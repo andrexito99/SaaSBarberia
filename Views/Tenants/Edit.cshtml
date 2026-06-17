@@ -1,0 +1,51 @@
+@model SaaSBarberia.Models.Tenant
+
+@{
+    ViewData["Title"] = "Editar Barbería";
+}
+<div class="container mt-4" style="max-width: 600px;">
+    <div class="card shadow-sm border-0 p-4">
+        <h3 class="fw-bold mb-3 text-dark">Modificar Datos</h3>
+        <form asp-action="Edit" autocomplete="off">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="FechaRegistro" />
+
+            <div class="mb-3">
+                <label asp-for="NombreNegocio" class="form-label fw-semibold">Nombre de la Barbería</label>
+                <input asp-for="NombreNegocio" class="form-control" autocomplete="off" />
+                <span asp-validation-for="NombreNegocio" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Subdominio" class="form-label fw-semibold">Subdominio</label>
+                <div class="input-group">
+                    <input asp-for="Subdominio" class="form-control" autocomplete="off" />
+                    <span class="input-group-text">.barbersaas.com</span>
+                </div>
+                <span asp-validation-for="Subdominio" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="PlanSuscripcion" class="form-label fw-semibold">Plan</label>
+                <select asp-for="PlanSuscripcion" class="form-select">
+                    <option value="Bronce">Plan Bronce</option>
+                    <option value="Oro">Plan Oro</option>
+                    <option value="Premium">Plan Premium</option>
+                </select>
+                <span asp-validation-for="PlanSuscripcion" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3 form-check form-switch pt-2">
+                <input type="checkbox" name="Activo" value="true" class="form-check-input" id="Activo" @(Model?.Activo == true ? "checked" : "") />
+                <input type="hidden" name="Activo" value="false" />
+                <label for="Activo" class="form-check-label fw-semibold">Estado de Cuenta Activo</label>
+            </div>
+
+            <div class="d-flex justify-content-between mt-4">
+                <a asp-action="Index" class="btn btn-light border">Cancelar</a>
+                <button type="submit" class="btn btn-warning px-4">Actualizar</button>
+            </div>
+        </form>
+    </div>
+</div>

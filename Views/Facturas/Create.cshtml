@@ -1,0 +1,50 @@
+@model SaaSBarberia.Models.Factura
+
+@{
+    ViewData["Title"] = "Nueva Factura";
+}
+<div class="container mt-4" style="max-width: 500px;">
+    <div class="card shadow-sm border-0 p-4">
+        <h3 class="fw-bold mb-3 text-dark">💰 Procesar Cobro</h3>
+        <form asp-action="Create" autocomplete="off">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="TenantId" class="form-label fw-semibold">Sede / Sucursal</label>
+                <select asp-for="TenantId" class="form-select" asp-items="ViewBag.TenantId"></select>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="CitaId" class="form-label fw-semibold">Asociar a la Cita N°</label>
+                <select asp-for="CitaId" class="form-select" asp-items="ViewBag.CitaId"></select>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Total" class="form-label fw-semibold">Monto Total ($)</label>
+                <input asp-for="Total" type="number" step="0.01" class="form-control" placeholder="0.00" />
+                <span asp-validation-for="Total" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="MetodoPago" class="form-label fw-semibold">Método de Pago</label>
+                <select asp-for="MetodoPago" class="form-select">
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Tarjeta">Tarjeta de Crédito/Débito</option>
+                    <option value="Transferencia">Transferencia / Nequi / Daviplata</option>
+                </select>
+                <span asp-validation-for="MetodoPago" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="FechaPago" class="form-label fw-semibold">Fecha y Hora de Transacción</label>
+                <input asp-for="FechaPago" type="datetime-local" class="form-control" step="60" asp-format="{0:yyyy-MM-ddTHH:mm}" />
+                <span asp-validation-for="FechaPago" class="text-danger"></span>
+            </div>
+
+            <div class="d-flex justify-content-between mt-4">
+                <a asp-action="Index" class="btn btn-light border">Volver</a>
+                <button type="submit" class="btn btn-success px-4">Generar Factura</button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,41 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - SaaSBarberia</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+</head>
+<body class="bg-light d-flex align-items-center justify-content-center" style="height: 100vh;">
+
+    <div class="card shadow border-0 p-4" style="width: 100%; max-width: 400px;">
+        <div class="text-center mb-4">
+            <h2 class="fw-bold text-dark">💈 SaaS Barbería</h2>
+            <p class="text-muted">Ingresa al sistema administrativo</p>
+        </div>
+
+        @* 🌟 SEGURIDAD EXTRA: Autocomplete="off" global para el formulario *@
+        <form asp-controller="Account" asp-action="Login" method="post" autocomplete="off">
+            @Html.ValidationSummary(true, "", new { @class = "text-danger small mb-3" })
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Correo Electrónico</label>
+                @* 🌟 Desactivamos explícitamente el autocompletado en este campo *@
+                <input type="email" name="email" class="form-control" placeholder="nombre@correo.com" autocomplete="off" required />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Contraseña</label>
+                @* 🌟 Usamos 'new-password' para obligar al navegador a no sugerir claves guardadas *@
+                <input type="password" name="password" class="form-control" placeholder="••••••••" autocomplete="new-password" required />
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 py-2 fw-bold mt-2">Entrar al Sistema</button>
+        </form>
+    </div>
+
+</body>
+</html>

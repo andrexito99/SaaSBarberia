@@ -1,0 +1,21 @@
+﻿@{
+    ViewData["Title"] = "Panel del Barbero";
+}
+
+<div class="container mt-4">
+    <div class="card shadow-sm border-0 mb-4 bg-primary text-white rounded-4">
+        <div class="card-body p-4">
+            <h3 class="fw-bold mb-1">💈 ¡Listo para el Flow!</h3>
+            <p class="mb-0 text-white-50">Gestiona tus turnos asignados y haz seguimiento a tus cortes del día.</p>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4 text-center">
+            <span class="fs-1">📋</span>
+            <h4 class="fw-bold text-dark mt-3">Mi Agenda Personal</h4>
+            <p class="text-muted small">Accede de forma rápida al listado de clientes que reservaron tu servicio para hoy.</p>
+            <a asp-controller="Citas" asp-action="Index" class="btn btn-primary fw-bold px-4 shadow-sm mt-2">Ver Mis Citas del Día</a>
+        </div>
+    </div>
+</div>

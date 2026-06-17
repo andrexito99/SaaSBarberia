@@ -1,0 +1,22 @@
+@model SaaSBarberia.Models.Tenant
+
+@{
+    ViewData["Title"] = "Ficha Técnica";
+}
+<div class="container mt-4" style="max-width: 500px;">
+    <div class="card shadow-sm border-0 text-center p-4">
+        <h2 class="text-primary fw-bold mb-0">@Model.NombreNegocio</h2>
+        <p class="text-muted">ID de Inquilino: #@Model.Id</p>
+        <hr />
+        <div class="text-start mb-3">
+            <p><strong>Subdominio:</strong> <code>@(Model.Subdominio).barbersaas.com</code></p>
+            <p><strong>Suscripción:</strong> <span class="badge bg-dark">@Model.PlanSuscripcion</span></p>
+            <p><strong>Estado:</strong> @(Model.Activo == true ? "🟢 Operando con normalidad" : "🔴 Suspendido")</p>
+            <p><strong>Fecha Alta:</strong> @Model.FechaRegistro?.ToString("dd/MM/yyyy hh:mm tt")</p>
+        </div>
+        <div class="d-flex justify-content-between border-top pt-3">
+            <a asp-action="Index" class="btn btn-light border">Volver</a>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning px-4">Modificar</a>
+        </div>
+    </div>
+</div>

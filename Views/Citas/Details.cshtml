@@ -1,0 +1,40 @@
+@model SaaSBarberia.Models.Cita
+
+@{
+    ViewData["Title"] = "Detalle de Turno";
+}
+
+<div class="container mt-4" style="max-width: 550px;">
+    <div class="card shadow-sm border-0 p-4">
+        <div class="text-center mb-3">
+            <span class="badge bg-primary px-3 py-2 mb-2">Resumen de Cita #@Model.Id</span>
+            <h3 class="fw-bold text-dark">👤 @(Model.Cliente?.Nombre ?? "Cliente sin registrar")</h3>
+        </div>
+        <hr />
+        <div class="text-start">
+            <dl class="row mb-0">
+                <dt class="col-sm-4">⏰ Turno:</dt>
+                <dd class="col-sm-8 text-primary fw-bold">@Model.FechaHora.ToString("dd/MM/yyyy hh:mm tt")</dd>
+
+                <dt class="col-sm-4">💈 Barbero:</dt>
+                <dd class="col-sm-8">@(Model.Barbero?.Usuario?.Nombre ?? "No asignado")</dd>
+
+                <dt class="col-sm-4">✂ Servicio:</dt>
+                <dd class="col-sm-8 fw-semibold">@(Model.Servicio?.Nombre ?? "Genérico")</dd>
+
+                <dt class="col-sm-4">🏢 Sucursal:</dt>
+                <dd class="col-sm-8">@(Model.Tenant?.NombreNegocio ?? "Principal")</dd>
+
+                <dt class="col-sm-4">🟢 Estado:</dt>
+                <dd class="col-sm-8"><span class="badge bg-secondary">@(Model.Estado ?? "Pendiente")</span></dd>
+
+                <dt class="col-sm-4">📝 Notas:</dt>
+                <dd class="col-sm-8 text-muted"><em>@(Model.Notas ?? "Ninguna indicación extra.")</em></dd>
+            </dl>
+        </div>
+        <div class="d-flex justify-content-between border-top pt-3 mt-3">
+            <a asp-action="Index" class="btn btn-light border">Volver</a>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning px-4">Modificar Reserva</a>
+        </div>
+    </div>
+</div>

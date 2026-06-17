@@ -1,0 +1,61 @@
+@model SaaSBarberia.Models.Cita
+
+@{
+    ViewData["Title"] = "Modificar Cita";
+}
+<div class="container mt-4" style="max-width: 600px;">
+    <div class="card shadow-sm border-0 p-4">
+        <h3 class="fw-bold mb-3 text-dark">✏ Reagendar / Modificar Cita</h3>
+        <form asp-action="Edit" autocomplete="off">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <input type="hidden" asp-for="Id" />
+
+            <div class="mb-3">
+                <label asp-for="TenantId" class="form-label fw-semibold">Sede / Sucursal</label>
+                <select asp-for="TenantId" class="form-select" asp-items="ViewBag.TenantId"></select>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ClienteId" class="form-label fw-semibold">Cliente</label>
+                <select asp-for="ClienteId" class="form-select" asp-items="ViewBag.ClienteId"></select>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="BarberoId" class="form-label fw-semibold">Barbero Asignado</label>
+                <select asp-for="BarberoId" class="form-select" asp-items="ViewBag.BarberoId"></select>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ServicioId" class="form-label fw-semibold">Servicio Requerido</label>
+                <select asp-for="ServicioId" class="form-select" asp-items="ViewBag.ServicioId"></select>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="FechaHora" class="form-label fw-semibold">Nueva Fecha y Hora</label>
+                <input asp-for="FechaHora" type="datetime-local" class="form-control" step="60" />
+                <span asp-validation-for="FechaHora" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Estado" class="form-label fw-semibold">Estado de la Cita</label>
+                <select asp-for="Estado" class="form-select">
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="Confirmada">Confirmada</option>
+                    <option value="Completada">Completada</option>
+                    <option value="Cancelada">Cancelada</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Notas" class="form-label fw-semibold">Notas</label>
+                <textarea asp-for="Notas" class="form-control" rows="2"></textarea>
+                <span asp-validation-for="Notas" class="text-danger"></span>
+            </div>
+
+            <div class="d-flex justify-content-between mt-4">
+                <a asp-action="Index" class="btn btn-light border">Cancelar</a>
+                <button type="submit" class="btn btn-warning px-4">Actualizar Turno</button>
+            </div>
+        </form>
+    </div>
+</div>

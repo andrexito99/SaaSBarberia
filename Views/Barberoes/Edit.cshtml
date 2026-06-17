@@ -1,0 +1,42 @@
+@model SaaSBarberia.Models.Barbero
+
+@{
+    ViewData["Title"] = "Modificar Barbero";
+}
+
+<div class="container mt-4" style="max-width: 550px;">
+    <div class="card shadow-sm border-0 p-4">
+        <h3 class="fw-bold mb-3 text-dark">Editar Condiciones del Barbero</h3>
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <input type="hidden" asp-for="Id" />
+
+            <div class="mb-3">
+                <label asp-for="UsuarioId" class="form-label fw-semibold">Cuenta de Usuario Vinculada</label>
+                <select asp-for="UsuarioId" class="form-select" asp-items="ViewBag.UsuarioId"></select>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="TenantId" class="form-label fw-semibold">Lugar de Trabajo (Sede)</label>
+                <select asp-for="TenantId" class="form-select" asp-items="ViewBag.TenantId"></select>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Especialidad" class="form-label fw-semibold">Especialidad</label>
+                <input asp-for="Especialidad" class="form-control" />
+                <span asp-validation-for="Especialidad" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ComisionPorcentaje" class="form-label fw-semibold">Porcentaje de Comisión</label>
+                <input asp-for="ComisionPorcentaje" type="number" step="0.01" class="form-control" />
+                <span asp-validation-for="ComisionPorcentaje" class="text-danger"></span>
+            </div>
+
+            <div class="d-flex justify-content-between mt-4">
+                <a asp-action="Index" class="btn btn-light border">Cancelar</a>
+                <button type="submit" class="btn btn-warning px-4">Actualizar Contrato</button>
+            </div>
+        </form>
+    </div>
+</div>  

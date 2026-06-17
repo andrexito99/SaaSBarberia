@@ -1,0 +1,45 @@
+﻿@{
+    ViewData["Title"] = "Panel General - SuperAdmin";
+}
+
+<div class="container mt-4">
+    <div class="p-5 bg-dark text-white rounded-4 shadow mb-4">
+        <h1 class="display-5 fw-bold">👑 Panel de Control Global</h1>
+        <p class="lead">Estás logueado como SuperAdmin del Sistema Administrativo General.</p>
+        <hr class="my-4 border-secondary">
+        <p class="text-white-50">Desde aquí gestionas todas las barberías (Tenants) afiliadas y los usuarios globales de la plataforma.</p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm border-0 border-top border-warning border-4">
+                <div class="card-body text-center py-4">
+                    <h1 class="display-4">🏢</h1>
+                    <h4 class="card-title fw-bold mt-2">Módulo de Tenants</h4>
+                    <p class="card-text text-muted small">Registra, edita o deshabilita barberías en el sistema.</p>
+                    <a asp-controller="Tenants" asp-action="Index" class="btn btn-warning w-100 fw-bold shadow-sm">Administrar Locales</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm border-0 border-top border-warning border-4">
+                <div class="card-body text-center py-4">
+                    <h1 class="display-4">👥</h1>
+                    <h4 class="card-title fw-bold mt-2">Usuarios Globales</h4>
+                    <p class="card-text text-muted small">Controla las cuentas de acceso y asignación de roles.</p>
+                    <a asp-controller="Usuarios" asp-action="Index" class="btn btn-warning w-100 fw-bold shadow-sm">Administrar Cuentas</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm border-0 border-top border-success border-4">
+                <div class="card-body text-center py-4">
+                    <h1 class="display-4">💵</h1>
+                    <h4 class="card-title fw-bold mt-2">Finanzas Globales</h4>
+                    <p class="card-text text-muted small">Audita la facturación general de todas las sedes del software.</p>
+                    <a asp-controller="Facturas" asp-action="Index" class="btn btn-success w-100 fw-bold shadow-sm">Ver Facturación</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

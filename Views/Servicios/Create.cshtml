@@ -1,0 +1,42 @@
+@model SaaSBarberia.Models.Servicio
+
+@{
+    ViewData["Title"] = "Nuevo Servicio";
+}
+
+<div class="container mt-4" style="max-width: 500px;">
+    <div class="card shadow-sm border-0 p-4">
+        <h3 class="fw-bold mb-3 text-dark">✨ Añadir Servicio</h3>
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="TenantId" class="form-label fw-semibold">Asignar a Sucursal</label>
+                <select asp-for="TenantId" class="form-select" asp-items="ViewBag.TenantId"></select>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Nombre" class="form-label fw-semibold">Nombre del Servicio</label>
+                <input asp-for="Nombre" class="form-control" placeholder="Ej: Corte Degradado + Barba" />
+                <span asp-validation-for="Nombre" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Precio" class="form-label fw-semibold">Precio del Servicio ($)</label>
+                <input asp-for="Precio" type="number" class="form-control" placeholder="0.00" />
+                <span asp-validation-for="Precio" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="DuracionMinutos" class="form-label fw-semibold">Duración (Minutos)</label>
+                <input asp-for="DuracionMinutos" type="number" class="form-control" placeholder="Ej: 30" />
+                <span asp-validation-for="DuracionMinutos" class="text-danger"></span>
+            </div>
+
+            <div class="d-flex justify-content-between mt-4">
+                <a asp-action="Index" class="btn btn-light border">Volver</a>
+                <button type="submit" class="btn btn-primary px-4">Guardar Servicio</button>
+            </div>
+        </form>
+    </div>
+</div>

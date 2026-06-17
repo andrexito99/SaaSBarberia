@@ -1,0 +1,77 @@
+@model SaaSBarberia.Models.Cita
+
+@{
+    ViewData["Title"] = "Agendar Cita";
+}
+
+<div class="container mt-4" style="max-width: 600px;">
+    <div class="card shadow-sm border-0 p-4">
+        <h3 class="fw-bold mb-1 text-dark text-center">📆 Reservar Cita</h3>
+        <p class="text-muted text-center small mb-4">Completa los datos del turno</p>
+
+        <form asp-action="Create" autocomplete="off">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            @if (User.IsInRole("Cliente"))
+            {
+                @* 🔒 Si es Michell, viaja oculto en el HTML para evitar que hackee otra sede *@
+                <input type="hidden" asp-for="TenantId" />
+                <input type="hidden" asp-for="ClienteId" />
+            }
+            else
+            {
+                @* 😎 Si eres SuperAdmin, te renderiza los selects funcionales para que escojas *@
+                <div class="mb-3">
+                    <label asp-for="TenantId" class="form-label fw-semibold">Sede / Sucursal</label>
+                    <select asp-for="TenantId" class="form-select" asp-items="ViewBag.TenantId">
+                        <option value="">-- Selecciona Barbería --</option>
+                    </select>
+                    <span asp-validation-for="TenantId" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="ClienteId" class="form-label fw-semibold">Cliente</label>
+                    <select asp-for="ClienteId" class="form-select" asp-items="ViewBag.ClienteId">
+                        <option value="">-- Selecciona el Cliente --</option>
+                    </select>
+                    <span asp-validation-for="ClienteId" class="text-danger"></span>
+                </div>
+            }
+
+            <input type="hidden" asp-for="Estado" />
+
+            <div class="mb-3">
+                <label asp-for="ServicioId" class="form-label fw-semibold">Servicio Requerido</label>
+                <select asp-for="ServicioId" class="form-select" asp-items="ViewBag.ServicioId">
+                    <option value="">-- Selecciona el Servicio --</option>
+                </select>
+                <span asp-validation-for="ServicioId" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="BarberoId" class="form-label fw-semibold">Barbero Asignado</label>
+                <select asp-for="BarberoId" class="form-select" asp-items="ViewBag.BarberoId">
+                    <option value="">-- Seleccione un Barbero --</option>
+                </select>
+                <span asp-validation-for="BarberoId" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="FechaHora" class="form-label fw-semibold">Fecha y Hora</label>
+                <input asp-for="FechaHora" type="datetime-local" class="form-control" step="60" value="@(Model?.FechaHora != null ? Model.FechaHora.ToString("yyyy-MM-ddTHH:mm") : "")" />
+                <span asp-validation-for="FechaHora" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Notas" class="form-label fw-semibold">Notas (Opcional)</label>
+                <textarea asp-for="Notas" class="form-control" rows="2"></textarea>
+                <span asp-validation-for="Notas" class="text-danger"></span>
+            </div>
+
+            <div class="d-flex justify-content-between mt-4">
+                <a asp-controller="Servicios" asp-action="Index" class="btn btn-light border">Regresar</a>
+                <button type="submit" class="btn btn-primary px-4 fw-bold">Confirmar Turno</button>
+            </div>
+        </form>
+    </div>
+</div>

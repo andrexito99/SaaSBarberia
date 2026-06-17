@@ -1,0 +1,45 @@
+@model IEnumerable<SaaSBarberia.Models.Barbero>
+
+@{
+    ViewData["Title"] = "Staff de Barberos";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-dark fw-bold">💈 Equipo de Barberos</h2>
+        <a asp-action="Create" class="btn btn-primary px-4 shadow-sm">+ Dar de Alta Barbero</a>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        @foreach (var item in Model)
+        {
+            <div class="col">
+                <div class="card h-100 shadow-sm border-0 position-relative">
+                    <div class="card-body pt-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-dark text-white rounded-circle p-3 fw-bold me-3" style="width: 55px; height: 55px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                                💈
+                            </div>
+                            <div>
+                                <h5 class="card-title fw-bold mb-0 text-truncate" style="max-width: 180px;">@(item.Usuario?.Nombre ?? "Sin Nombre")</h5>
+                                <small class="text-primary fw-semibold">🎯 @(item.Especialidad ?? "Estilo Libre")</small>
+                            </div>
+                        </div>
+
+                        <hr />
+
+                        <p class="mb-1 text-muted small">💼 <strong>Comisión:</strong> @(item.ComisionPorcentaje?.ToString("0") ?? "0")% por corte</p>
+                        <p class="mb-1 text-muted small">📧 <strong>Contacto:</strong> @(item.Usuario?.Email ?? "No asignado")</p>
+                        <p class="mb-0 text-muted small">🏢 <strong>Lugar de Trabajo:</strong> <span class="text-secondary fw-semibold">@(item.Tenant?.NombreNegocio ?? "Sede Desconocida")</span></p>
+                    </div>
+
+                    <div class="card-footer bg-light border-0 d-flex justify-content-around py-3">
+                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-warning w-25">Editar</a>
+                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info w-25">Detalles</a>
+                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger w-25">Borrar</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

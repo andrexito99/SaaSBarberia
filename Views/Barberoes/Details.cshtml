@@ -1,0 +1,35 @@
+@model SaaSBarberia.Models.Barbero
+
+@{
+    ViewData["Title"] = "Expediente del Colaborador";
+}
+
+<div class="container mt-4" style="max-width: 500px;">
+    <div class="card shadow-sm border-0 p-4 text-center">
+        <div class="mx-auto bg-dark text-white rounded-circle p-3 mb-3" style="width: 65px; height: 65px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+            💈
+        </div>
+        <h3 class="fw-bold text-dark mb-1">@(Model.Usuario?.Nombre ?? "Sin Vincular")</h3>
+        <span class="badge bg-primary px-3 py-2 mb-3">🎯 @(Model.Especialidad ?? "Estilista General")</span>
+        <hr />
+        <div class="text-start mb-3">
+            <dl class="row mb-0">
+                <dt class="col-sm-5">📧 Correo:</dt>
+                <dd class="col-sm-7">@(Model.Usuario?.Email ?? "No registrado")</dd>
+
+                <dt class="col-sm-5">📞 Teléfono:</dt>
+                <dd class="col-sm-7">@(Model.Usuario?.Telefono ?? "No registrado")</dd>
+
+                <dt class="col-sm-5">💰 Comisión pactada:</dt>
+                <dd class="col-sm-7 text-success fw-bold">@(Model.ComisionPorcentaje?.ToString("0.00") ?? "0") %</dd>
+
+                <dt class="col-sm-5">🏢 Sede asignada:</dt>
+                <dd class="col-sm-7">@(Model.Tenant?.NombreNegocio ?? "Ninguna")</dd>
+            </dl>
+        </div>
+        <div class="d-flex justify-content-between border-top pt-3">
+            <a asp-action="Index" class="btn btn-light border">Volver al Staff</a>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning px-4">Modificar Datos</a>
+        </div>
+    </div>
+</div>

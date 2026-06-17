@@ -1,0 +1,37 @@
+@model SaaSBarberia.Models.Servicio
+
+@{
+    ViewData["Title"] = "Detalle del Servicio";
+}
+
+<div class="container mt-4" style="max-width: 500px;">
+    <div class="card shadow-sm border-0 p-4 text-center">
+        <div class="mb-3">
+            <span class="badge bg-light text-primary border border-primary px-3 py-2 mb-2">Servicio ID #@Model.Id</span>
+            <h3 class="fw-bold text-dark">@Model.Nombre</h3>
+        </div>
+        <hr />
+        <div class="text-start mb-3">
+            <dl class="row mb-0">
+                @* 🇨🇴 CORRECCIÓN AQUÍ: Signo de pesos y corregido el "N0" con número cero *@
+                <dt class="col-sm-5">💰 Valor:</dt>
+                <dd class="col-sm-7 text-success fw-bold">$@Model.Precio.ToString("N0")</dd>
+
+                <dt class="col-sm-5">⏱ Tiempo estimado:</dt>
+                <dd class="col-sm-7">@Model.DuracionMinutos minutos</dd>
+
+                <dt class="col-sm-5">🏢 Sede vinculada:</dt>
+                <dd class="col-sm-7 fw-semibold">@(Model.Tenant?.NombreNegocio ?? "No mapeada")</dd>
+            </dl>
+        </div>
+        <div class="d-flex justify-content-between border-top pt-3">
+            <a asp-action="Index" class="btn btn-light border">Regresar</a>
+
+            @* 🔒 SEGURIDAD VISTA: Solo el Admin o SuperAdmin pueden ver el botón de Modificar *@
+            @if (User.IsInRole("SuperAdmin") || User.IsInRole("Administrador"))
+            {
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning px-4">Modificar Precio</a>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,20 @@
+@model SaaSBarberia.Models.Barbero
+
+@{
+    ViewData["Title"] = "Remover del Staff";
+}
+
+<div class="container mt-4" style="max-width: 480px;">
+    <div class="card shadow border-0 p-4 border-top border-danger border-4 text-center">
+        <h4 class="text-danger fw-bold">🗑 ¿Desvincular barbero del equipo?</h4>
+        <p class="text-muted mt-2">Vas a remover el perfil operacional de <strong>@(Model.Usuario?.Nombre ?? "este colaborador")</strong> de la sucursal <strong>@(Model.Tenant?.NombreNegocio ?? "")</strong>. El usuario base no se borrará.</p>
+
+        <form asp-action="Delete">
+            <input type="hidden" asp-for="Id" />
+            <div class="d-flex justify-content-between mt-4">
+                <a asp-action="Index" class="btn btn-light border">No, mantener contratado</a>
+                <input type="submit" value="Sí, rescindir contrato" class="btn btn-danger px-4" />
+            </div>
+        </form>
+    </div>
+</div>

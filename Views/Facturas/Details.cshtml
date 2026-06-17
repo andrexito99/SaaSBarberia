@@ -1,0 +1,43 @@
+@model SaaSBarberia.Models.Factura
+
+@{
+    ViewData["Title"] = "Comprobante de Pago";
+}
+
+<div class="container mt-4" style="max-width: 450px;">
+    <div class="card shadow border-0 p-4 text-center bg-white" style="border-style: dashed !important; border-width: 2px !important; border-color: #ced4da !important;">
+        <div class="mb-2">
+            <h4 class="fw-bold text-dark mb-0">💈 @(Model.Tenant?.NombreNegocio ?? "BARBERÍA SAAS") 💈</h4>
+            <small class="text-muted">Comprobante de Caja Electrónico</small>
+        </div>
+        <hr class="my-2" style="border-top: 2px dashed #000;" />
+
+        <div class="text-start my-3 fs-6">
+            <dl class="row mb-0">
+                <dt class="col-6 text-muted">Factura N°:</dt>
+                <dd class="col-6 text-end fw-bold">#@Model.Id</dd>
+
+                <dt class="col-6 text-muted">Código Cita:</dt>
+                <dd class="col-6 text-end">#@Model.CitaId</dd>
+
+                <dt class="col-6 text-muted">Fecha Emisión:</dt>
+                <dd class="col-6 text-end small">@(Model.FechaPago?.ToString("dd/MM/yyyy hh:mm tt") ?? "N/A")</dd>
+
+                <dt class="col-6 text-muted">Medio de Pago:</dt>
+                <dd class="col-6 text-end text-uppercase">💵 @Model.MetodoPago</dd>
+            </dl>
+        </div>
+
+        <hr class="my-2" style="border-top: 2px dashed #000;" />
+
+        <div class="d-flex justify-content-between align-items-center my-3">
+            <span class="fs-5 fw-bold text-dark">TOTAL NETO:</span>
+            <span class="fs-4 fw-bold text-success">@Model.Total.ToString("C0")</span>
+        </div>
+
+        <div class="d-flex justify-content-between mt-4 border-top pt-3 bg-light m-n4 p-3 rounded-bottom">
+            <a asp-action="Index" class="btn btn-sm btn-secondary">Regresar</a>
+            <button onclick="window.print();" class="btn btn-sm btn-dark">🖨 Imprimir Ticket</button>
+        </div>
+    </div>
+</div>

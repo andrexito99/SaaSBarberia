@@ -1,0 +1,76 @@
+@model IEnumerable<SaaSBarberia.Models.Cita>
+
+@{
+    ViewData["Title"] = "Agenda de Citas";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="fw-bold text-dark">📅 Agenda de Citas</h2>
+        <a asp-action="Create" class="btn btn-primary px-4 fw-semibold">⚡ Agendar Nueva Cita</a>
+    </div>
+
+    <div class="card shadow-sm border-0 p-3">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Barbería</th>
+                        <th>Barbero (ID)</th>
+                        <th>Servicio</th>
+                        <th>Fecha y Hora</th>
+                        <th>Estado</th>
+                        @if (User.IsInRole("SuperAdmin") || User.IsInRole("Administrador") || User.IsInRole("Barbero"))
+                        {
+                            <th class="text-center">Acciones</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">No hay citas agendadas todavía.</td>
+                        </tr>
+                    }
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="fw-bold">@item.Cliente?.Nombre</td>
+                            <td>@item.Tenant?.NombreNegocio</td>
+                            <td><span class="badge bg-secondary">#@item.BarberoId</span></td>
+                            <td>@item.Servicio?.Nombre</td>
+                            <td>@item.FechaHora.ToString("dd/MM/yyyy hh:mm tt")</td>
+                            <td>
+                                @if (item.Estado == "Pendiente")
+                                {
+                                    <span class="badge bg-warning text-dark">Pendiente</span>
+                                }
+                                else if (item.Estado == "Completada")
+                                {
+
+                                    <span class="badge bg-success">Completada</span>
+                                }
+                                else
+                                {
+
+                                    <span class="badge bg-danger">Cancelada</span>
+                                }
+                            </td>
+                            @if (User.IsInRole("SuperAdmin") || User.IsInRole("Administrador") || User.IsInRole("Barbero"))
+                            {
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm">
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-light border text-primary">✏️</a>
+                                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-light border text-danger">🗑️</a>
+                                    </div>
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

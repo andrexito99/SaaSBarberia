@@ -1,0 +1,37 @@
+﻿@{
+    ViewData["Title"] = "Administración de Sede";
+}
+
+<div class="container mt-4">
+    <div class="p-4 bg-white border rounded-4 shadow-sm mb-4">
+        <h2 class="fw-bold text-dark mb-1">💼 Panel de Administración</h2>
+        <p class="text-muted">Control operativo y financiero exclusivo para tu sucursal.</p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 text-center py-4">
+                <h2 class="text-success mb-2">💵</h2>
+                <h5 class="fw-bold">Caja y Facturas</h5>
+                <p class="text-muted small px-3">Revisa las transacciones hechas y los métodos de pago usados en la sede.</p>
+                <div class="px-3"><a asp-controller="Facturas" asp-action="Index" class="btn btn-sm btn-dark w-100">Ver Movimientos</a></div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 text-center py-4">
+                <h2 class="text-primary mb-2">✂</h2>
+                <h5 class="fw-bold">Servicios Ofrecidos</h5>
+                <p class="text-muted small px-3">Actualiza los cortes, combos y tiempos de ejecución de tu catálogo.</p>
+                <div class="px-3"><a asp-controller="Servicios" asp-action="Index" class="btn btn-sm btn-dark w-100">Ajustar Precios</a></div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 text-center py-4">
+                <h2 class="text-info mb-2">📆</h2>
+                <h5 class="fw-bold">Citas de la Sede</h5>
+                <p class="text-muted small px-3">Monitorea los turnos agendados y reasigna barberos si es necesario.</p>
+                <div class="px-3"><a asp-controller="Citas" asp-action="Index" class="btn btn-sm btn-dark w-100">Ver Calendario</a></div>
+            </div>
+        </div>
+    </div>
+</div>

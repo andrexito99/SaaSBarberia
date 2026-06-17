@@ -1,0 +1,26 @@
+@model SaaSBarberia.Models.Usuario
+
+@{
+    ViewData["Title"] = "Ficha Usuario";
+}
+
+<div class="container mt-4" style="max-width: 500px;">
+    <div class="card shadow-sm border-0 text-center p-4">
+        <div class="mx-auto bg-light rounded-circle p-3 text-primary fw-bold mb-3" style="width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; font-size: 24px;">
+            @(!string.IsNullOrEmpty(Model.Nombre) ? Model.Nombre.Substring(0, 1).ToUpper() : "?")
+        </div>
+        <h2 class="text-dark fw-bold mb-1">@Model.Nombre</h2>
+        <span class="badge bg-info text-dark mb-3 px-3 py-2 fs-6">@(Model.Role?.NombreRole ?? "Sin Rol")</span>
+        <hr />
+        <div class="text-start mb-3">
+            <p><strong>📧 Correo:</strong> @Model.Email</p>
+            <p><strong>📞 Teléfono:</strong> @(Model.Telefono ?? "No asignado")</p>
+            <p><strong>💈 Sede Asociada:</strong> @(Model.Tenant?.NombreNegocio ?? "Global System Admin")</p>
+            <p><strong>🟢 Estado:</strong> @(Model.Activo == true ? "Habilitado para trabajar" : "Bloqueado de la app")</p>
+        </div>
+        <div class="d-flex justify-content-between border-top pt-3">
+            <a asp-action="Index" class="btn btn-light border">Volver</a>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning px-4">Modificar Perfil</a>
+        </div>
+    </div>
+</div>

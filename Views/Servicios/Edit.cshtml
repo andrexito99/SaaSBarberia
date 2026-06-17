@@ -1,0 +1,43 @@
+@model SaaSBarberia.Models.Servicio
+
+@{
+    ViewData["Title"] = "Editar Servicio";
+}
+
+<div class="container mt-4" style="max-width: 500px;">
+    <div class="card shadow-sm border-0 p-4">
+        <h3 class="fw-bold mb-3 text-dark">✏ Ajustar Detalles del Servicio</h3>
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <input type="hidden" asp-for="Id" />
+
+            <div class="mb-3">
+                <label asp-for="TenantId" class="form-label fw-semibold">Sucursal</label>
+                <select asp-for="TenantId" class="form-select" asp-items="ViewBag.TenantId"></select>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Nombre" class="form-label fw-semibold">Nombre</label>
+                <input asp-for="Nombre" class="form-control" />
+                <span asp-validation-for="Nombre" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Precio" class="form-label fw-semibold">Precio ($)</label>
+                <input asp-for="Precio" type="number" class="form-control" />
+                <span asp-validation-for="Precio" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="DuracionMinutos" class="form-label fw-semibold">Duración Estimada (Minutos)</label>
+                <input asp-for="DuracionMinutos" type="number" class="form-control" />
+                <span asp-validation-for="DuracionMinutos" class="text-danger"></span>
+            </div>
+
+            <div class="d-flex justify-content-between mt-4">
+                <a asp-action="Index" class="btn btn-light border">Cancelar</a>
+                <button type="submit" class="btn btn-warning px-4">Actualizar</button>
+            </div>
+        </form>
+    </div>
+</div>

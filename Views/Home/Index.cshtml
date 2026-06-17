@@ -1,0 +1,95 @@
+﻿@{
+    ViewData["Title"] = "Panel de Control";
+}
+
+<div class="container mt-4">
+    <div class="p-5 mb-4 bg-dark text-white rounded-3 shadow-sm text-center position-relative overflow-hidden">
+        <div class="position-absolute top-0 start-0 w-100 h-100 bg-gradient" style="opacity: 0.1; background: linear-gradient(45deg, #ff0000, #0000ff);"></div>
+        <h1 class="display-4 fw-bold mb-2">¡Otra vez tu, care verga, ¿ahora que?! 💈😂</h1>
+        <p class="fs-5 text-muted">Bienvenido al núcleo operacional de tu SaaS de Barberías. Todo está sincronizado y listo para camellar.</p>
+    </div>
+
+    @* 🌟 SECCIÓN OPTIMIZADA PARA ROLES DE CLIENTE *@
+    @if (User.IsInRole("Cliente"))
+    {
+        <h3 class="text-secondary fw-bold mb-3">📅 Tu Espacio Personal</h3>
+        <div class="row row-cols-1 row-cols-md-2 g-4 mb-4">
+            <div class="col">
+                <div class="card h-100 shadow-sm border-0 border-top border-primary border-4 transition-card">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold text-dark">⚡ Agendar Nueva Cita</h5>
+                        <p class="card-text text-muted small">Elige tu servicio favorito, selecciona tu barbero de confianza y aparta tu cupo en un segundo.</p>
+                    </div>
+                    <div class="card-footer bg-white border-0 pb-3">
+                        <a asp-controller="Citas" asp-action="Create" class="btn btn-primary w-100 fw-bold">Reservar Turno Ahora →</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="card h-100 shadow-sm border-0 border-top border-info border-4 transition-card">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold text-dark">📋 Mis Citas Programadas</h5>
+                        <p class="card-text text-muted small">Consulta el historial de tus turnos, revisa cuáles están pendientes y verifica tus horarios.</p>
+                    </div>
+                    <div class="card-footer bg-white border-0 pb-3">
+                        <a asp-controller="Citas" asp-action="Index" class="btn btn-outline-info w-100 fw-semibold">Ver Historial de Citas →</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        @* 👨‍💼 VISTA ORIGINAL PARA ADMINISTRADORES / SUPERADMINS *@
+        <h3 class="text-secondary fw-bold mb-3">🛠️ Accesos Rápidos del Sistema</h3>
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            <div class="col">
+                <div class="card h-100 shadow-sm border-0 border-top border-primary border-4 transition-card">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold text-dark">✂️ Catálogo de Servicios</h5>
+                        <p class="card-text text-muted small">Configura los cortes, lavados, tinturas y las tarifas bases por sucursal.</p>
+                    </div>
+                    <div class="card-footer bg-white border-0 pb-3">
+                        <a asp-controller="Servicios" asp-action="Index" class="btn btn-outline-primary btn-sm w-100 fw-semibold">Administrar Servicios →</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="card h-100 shadow-sm border-0 border-top border-warning border-4 transition-card">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold text-dark">💈 Staff de Barberos</h5>
+                        <p class="card-text text-muted small">Gestiona el equipo de colaboradores, sus especialidades y los porcentajes de comisión.</p>
+                    </div>
+                    <div class="card-footer bg-white border-0 pb-3">
+                        <a asp-controller="Barberoes" asp-action="Index" class="btn btn-outline-warning btn-sm w-100 fw-semibold text-dark">Ver Equipo de Barberos →</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="card h-100 shadow-sm border-0 border-top border-success border-4 transition-card">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold text-dark">💵 Caja y Facturación</h5>
+                        <p class="card-text text-muted small">Revisa el historial de cobros, procesa nuevos pagos y mantén las cuentas melas.</p>
+                    </div>
+                    <div class="card-footer bg-white border-0 pb-3">
+                        <a asp-controller="Facturas" asp-action="Index" class="btn btn-outline-success btn-sm w-100 fw-semibold">Revisar Finanzas →</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .transition-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+        .transition-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1) !important;
+        }
+</style>

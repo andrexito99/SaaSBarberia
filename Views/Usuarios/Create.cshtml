@@ -1,0 +1,65 @@
+@model SaaSBarberia.Models.Usuario
+
+@{
+    ViewData["Title"] = "Registrar Usuario";
+}
+
+<div class="container mt-4" style="max-width: 600px;">
+    <div class="card shadow-sm border-0 p-4">
+        <h3 class="fw-bold mb-3 text-dark">Registrar Usuario</h3>
+
+        <form asp-action="Create" autocomplete="off">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <input type="text" style="display:none;" autocomplete="false" />
+            <input type="password" style="display:none;" autocomplete="new-password" />
+
+            <div class="mb-3">
+                <label asp-for="Nombre" class="form-label fw-semibold">Nombre Completo</label>
+                <input asp-for="Nombre" class="form-control" placeholder="Ej. Juan Pérez" autocomplete="off" />
+                <span asp-validation-for="Nombre" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label fw-semibold">Correo Electrónico</label>
+                <input asp-for="Email" type="email" class="form-control" placeholder="juan@correo.com" autocomplete="none" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="PasswordHash" class="form-label fw-semibold">Contraseña Inicial</label>
+                <input asp-for="PasswordHash" type="password" class="form-control" placeholder="••••••••" autocomplete="new-password" value="" />
+                <span asp-validation-for="PasswordHash" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Telefono" class="form-label fw-semibold">Número de Teléfono</label>
+                <input asp-for="Telefono" class="form-control" placeholder="3001234567" autocomplete="off" />
+                <span asp-validation-for="Telefono" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="RoleId" class="form-label fw-semibold">Asignar Rol</label>
+                <select asp-for="RoleId" class="form-select" asp-items="ViewBag.RoleId"></select>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="TenantId" class="form-label fw-semibold">Asignar Barbería (Tenant)</label>
+                <select asp-for="TenantId" class="form-select" asp-items="ViewBag.TenantId">
+                    <option value="">-- Ninguno (Administrador del Sistema Global) --</option>
+                </select>
+            </div>
+
+            <div class="mb-3 form-check form-switch pt-2">
+                <input name="Activo" id="Activo" class="form-check-input" type="checkbox" value="true" checked />
+                <input name="Activo" type="hidden" value="false" />
+                <label for="Activo" class="form-check-label fw-semibold">Usuario Habilitado</label>
+            </div>
+
+            <div class="d-flex justify-content-between mt-4">
+                <a asp-action="Index" class="btn btn-light border">Regresar</a>
+                <button type="submit" class="btn btn-primary px-4">Crear Perfil</button>
+            </div>
+        </form>
+    </div>
+</div>

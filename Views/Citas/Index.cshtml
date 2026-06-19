@@ -17,11 +17,15 @@
                     <tr>
                         <th>Cliente</th>
                         <th>Barbería</th>
-                        <th>Barbero (ID)</th>
+                        <th>Barbero</th>
                         <th>Servicio</th>
                         <th>Fecha y Hora</th>
                         <th>Estado</th>
-                        @if (User.IsInRole("SuperAdmin") || User.IsInRole("Administrador") || User.IsInRole("Barbero"))
+                        @if (User.IsInRole("Cliente"))
+                        {
+                            <th class="text-center">Gestión</th>
+                        }
+                        @if (User.IsInRole("SuperAdmin") || User.IsInRole("AdminBarberia") || User.IsInRole("Barbero"))
                         {
                             <th class="text-center">Acciones</th>
                         }
@@ -31,7 +35,7 @@
                     @if (!Model.Any())
                     {
                         <tr>
-                            <td colspan="7" class="text-center text-muted py-4">No hay citas agendadas todavía.</td>
+                            <td colspan="8" class="text-center text-muted py-4">No hay citas agendadas todavía.</td>
                         </tr>
                     }
                     @foreach (var item in Model)
@@ -39,7 +43,18 @@
                         <tr>
                             <td class="fw-bold">@item.Cliente?.Nombre</td>
                             <td>@item.Tenant?.NombreNegocio</td>
-                            <td><span class="badge bg-secondary">#@item.BarberoId</span></td>
+
+                            <td>
+                                @if (item.Barbero?.Usuario != null)
+                                {
+                                    <span class="fw-semibold text-dark">✨ @item.Barbero.Usuario.Nombre</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">No asignado</span>
+                                }
+                            </td>
+
                             <td>@item.Servicio?.Nombre</td>
                             <td>@item.FechaHora.ToString("dd/MM/yyyy hh:mm tt")</td>
                             <td>
@@ -49,16 +64,34 @@
                                 }
                                 else if (item.Estado == "Completada")
                                 {
-
                                     <span class="badge bg-success">Completada</span>
                                 }
                                 else
                                 {
-
                                     <span class="badge bg-danger">Cancelada</span>
                                 }
                             </td>
-                            @if (User.IsInRole("SuperAdmin") || User.IsInRole("Administrador") || User.IsInRole("Barbero"))
+
+                            @* 🌟 BOTÓN DE AUTOGESTIÓN PARA CLIENTES (Solo si está Pendiente) *@
+                            @if (User.IsInRole("Cliente"))
+                            {
+                                <td class="text-center">
+                                    @if (item.Estado == "Pendiente")
+                                    {
+                                        <form asp-action="Cancelar" asp-route-id="@item.Id" method="post" onsubmit="return confirm('¿En serio vas a cancelar esta monda de cita?');" style="display:inline;">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger fw-semibold py-1 px-2" style="font-size: 0.8rem;">
+                                                ❌ Cancelar
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">-</span>
+                                    }
+                                </td>
+                            }
+
+                            @if (User.IsInRole("SuperAdmin") || User.IsInRole("AdminBarberia") || User.IsInRole("Barbero"))
                             {
                                 <td class="text-center">
                                     <div class="btn-group btn-group-sm">

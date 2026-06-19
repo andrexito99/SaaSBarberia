@@ -1,93 +1,182 @@
-﻿<!DOCTYPE html>
+﻿@using System.Security.Claims
+@using Microsoft.EntityFrameworkCore
+@inject SaaSBarberia.Data.BarberSaaSDbContext Context
+
+@{
+    // Valores por defecto globales
+    string colorPrimario = "#212529";
+    string colorSecundario = "#0d6efd";
+    string estiloSidebar = "SuperiorClasico";
+    string nombreNegocio = "SaaS Barbería";
+
+    bool esSuperAdmin = User.IsInRole("SuperAdmin");
+
+    if (User.Identity != null && User.Identity.IsAuthenticated)
+    {
+        var usuarioIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!string.IsNullOrEmpty(usuarioIdStr) && int.TryParse(usuarioIdStr, out int usuarioId))
+        {
+            var usuarioDb = Context.Usuarios.Include(u => u.Tenant).FirstOrDefault(u => u.Id == usuarioId);
+            if (usuarioDb != null && usuarioDb.Tenant != null)
+            {
+                // Si es SuperAdmin mantenemos diseño neutro superior, si no, cargamos sus estilos personalizados
+                if (!esSuperAdmin)
+                {
+                    colorPrimario = usuarioDb.Tenant.ColorPrimario ?? colorPrimario;
+                    colorSecundario = usuarioDb.Tenant.ColorSecundario ?? colorSecundario;
+                    estiloSidebar = usuarioDb.Tenant.EstiloSidebar ?? estiloSidebar;
+                    nombreNegocio = usuarioDb.Tenant.NombreNegocio ?? nombreNegocio;
+                }
+                else
+                {
+                    colorPrimario = "#0f172a"; // Azul oscuro para SuperAdmin
+                    colorSecundario = "#258cfb";
+                    estiloSidebar = "SuperiorClasico";
+                    nombreNegocio = "Panel SuperAdmin";
+                }
+            }
+        }
+    }
+
+    // Evaluamos si requiere estructura lateral
+    bool usaLayoutLateral = (estiloSidebar == "LateralOscuro" || estiloSidebar == "LateralClaro") && !esSuperAdmin;
+}
+
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - SaaSBarberia</title>
+    <title>@ViewData["Title"] - @nombreNegocio</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/SaaSBarberia.styles.css" asp-append-version="true" />
+
+    <style>
+            :root {
+                --tenant-primary: @colorPrimario;
+                --tenant-secondary: @colorSecundario;
+            }
+
+            .bg-tenant-custom {
+                background-color: var(--tenant-primary) !important;
+            }
+
+            .text-tenant-brand {
+                color: var(--tenant-secondary) !important;
+            }
+
+            .btn-tenant-action {
+                background-color: var(--tenant-secondary) !important;
+                border-color: var(--tenant-secondary) !important;
+                color: #fff !important;
+            }
+
+                .btn-tenant-action:hover {
+                    filter: brightness(90%);
+                }
+    </style>
 </head>
 <body class="bg-light">
-    <header>
-        <nav class="navbar navbar-expand-md navbar-dark bg-dark border-bottom box-shadow mb-4 py-3">
-            <div class="container shadow-sm">
-                <a class="navbar-brand fw-bold text-uppercase tracking-wider" asp-area="" asp-controller="Home" asp-action="Index">
-                    💈 SaaS Barbería
+
+    <div class="@(usaLayoutLateral ? "saas-wrapper" : "")">
+
+        @if (usaLayoutLateral)
+        {
+            <nav class="saas-sidebar d-flex flex-column flex-shrink-0 p-3 shadow @(estiloSidebar == "LateralClaro" ? "bg-white text-dark border-end" : "text-white")"
+                 style="@(estiloSidebar == "LateralOscuro" ? $"background-color: {colorPrimario} !important;" : "")">
+
+                <a class="navbar-brand fw-bold text-uppercase tracking-wider text-center py-2" asp-controller="Home" asp-action="Index">
+                    💈 <span class="text-tenant-brand">@nombreNegocio</span>
                 </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-md-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1 ms-3">
-                        <li class="nav-item">
-                            <a class="nav-link text-white-50 fw-semibold" asp-area="" asp-controller="Home" asp-action="Index">🏠 Inicio</a>
-                        </li>
-
-                        @if (User.Identity != null && User.Identity.IsAuthenticated)
+                <hr>
+                <ul class="nav nav-pills flex-column mb-auto gap-1">
+                    <li class="nav-item">
+                        <a class="nav-link @(estiloSidebar == "LateralClaro" ? "text-dark" : "text-white") fw-semibold" asp-controller="Home" asp-action="Index">🏠 Inicio</a>
+                    </li>
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <li><a class="nav-link @(estiloSidebar == "LateralClaro" ? "text-dark" : "text-white-50") fw-semibold" asp-controller="Servicios" asp-action="Index">✂️ Servicios</a></li>
+                        if (!User.IsInRole("Cliente"))
                         {
-                            <li class="nav-item ms-2">
-                                <a class="nav-link text-white-50 fw-semibold" asp-area="" asp-controller="Servicios" asp-action="Index">✂️ Servicios</a>
-                            </li>
-                            <li class="nav-item ms-2">
-                                <a class="nav-link text-white-50 fw-semibold" asp-area="" asp-controller="Barberoes" asp-action="Index">💈 Barberos</a>
-                            </li>
-
-                            @if (User.IsInRole("SuperAdmin") || User.IsInRole("Administrador"))
-                            {
-                                <li class="nav-item ms-2">
-                                    <a class="nav-link text-white-50 fw-semibold" asp-area="" asp-controller="Facturas" asp-action="Index">💵 Facturación</a>
-                                </li>
-                            }
-
-                            <li class="nav-item ms-2">
-                                <a class="nav-link text-white-50 fw-semibold" asp-area="" asp-controller="Citas" asp-action="Index">📆 Citas</a>
-                            </li>
-
-                            @if (User.IsInRole("SuperAdmin"))
-                            {
-                                <li class="nav-item ms-2 border-start border-secondary ps-2">
-                                    <a class="nav-link text-warning fw-semibold" asp-area="" asp-controller="Tenants" asp-action="Index">🏢 Tenants</a>
-                                </li>
-                                <li class="nav-item ms-2">
-                                    <a class="nav-link text-warning fw-semibold" asp-area="" asp-controller="Usuarios" asp-action="Index">👥 Usuarios Globales</a>
-                                </li>
-                            }
+                            <li><a class="nav-link @(estiloSidebar == "LateralClaro" ? "text-dark" : "text-white-50") fw-semibold" asp-controller="Barberoes" asp-action="Index">💈 Barberos</a></li>
                         }
-                    </ul>
-
-                    <div class="d-flex align-items-center gap-3">
-                        @if (User.Identity != null && User.Identity.IsAuthenticated)
+                        if (User.IsInRole("AdminBarberia"))
                         {
-                            <span class="text-white small me-1">Hola, <strong>@User.Identity.Name</strong></span>
-                            <span class="badge bg-danger px-3 py-2 fw-bold shadow-sm">
-                                @User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value.ToUpper()
-                            </span>
-                            <a class="btn btn-sm btn-outline-light" asp-controller="Account" asp-action="Logout">Salir</a>
+                            <li><a class="nav-link text-danger fw-bold" asp-controller="Tenants" asp-action="DashboardSede">🚨 EMERGENCIA</a></li>
                         }
-                        else
-                        {
-                            <a class="btn btn-sm btn-primary" asp-controller="Account" asp-action="Login">Iniciar Sesión</a>
-                        }
-                    </div>
+                        <li><a class="nav-link @(estiloSidebar == "LateralClaro" ? "text-dark" : "text-white-50") fw-semibold" asp-controller="Citas" asp-action="Index">📆 Citas</a></li>
+                    }
+                </ul>
+                <hr>
+                <div class="p-1 small">
+                    <p class="mb-1">Hola, <strong>@User.Identity.Name</strong></p>
+                    <a class="btn btn-sm btn-danger w-100" asp-controller="Account" asp-action="Logout">Salir</a>
                 </div>
+            </nav>
+        }
+
+        <div class="saas-content @(usaLayoutLateral ? "has-sidebar" : "")">
+
+            @if (!usaLayoutLateral)
+            {
+                <header>
+                    <nav class="navbar navbar-expand-md navbar-dark border-bottom box-shadow mb-4 py-3" style="background-color: @colorPrimario !important;">
+                        <div class="container shadow-sm">
+                            <a class="navbar-brand fw-bold text-uppercase tracking-wider" asp-controller="Home" asp-action="Index">
+                                💈 <span class="text-tenant-brand">@nombreNegocio</span>
+                            </a>
+                            <div class="navbar-collapse collapse d-md-inline-flex justify-content-between">
+                                <ul class="navbar-nav flex-grow-1 ms-3">
+                                    <li class="nav-item"><a class="nav-link text-white-50 fw-semibold" asp-controller="Home" asp-action="Index">🏠 Inicio</a></li>
+                                    @if (User.Identity.IsAuthenticated)
+                                    {
+                                        <li class="nav-item ms-2"><a class="nav-link text-white-50 fw-semibold" asp-controller="Servicios" asp-action="Index">✂️ Servicios</a></li>
+                                        if (!User.IsInRole("Cliente"))
+                                        {
+                                            <li class="nav-item ms-2"><a class="nav-link text-white-50 fw-semibold" asp-controller="Barberoes" asp-action="Index">💈 Barberos</a></li>
+                                        }
+                                        if (User.IsInRole("SuperAdmin") || User.IsInRole("AdminBarberia"))
+                                        {
+                                            <li class="nav-item ms-2"><a class="nav-link text-white-50 fw-semibold" asp-controller="Facturas" asp-action="Index">💵 Facturación</a></li>
+                                        }
+                                        <li class="nav-item ms-2"><a class="nav-link text-white-50 fw-semibold" asp-controller="Citas" asp-action="Index">📆 Citas</a></li>
+                                        if (User.IsInRole("AdminBarberia"))
+                                        {
+                                            <li class="nav-item"><a class="nav-link text-danger fw-bold" asp-controller="Tenants" asp-action="DashboardSede">🚨 CONTROL</a></li>
+                                        }
+                                        if (esSuperAdmin)
+                                        {
+                                            <li class="nav-item ms-2 border-start border-secondary ps-2"><a class="nav-link text-warning fw-semibold" asp-controller="Tenants" asp-action="Index">🏢 Tenants</a></li>
+                                            <li class="nav-item ms-2"><a class="nav-link text-warning fw-semibold" asp-controller="Usuarios" asp-action="Index">👥 Usuarios Globales</a></li>
+                                        }
+                                    }
+                                </ul>
+                                <div class="d-flex align-items-center gap-3">
+                                    <span class="text-white small me-1">Hola, <strong>@User.Identity.Name</strong></span>
+                                    <a class="btn btn-sm btn-outline-light" asp-controller="Account" asp-action="Logout">Salir</a>
+                                </div>
+                            </div>
+                        </div>
+                    </nav>
+                </header>
+            }
+
+            <div class="container" style="margin-bottom: 80px; padding-top: @(usaLayoutLateral ? "20px" : "0px");">
+                <main role="main" class="pb-5">
+                    @RenderBody()
+                </main>
             </div>
-        </nav>
-    </header>
 
-    <div class="container" style="margin-bottom: 80px;">
-        <main role="main" class="pb-5">
-            @RenderBody()
-        </main>
-    </div>
-
-    <footer class="border-top footer text-muted bg-white py-3 position-fixed bottom-0 start-0 w-100 z-3">
-        <div class="container text-center text-md-start d-md-flex justify-content-between">
-            <span>&copy; 2026 - <strong>SaaSBarberia</strong> - Desarrollado con C# y Mucho Flow.</span>
-            <span class="text-secondary small">Valledupar, Cesar 🇨🇴</span>
+            <footer class="border-top footer text-muted bg-white py-3 position-fixed bottom-0 start-0 w-100 z-3"
+                    style="padding-left: @(usaLayoutLateral ? "280px" : "20px");">
+                <div class="container-fluid px-4 text-center text-md-start d-md-flex justify-content-between">
+                    <span>&copy; 2026 - <strong>@nombreNegocio</strong> - Control SaaS Adaptativo.</span>
+                    <span class="text-secondary small">Valledupar, Cesar 🇨🇴</span>
+                </div>
+            </footer>
         </div>
-    </footer>
+    </div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>

@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 public class ServiciosController : Controller
 {
     private readonly ServicioService _servicioService;
-    private readonly CitaService _citaService; // 🌟 LA CLAVE: Inyectamos el servicio de citas para buscar el TenantId del usuario
+    private readonly CitaService _citaService;
 
     public ServiciosController(ServicioService servicioService, CitaService citaService)
     {
@@ -21,26 +21,25 @@ public class ServiciosController : Controller
     // GET: Servicios
     public async Task<IActionResult> Index()
     {
-        // 1. Si es un Cliente logueado, le capamos el catálogo para que SOLO vea su barbería asociada
-        if (User.Identity != null && User.Identity.IsAuthenticated && User.IsInRole("Cliente"))
-        {
-            var usuarioIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!string.IsNullOrEmpty(usuarioIdStr))
-            {
-                int usuarioId = int.Parse(usuarioIdStr);
+        var usuarioIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-                // Buscamos al cliente en la BD para saber a qué maldito Tenant pertenece real
-                var clienteDb = await _citaService.ObtenerClientePorIdAsync(usuarioId);
-                if (clienteDb != null && clienteDb.TenantId != null)
+        if (User.Identity != null && User.Identity.IsAuthenticated && !string.IsNullOrEmpty(usuarioIdStr))
+        {
+            int usuarioId = int.Parse(usuarioIdStr);
+            var usuarioDb = await _citaService.ObtenerClientePorIdAsync(usuarioId);
+
+            if (usuarioDb != null && usuarioDb.TenantId != null)
+            {
+                // 🔒 FILTRADO HERMÉTICO: Si es Cliente, Administrador de barbería o Barbero, solo ven su sede
+                if (User.IsInRole("Cliente") || User.IsInRole("AdminBarberia") || User.IsInRole("Barbero"))
                 {
-                    // 🔒 FILTRADO HERMÉTICO: Solo cargamos los servicios de SU sede asociada
-                    var serviciosFiltrados = await _servicioService.ObtenerTodosPorTenantAsync(clienteDb.TenantId.Value);
+                    var serviciosFiltrados = await _servicioService.ObtenerTodosPorTenantAsync(usuarioDb.TenantId.Value);
                     return View(serviciosFiltrados);
                 }
             }
         }
 
-        // 2. Si es SuperAdmin, Administrador o un usuario sin loguear (público), ve todo el catálogo global
+        // Si es SuperAdmin, ve absolutamente todo el catálogo global
         return View(await _servicioService.ObtenerTodosConTenantAsync());
     }
 
@@ -58,7 +57,24 @@ public class ServiciosController : Controller
     // GET: Servicios/Create
     public async Task<IActionResult> Create()
     {
-        ViewBag.TenantId = new SelectList(await _servicioService.ObtenerTenantsAsync(), "Id", "NombreNegocio");
+        var usuarioIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        int usuarioId = int.Parse(usuarioIdStr ?? "0");
+
+        var tenants = await _servicioService.ObtenerTenantsAsync();
+
+        if (User.IsInRole("AdminBarberia"))
+        {
+            var adminDb = await _citaService.ObtenerClientePorIdAsync(usuarioId);
+            if (adminDb != null && adminDb.TenantId != null)
+            {
+                ViewBag.TenantId = new SelectList(tenants.Where(t => t.Id == adminDb.TenantId.Value), "Id", "NombreNegocio", adminDb.TenantId.Value);
+            }
+        }
+        else
+        {
+            ViewBag.TenantId = new SelectList(tenants, "Id", "NombreNegocio");
+        }
+
         return View(new Servicio());
     }
 
@@ -74,7 +90,16 @@ public class ServiciosController : Controller
             await _servicioService.GuardarAsync(servicio);
             return RedirectToAction(nameof(Index));
         }
-        ViewBag.TenantId = new SelectList(await _servicioService.ObtenerTenantsAsync(), "Id", "NombreNegocio", servicio.TenantId);
+
+        var tenants = await _servicioService.ObtenerTenantsAsync();
+        if (User.IsInRole("AdminBarberia"))
+        {
+            ViewBag.TenantId = new SelectList(tenants.Where(t => t.Id == servicio.TenantId), "Id", "NombreNegocio", servicio.TenantId);
+        }
+        else
+        {
+            ViewBag.TenantId = new SelectList(tenants, "Id", "NombreNegocio", servicio.TenantId);
+        }
         return View(servicio);
     }
 
@@ -86,7 +111,15 @@ public class ServiciosController : Controller
         var servicio = await _servicioService.ObtenerPorIdAsync(id.Value);
         if (servicio == null) return NotFound();
 
-        ViewBag.TenantId = new SelectList(await _servicioService.ObtenerTenantsAsync(), "Id", "NombreNegocio", servicio.TenantId);
+        var tenants = await _servicioService.ObtenerTenantsAsync();
+        if (User.IsInRole("AdminBarberia"))
+        {
+            ViewBag.TenantId = new SelectList(tenants.Where(t => t.Id == servicio.TenantId), "Id", "NombreNegocio", servicio.TenantId);
+        }
+        else
+        {
+            ViewBag.TenantId = new SelectList(tenants, "Id", "NombreNegocio", servicio.TenantId);
+        }
         return View(servicio);
     }
 
@@ -112,7 +145,16 @@ public class ServiciosController : Controller
             }
             return RedirectToAction(nameof(Index));
         }
-        ViewBag.TenantId = new SelectList(await _servicioService.ObtenerTenantsAsync(), "Id", "NombreNegocio", servicio.TenantId);
+
+        var tenants = await _servicioService.ObtenerTenantsAsync();
+        if (User.IsInRole("AdminBarberia"))
+        {
+            ViewBag.TenantId = new SelectList(tenants.Where(t => t.Id == servicio.TenantId), "Id", "NombreNegocio", servicio.TenantId);
+        }
+        else
+        {
+            ViewBag.TenantId = new SelectList(tenants, "Id", "NombreNegocio", servicio.TenantId);
+        }
         return View(servicio);
     }
 

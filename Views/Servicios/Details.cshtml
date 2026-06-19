@@ -28,7 +28,7 @@
             <a asp-action="Index" class="btn btn-light border">Regresar</a>
 
             @* 🔒 SEGURIDAD VISTA: Solo el Admin o SuperAdmin pueden ver el botón de Modificar *@
-            @if (User.IsInRole("SuperAdmin") || User.IsInRole("Administrador"))
+            @if (User.IsInRole("SuperAdmin") || User.IsInRole("AdminBarberia"))
             {
                 <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning px-4">Modificar Precio</a>
             }

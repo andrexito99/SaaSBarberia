@@ -1,7 +1,6 @@
 ﻿@{
     ViewData["Title"] = "Panel de Control";
 }
-
 <div class="container mt-4">
     <div class="p-5 mb-4 bg-dark text-white rounded-3 shadow-sm text-center position-relative overflow-hidden">
         <div class="position-absolute top-0 start-0 w-100 h-100 bg-gradient" style="opacity: 0.1; background: linear-gradient(45deg, #ff0000, #0000ff);"></div>
@@ -13,7 +12,7 @@
     @if (User.IsInRole("Cliente"))
     {
         <h3 class="text-secondary fw-bold mb-3">📅 Tu Espacio Personal</h3>
-        <div class="row row-cols-1 row-cols-md-2 g-4 mb-4">
+        <div class="row row-cols-1 row-cols-md-3 g-4 mb-4">
             <div class="col">
                 <div class="card h-100 shadow-sm border-0 border-top border-primary border-4 transition-card">
                     <div class="card-body">
@@ -22,6 +21,18 @@
                     </div>
                     <div class="card-footer bg-white border-0 pb-3">
                         <a asp-controller="Citas" asp-action="Create" class="btn btn-primary w-100 fw-bold">Reservar Turno Ahora →</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="card h-100 shadow-sm border-0 border-top border-success border-4 transition-card">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold text-dark">✂️ Ver Cortes y Precios</h5>
+                        <p class="card-text text-muted small">Explora nuestro catálogo completo de servicios disponibles, tarifas bases y tiempos de atención.</p>
+                    </div>
+                    <div class="card-footer bg-white border-0 pb-3">
+                        <a asp-controller="Servicios" asp-action="Index" class="btn btn-outline-success w-100 fw-semibold">Consultar Servicios →</a>
                     </div>
                 </div>
             </div>

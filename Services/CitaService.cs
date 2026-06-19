@@ -21,6 +21,7 @@ namespace SaaSBarberia.Services
         {
             return await _context.Citas
                 .Include(c => c.Barbero)
+                    .ThenInclude(b=> b.Usuario)
                 .Include(c => c.Cliente)
                 .Include(c => c.Servicio)
                 .Include(c => c.Tenant)

@@ -8,6 +8,7 @@ public partial class Barbero
     public int Id { get; set; }
 
     public int TenantId { get; set; }
+    public byte[]? Foto { get; set; }
 
     public int UsuarioId { get; set; }
 

@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = "Nueva Barbería";
 }
+
 <div class="container mt-4" style="max-width: 600px;">
     <div class="card shadow-sm border-0 p-4">
         <h3 class="fw-bold mb-3 text-dark">Registrar Negocio</h3>
@@ -33,6 +34,33 @@
                 </select>
                 <span asp-validation-for="PlanSuscripcion" class="text-danger"></span>
             </div>
+
+            <hr class="my-4" />
+            <h5 class="fw-bold text-secondary mb-3">🎨 Personalización Estética (Multi-Tenant)</h5>
+
+            <div class="row">
+                <div class="col-6 mb-3">
+                    <label asp-for="ColorPrimario" class="form-label fw-semibold">Color de Fondo Navbar</label>
+                    <input asp-for="ColorPrimario" type="color" class="form-control form-control-color w-100" value="#212529" title="Elige el color principal" />
+                    <span asp-validation-for="ColorPrimario" class="text-danger"></span>
+                </div>
+                <div class="col-6 mb-3">
+                    <label asp-for="ColorSecundario" class="form-label fw-semibold">Color de Detalles / Botones</label>
+                    <input asp-for="ColorSecundario" type="color" class="form-control form-control-color w-100" value="#0d6efd" title="Elige el color secundario" />
+                    <span asp-validation-for="ColorSecundario" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="EstiloSidebar" class="form-label fw-semibold">Diseño y Posición del Menú</label>
+                <select asp-for="EstiloSidebar" class="form-select">
+                    <option value="SuperiorClasico">Menú Superior Clásico (Horizontal)</option>
+                    <option value="LateralOscuro">Barra Lateral Izquierda (Fondo Oscuro)</option>
+                    <option value="LateralClaro">Barra Lateral Izquierda (Fondo Claro)</option>
+                </select>
+                <span asp-validation-for="EstiloSidebar" class="text-danger"></span>
+            </div>
+            <hr class="my-4" />
 
             <div class="mb-3 form-check form-switch pt-2">
                 <input name="Activo" id="Activo" class="form-check-input" type="checkbox" value="true" checked />

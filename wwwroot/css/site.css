@@ -29,3 +29,33 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
 }
+/* --- ESTRUCTURA PARA MENÚ LATERAL SaaS --- */
+.saas-wrapper {
+    display: flex;
+    width: 100%;
+    align-items: stretch;
+    min-height: 100vh;
+}
+
+.saas-sidebar {
+    width: 260px;
+    min-width: 260px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+.saas-content {
+    flex-grow: 1;
+    width: 100%;
+    min-height: 100vh;
+    transition: padding 0.3s ease;
+}
+
+/* Espaciado del contenido para que no quede debajo de la barra fija */
+.has-sidebar {
+    padding-left: 260px;
+}

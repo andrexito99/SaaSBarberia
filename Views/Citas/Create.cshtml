@@ -4,26 +4,24 @@
     ViewData["Title"] = "Agendar Cita";
 }
 
-<div class="container mt-4" style="max-width: 600px;">
+<div class="container mt-4" style="max-width: 700px;">
     <div class="card shadow-sm border-0 p-4">
         <h3 class="fw-bold mb-1 text-dark text-center">📆 Reservar Cita</h3>
         <p class="text-muted text-center small mb-4">Completa los datos del turno</p>
 
-        <form asp-action="Create" autocomplete="off">
+        <form asp-action="Create" autocomplete="off" id="formCita">
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
             @if (User.IsInRole("Cliente"))
             {
-                @* 🔒 Si es Michell, viaja oculto en el HTML para evitar que hackee otra sede *@
                 <input type="hidden" asp-for="TenantId" />
                 <input type="hidden" asp-for="ClienteId" />
             }
             else
             {
-                @* 😎 Si eres SuperAdmin, te renderiza los selects funcionales para que escojas *@
                 <div class="mb-3">
                     <label asp-for="TenantId" class="form-label fw-semibold">Sede / Sucursal</label>
-                    <select asp-for="TenantId" class="form-select" asp-items="ViewBag.TenantId">
+                    <select asp-for="TenantId" class="form-select" asp-items="ViewBag.TenantId" id="selectTenant">
                         <option value="">-- Selecciona Barbería --</option>
                     </select>
                     <span asp-validation-for="TenantId" class="text-danger"></span>
@@ -40,38 +38,255 @@
 
             <input type="hidden" asp-for="Estado" />
 
+            @* Este campo oculto guardará el valor final de fecha y hora calculado por JS *@
+            <input type="hidden" asp-for="FechaHora" id="hfFechaHora" />
+
             <div class="mb-3">
                 <label asp-for="ServicioId" class="form-label fw-semibold">Servicio Requerido</label>
-                <select asp-for="ServicioId" class="form-select" asp-items="ViewBag.ServicioId">
+                <select asp-for="ServicioId" class="form-select" asp-items="ViewBag.ServicioId" id="selectServicio">
                     <option value="">-- Selecciona el Servicio --</option>
                 </select>
                 <span asp-validation-for="ServicioId" class="text-danger"></span>
             </div>
 
-            <div class="mb-3">
-                <label asp-for="BarberoId" class="form-label fw-semibold">Barbero Asignado</label>
-                <select asp-for="BarberoId" class="form-select" asp-items="ViewBag.BarberoId">
-                    <option value="">-- Seleccione un Barbero --</option>
-                </select>
-                <span asp-validation-for="BarberoId" class="text-danger"></span>
+            @* 💇‍♂️ SECCIÓN SELECCIÓN VISUAL DE BARBEROS *@
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark d-block mb-2">💇‍♂️ Selecciona tu Barbero de Preferencia:</label>
+                <span asp-validation-for="BarberoId" class="text-danger d-block mb-2"></span>
+
+                <div class="row row-cols-1 row-cols-sm-2 g-3">
+                    @if (ViewBag.ListaBarberosCompleta != null)
+                    {
+                        var barberos = (IEnumerable<SaaSBarberia.Models.Barbero>)ViewBag.ListaBarberosCompleta;
+                        foreach (var barbero in barberos)
+                        {
+                            var barberoId = barbero.Id;
+                            var nombreBarbero = barbero.Usuario?.Nombre ?? "Sin Nombre";
+                            var especialidad = barbero.Especialidad ?? "Estilo Libre";
+
+                            string imgSrc = "/images/avatar-default.png";
+                            if (barbero.Foto != null && barbero.Foto.Length > 0)
+                            {
+                                var base64 = Convert.ToBase64String(barbero.Foto);
+                                imgSrc = $"data:image/png;base64,{base64}";
+                            }
+
+                            <div class="col">
+                                <input type="radio" name="BarberoId" id="barbero_@barberoId" value="@barberoId" class="btn-check radio-barbero" @(Model?.BarberoId == barberoId ? "checked" : "") required />
+                                <label class="card h-100 border-2 w-100 btn-outline-dark p-3 text-center d-flex flex-column align-items-center justify-content-center position-relative" for="barbero_@barberoId" style="cursor: pointer; transition: all 0.2s ease;">
+
+                                    <div class="mb-3">
+                                        <img src="@imgSrc" class="rounded-circle border shadow-sm" style="width: 85px; height: 85px; object-fit: cover;" alt="@nombreBarbero" />
+                                    </div>
+
+                                    <div>
+                                        <h6 class="fw-bold text-dark mb-1">@nombreBarbero</h6>
+                                        <small class="text-primary fw-semibold d-block">🎯 @especialidad</small>
+                                    </div>
+
+                                    <div class="position-absolute top-0 end-0 m-2 check-indicator" style="display: none;">
+                                        <span class="badge bg-primary rounded-circle p-1">✓</span>
+                                    </div>
+                                </label>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="col-12">
+                            <p class="text-muted small">No hay barberos disponibles en esta sede.</p>
+                        </div>
+                    }
+                </div>
             </div>
 
-            <div class="mb-3">
-                <label asp-for="FechaHora" class="form-label fw-semibold">Fecha y Hora</label>
-                <input asp-for="FechaHora" type="datetime-local" class="form-control" step="60" value="@(Model?.FechaHora != null ? Model.FechaHora.ToString("yyyy-MM-ddTHH:mm") : "")" />
-                <span asp-validation-for="FechaHora" class="text-danger"></span>
+            @* 📅 COMPONENTE PREMIUM: SELECCIÓN DE FECHAS EN BOTONES *@
+            <div class="mb-4 d-none" id="seccionCalendario">
+                <label class="form-label fw-bold text-dark mb-2">📅 Elige una fecha:</label>
+                <div class="d-flex overflow-auto gap-2 pb-2 scroll-fechas" style="scrollbar-width: thin;">
+                    @* Se inyectarán dinámicamente los próximos 12 días por JS *@
+                </div>
+            </div>
+
+            @* 🕒 COMPONENTE PREMIUM: TURNOS DISPONIBLES EN BOTONES *@
+            <div class="mb-4 d-none" id="seccionHoras">
+                <label class="form-label fw-bold text-dark mb-2">⏱ Horarios disponibles:</label>
+                <div class="row row-cols-3 row-cols-sm-4 g-2" id="contenedorHoras">
+                    @* Se inyectan las píldoras de horas dinámicamente *@
+                </div>
+                <span asp-validation-for="FechaHora" class="text-danger d-block mt-2"></span>
             </div>
 
             <div class="mb-3">
                 <label asp-for="Notas" class="form-label fw-semibold">Notas (Opcional)</label>
-                <textarea asp-for="Notas" class="form-control" rows="2"></textarea>
+                <textarea asp-for="Notas" class="form-control" rows="2" placeholder="Alguna indicación especial..."></textarea>
                 <span asp-validation-for="Notas" class="text-danger"></span>
             </div>
 
             <div class="d-flex justify-content-between mt-4">
-                <a asp-controller="Servicios" asp-action="Index" class="btn btn-light border">Regresar</a>
-                <button type="submit" class="btn btn-primary px-4 fw-bold">Confirmar Turno</button>
+                <a asp-controller="Citas" asp-action="Index" class="btn btn-light border">Regresar</a>
+                <button type="submit" class="btn btn-primary px-4 fw-bold" id="btnConfirmar" disabled>Agendar cita</button>
             </div>
         </form>
     </div>
 </div>
+
+<style>
+    .btn-check:checked + .card {
+        border-color: #0d6efd !important;
+        background-color: rgba(13, 110, 253, 0.05);
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.15);
+    }
+
+        .btn-check:checked + .card .check-indicator {
+            display: block !important;
+        }
+
+    .btn-fecha {
+        min-width: 65px;
+        transition: all 0.2s;
+    }
+
+        .btn-fecha.active {
+            background-color: #0d6efd !important;
+            color: white !important;
+            border-color: #0d6efd !important;
+        }
+
+    .btn-hora {
+        transition: all 0.2s;
+    }
+
+        .btn-hora.active {
+            background-color: #198754 !important;
+            color: white !important;
+            border-color: #198754 !important;
+        }
+</style>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const selectServicio = document.getElementById("selectServicio");
+            const radiosBarbero = document.querySelectorAll(".radio-barbero");
+            const seccionCalendario = document.getElementById("seccionCalendario");
+            const contenedorFechas = document.querySelector(".scroll-fechas");
+            const seccionHoras = document.getElementById("seccionHoras");
+            const contenedorHoras = document.getElementById("contenedorHoras");
+            const hfFechaHora = document.getElementById("hfFechaHora");
+            const btnConfirmar = document.getElementById("btnConfirmar");
+
+            let fechaSeleccionadaStr = "";
+            let horaSeleccionadaStr = "";
+
+            // 1. Generar los próximos 14 días dinámicamente en formato botón
+            function generarCalendarioHorizontal() {
+                contenedorFechas.innerHTML = "";
+                const opcionesDias = { weekday: 'short' };
+                const diasSemana = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+
+                for (let i = 0; i < 14; i++) {
+                    let d = new Date();
+                    d.setDate(d.getDate() + i);
+
+                    let diaNombre = diasSemana[d.getDay()];
+                    let diaNumero = d.getDate();
+                    let mesNumero = String(d.getMonth() + 1).padStart(2, '0');
+                    let año = d.getFullYear();
+                    let valueFecha = `${año}-${mesNumero}-${String(diaNumero).padStart(2, '0')}`;
+
+                    let boton = document.createElement("button");
+                    boton.type = "button";
+                    boton.className = "btn btn-outline-primary btn-fecha p-2 d-flex flex-column align-items-center bg-white text-dark border";
+                    boton.dataset.fecha = valueFecha;
+                    boton.innerHTML = `<small class="text-muted text-uppercase" style="font-size:10px;">${diaNombre}</small><span class="fw-bold fs-5">${diaNumero}</span>`;
+
+                    boton.addEventListener("click", function () {
+                        document.querySelectorAll(".btn-fecha").forEach(b => b.classList.remove("active"));
+                        this.classList.add("active");
+                        fechaSeleccionadaStr = this.dataset.fecha;
+                        cargarHorarios();
+                    });
+
+                    contenedorFechas.appendChild(boton);
+                }
+            }
+
+            // 2. Escuchar cambios de Servicio o Barbero para desplegar el flujo
+            function evaluarDespliegueCalendario() {
+                let servicioVal = selectServicio.value;
+                let barberoChecked = document.querySelector(".radio-barbero:checked");
+
+                if (servicioVal && barberoChecked) {
+                    seccionCalendario.classList.remove("d-none");
+                    generarCalendarioHorizontal();
+                    seccionHoras.classList.add("d-none");
+                    btnConfirmar.disabled = true;
+                    hfFechaHora.value = "";
+                } else {
+                    seccionCalendario.classList.add("d-none");
+                    seccionHoras.classList.add("d-none");
+                }
+            }
+
+            selectServicio.addEventListener("change", evaluarDespliegueCalendario);
+            radiosBarbero.forEach(r => r.addEventListener("change", evaluarDespliegueCalendario));
+
+            // 3. Consultar mediante FETCH al Endpoint de C# pasando los parámetros
+            function cargarHorarios() {
+                let servicioId = selectServicio.value;
+                let barberoId = document.querySelector(".radio-barbero:checked").value;
+
+                seccionHoras.classList.remove("d-none");
+                contenedorHoras.innerHTML = `<div class="col-12 text-center p-2"><span class="spinner-border spinner-border-sm text-primary"></span> Buscando turnos...</div>`;
+
+                fetch(`/Citas/ObtenerHorariosDisponibles?barberoId=${barberoId}&servicioId=${servicioId}&fecha=${fechaSeleccionadaStr}`)
+                    .then(response => response.json())
+                    .then(horas => {
+                        contenedorHoras.innerHTML = "";
+                        if (horas.length === 0) {
+                            contenedorHoras.innerHTML = `<div class="col-12 text-center text-danger small p-2">🚫 No hay bloques disponibles para este servicio hoy.</div>`;
+                            btnConfirmar.disabled = true;
+                            return;
+                        }
+
+                        horas.forEach(hora => {
+                            let col = document.createElement("div");
+                            col.className = "col";
+
+                            let botonHora = document.createElement("button");
+                            botonHora.type = "button";
+                            botonHora.className = "btn btn-outline-success btn-hora w-100 fw-semibold text-nowrap py-2";
+                            botonHora.textContent = hora;
+
+                            botonHora.addEventListener("click", function () {
+                                document.querySelectorAll(".btn-hora").forEach(b => b.classList.remove("active"));
+                                this.classList.add("active");
+                                horaSeleccionadaStr = convertAmPmTo24h(this.textContent);
+
+                                // Unificamos los datos en la cadena esperada por el DateTime de C#
+                                hfFechaHora.value = `${fechaSeleccionadaStr}T${horaSeleccionadaStr}`;
+                                btnConfirmar.disabled = false;
+                            });
+
+                            col.appendChild(botonHora);
+                            contenedorHoras.appendChild(col);
+                        });
+                    })
+                    .catch(error => {
+                        console.error(error);
+                        contenedorHoras.innerHTML = `<div class="col-12 text-center text-danger small p-2">Error al procesar los horarios.</div>`;
+                    });
+            }
+
+            // Función auxiliar para convertir "04:20 PM" a "16:20" para .NET
+            function convertAmPmTo24h(timeStr) {
+                const [time, modifier] = timeStr.split(' ');
+                let [hours, minutes] = time.split(':');
+                if (hours === '12') hours = '00';
+                if (modifier === 'PM') hours = parseInt(hours, 10) + 12;
+                return `${String(hours).padStart(2, '0')}:${minutes}`;
+            }
+        });
+    </script>
+}

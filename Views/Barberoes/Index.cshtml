@@ -7,7 +7,11 @@
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="text-dark fw-bold">💈 Equipo de Barberos</h2>
-        <a asp-action="Create" class="btn btn-primary px-4 shadow-sm">+ Dar de Alta Barbero</a>
+
+        @if (User.IsInRole("SuperAdmin") || User.IsInRole("AdminBarberia"))
+        {
+            <a asp-action="Create" class="btn btn-primary px-4 shadow-sm">+ Dar de Alta Barbero</a>
+        }
     </div>
 
     <div class="row row-cols-1 row-cols-md-3 g-4">
@@ -17,8 +21,20 @@
                 <div class="card h-100 shadow-sm border-0 position-relative">
                     <div class="card-body pt-4">
                         <div class="d-flex align-items-center mb-3">
-                            <div class="bg-dark text-white rounded-circle p-3 fw-bold me-3" style="width: 55px; height: 55px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
-                                💈
+                            @* 📸 Renderizado dinámico de la foto en el Index *@
+                            <div class="me-3">
+                                @if (item.Foto != null && item.Foto.Length > 0)
+                                {
+                                    var base64 = Convert.ToBase64String(item.Foto);
+                                    var imgSrc = $"data:image/png;base64,{base64}";
+                                    <img src="@imgSrc" class="rounded-circle border shadow-sm shadow-sm" style="width: 55px; height: 55px; object-fit: cover;" alt="@item.Usuario?.Nombre" />
+                                }
+                                else
+                                {
+                                    <div class="bg-dark text-white rounded-circle p-3 fw-bold shadow-sm" style="width: 55px; height: 55px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                                        💈
+                                    </div>
+                                }
                             </div>
                             <div>
                                 <h5 class="card-title fw-bold mb-0 text-truncate" style="max-width: 180px;">@(item.Usuario?.Nombre ?? "Sin Nombre")</h5>
@@ -34,9 +50,16 @@
                     </div>
 
                     <div class="card-footer bg-light border-0 d-flex justify-content-around py-3">
-                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-warning w-25">Editar</a>
-                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info w-25">Detalles</a>
-                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger w-25">Borrar</a>
+                        @if (User.IsInRole("SuperAdmin") || User.IsInRole("AdminBarberia"))
+                        {
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-warning w-25">Editar</a>
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info w-25">Detalles</a>
+                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger w-25">Borrar</a>
+                        }
+                        else
+                        {
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info w-75">ℹ️ Ver Información del Barbero</a>
+                        }
                     </div>
                 </div>
             </div>

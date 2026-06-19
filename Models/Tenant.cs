@@ -16,14 +16,17 @@ public partial class Tenant
     public bool? Activo { get; set; }
 
     public DateTime? FechaRegistro { get; set; }
+    public bool CerradoPorEmergencia { get; set; }
+    public DateTime? FechaUltimoCierre { get; set; }
+
+    // 🔥 Nuevos campos para la personalización estética del SuperAdmin
+    public string ColorPrimario { get; set; } = "#1a1a1a";
+    public string ColorSecundario { get; set; } = "#d4af37";
+    public string EstiloSidebar { get; set; } = "DarkStyle";
 
     public virtual ICollection<Barbero> Barberos { get; set; } = new List<Barbero>();
-
     public virtual ICollection<Cita> Cita { get; set; } = new List<Cita>();
-
     public virtual ICollection<Factura> Facturas { get; set; } = new List<Factura>();
-
     public virtual ICollection<Servicio> Servicios { get; set; } = new List<Servicio>();
-
     public virtual ICollection<Usuario> Usuarios { get; set; } = new List<Usuario>();
 }

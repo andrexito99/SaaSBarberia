@@ -38,8 +38,9 @@ namespace SaaSBarberia.Controllers
                 return View();
             }
 
-            // Buscamos el usuario e incluimos su Rol (con tu propiedad NombreRole)
+            // 🌟 CORRECCIÓN AQUÍ: Metemos .IgnoreQueryFilters() para saltarnos el filtro global de multi-tenant durante el login
             var usuario = await _context.Usuarios
+                .IgnoreQueryFilters()
                 .Include(u => u.Role)
                 .FirstOrDefaultAsync(u => u.Email == email);
 

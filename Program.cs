@@ -23,6 +23,8 @@ builder.Services.AddScoped<CitaService>();
 builder.Services.AddScoped<ServicioService>();
 builder.Services.AddScoped<BarberoService>();
 builder.Services.AddScoped<FacturaService>();
+builder.Services.AddScoped<CajaService>();
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddControllersWithViews();
 

@@ -16,7 +16,12 @@
         var usuarioIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!string.IsNullOrEmpty(usuarioIdStr) && int.TryParse(usuarioIdStr, out int usuarioId))
         {
-            var usuarioDb = Context.Usuarios.Include(u => u.Tenant).FirstOrDefault(u => u.Id == usuarioId);
+            // 🌟 Usamos .IgnoreQueryFilters() aquí para que el Layout pueda cargar correctamente la metadata del Tenant sin importar las restricciones globales del login
+            var usuarioDb = Context.Usuarios
+                .IgnoreQueryFilters()
+                .Include(u => u.Tenant)
+                .FirstOrDefault(u => u.Id == usuarioId);
+
             if (usuarioDb != null && usuarioDb.Tenant != null)
             {
                 // Si es SuperAdmin mantenemos diseño neutro superior, si no, cargamos sus estilos personalizados
@@ -103,7 +108,8 @@
                         }
                         if (User.IsInRole("AdminBarberia"))
                         {
-                            <li><a class="nav-link text-danger fw-bold" asp-controller="Tenants" asp-action="DashboardSede">🚨 EMERGENCIA</a></li>
+                            <li><a class="nav-link text-danger fw-bold" asp-controller="Tenants" asp-action="DashboardSede">🚨 CONTROL</a></li>
+                            <li><a class="nav-link @(estiloSidebar == "LateralClaro" ? "text-dark" : "text-white-50") fw-semibold" asp-controller="Caja" asp-action="Index">💵 Caja Chica</a></li>
                         }
                         <li><a class="nav-link @(estiloSidebar == "LateralClaro" ? "text-dark" : "text-white-50") fw-semibold" asp-controller="Citas" asp-action="Index">📆 Citas</a></li>
                     }
@@ -140,21 +146,28 @@
                                         {
                                             <li class="nav-item ms-2"><a class="nav-link text-white-50 fw-semibold" asp-controller="Facturas" asp-action="Index">💵 Facturación</a></li>
                                         }
+
+                                        if (User.IsInRole("AdminBarberia"))
+                                        {
+                                            <li class="nav-item ms-2"><a class="nav-link text-white-50 fw-semibold" asp-controller="Caja" asp-action="Index">💰 Caja Chica</a></li>
+                                        }
+
                                         <li class="nav-item ms-2"><a class="nav-link text-white-50 fw-semibold" asp-controller="Citas" asp-action="Index">📆 Citas</a></li>
                                         if (User.IsInRole("AdminBarberia"))
                                         {
-                                            <li class="nav-item"><a class="nav-link text-danger fw-bold" asp-controller="Tenants" asp-action="DashboardSede">🚨 CONTROL</a></li>
+                                            <li class="nav-item ms-2"><a class="nav-link text-danger fw-bold" asp-controller="Tenants" asp-action="DashboardSede">🚨 CONTROL</a></li>
                                         }
-                                        if (esSuperAdmin)
+                                        @if (esSuperAdmin)
                                         {
-                                            <li class="nav-item ms-2 border-start border-secondary ps-2"><a class="nav-link text-warning fw-semibold" asp-controller="Tenants" asp-action="Index">🏢 Tenants</a></li>
+                                            <li class="nav-item ms-2 border-start border-secondary ps-2"><a class="nav-link text-info fw-bold" asp-controller="Tenants" asp-action="SuperDashboard">📈 Dashboard Global</a></li>
+                                            <li class="nav-item ms-2"><a class="nav-link text-warning fw-semibold" asp-controller="Tenants" asp-action="Index">🏢 Tenants</a></li>
                                             <li class="nav-item ms-2"><a class="nav-link text-warning fw-semibold" asp-controller="Usuarios" asp-action="Index">👥 Usuarios Globales</a></li>
                                         }
                                     }
                                 </ul>
                                 <div class="d-flex align-items-center gap-3">
                                     <span class="text-white small me-1">Hola, <strong>@User.Identity.Name</strong></span>
-                                    <a class="btn btn-sm btn-outline-light" asp-controller="Account" asp-action="Logout">Salir</a>
+                                    <a class="btn btn-sm btn-danger" asp-controller="Account" asp-action="Logout">Salir</a>
                                 </div>
                             </div>
                         </div>

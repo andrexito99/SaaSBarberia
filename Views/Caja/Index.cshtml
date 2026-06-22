@@ -1,0 +1,145 @@
+﻿@model SaaSBarberia.Models.MovimientoCaja
+
+@{
+    ViewData["Title"] = "Control de Caja";
+}
+
+<div class="container mt-4">
+    <h2 class="fw-bold text-dark mb-4">💈 Control de Caja Chica</h2>
+
+    @if (Model == null)
+    {
+        <div class="card shadow-sm border-0 p-4 mx-auto text-center" style="max-width: 500px;">
+            <div class="text-danger mb-3">
+                <i class="bi bi-lock-fill" style="font-size: 3rem;"></i>
+            </div>
+            <h4 class="fw-bold">La caja se encuentra cerrada</h4>
+            <p class="text-secondary">Para registrar ventas, ingresos o egresos, debes aperturar el día financiero.</p>
+
+            <form asp-action="Abrir" method="post" class="mt-3">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Monto Base de Apertura (Efectivo en caja)</label>
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <input type="number" name="montoInicial" class="form-control" placeholder="0.00" step="0.01" required />
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success w-100 fw-bold">Abrir Caja del Día</button>
+            </form>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card shadow-sm border-0 p-4 bg-dark text-white">
+                    <span class="badge bg-success mb-2 p-2">CAJA ABIERTA</span>
+                    <p class="text-light mb-1">Iniciada a las: @Model.FechaApertura.ToString("hh:mm tt")</p>
+                    <hr class="border-secondary" />
+
+                    <div class="mb-3">
+                        <small class="text-secondary d-block">Monto Inicial:</small>
+                        <h4 class="fw-semibold text-info">$@Model.MontoInicial.ToString("N2")</h4>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-secondary d-block">Saldo Estimado en Sistema:</small>
+                        <h2 class="fw-bold text-warning">$@Model.MontoFinalCalculado.ToString("N2")</h2>
+                    </div>
+
+                    <button class="btn btn-danger w-100 fw-bold mt-3" data-bs-toggle="modal" data-bs-target="#modalCierre">
+                        Cerrar Caja del Día
+                    </button>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="card shadow-sm border-0 p-4 mb-4">
+                    <h5 class="fw-bold mb-3 text-secondary">Inyectar Gasto / Ingreso Manual</h5>
+                    <form asp-action="RegistrarMovimiento" method="post" class="row g-3">
+                        <div class="col-md-3">
+                            <select name="tipo" class="form-select" required>
+                                <option value="Egreso">❌ Gasto (Salida)</option>
+                                <option value="Ingreso">✅ Ingreso (Entrada)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="number" name="monto" class="form-control" placeholder="Valor $" step="0.01" required />
+                        </div>
+                        <div class="col-md-4">
+                            <input type="text" name="descripcion" class="form-control" placeholder="¿En qué se gastó o por qué entró?" required />
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100">Registrar</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card shadow-sm border-0 p-4">
+                    <h5 class="fw-bold mb-3 text-dark">Historial del Turno</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Hora</th>
+                                    <th>Concepto</th>
+                                    <th>Tipo</th>
+                                    <th class="text-end">Monto</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="table-info">
+                                    <td>@Model.FechaApertura.ToString("hh:mm tt")</td>
+                                    <td><strong>Apertura de Caja Inicial</strong></td>
+                                    <td><span class="text-info">Base</span></td>
+                                    <td class="text-end fw-bold">$@Model.MontoInicial.ToString("N2")</td>
+                                </tr>
+                                @foreach (var det in Model.DetallesCaja.OrderByDescending(d => d.Fecha))
+                                {
+                                    <tr>
+                                        <td>@det.Fecha.ToString("hh:mm tt")</td>
+                                        <td>@det.Descripcion</td>
+                                        <td>
+                                            <span class="badge @(det.Tipo == "Ingreso" ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger")">
+                                                @det.Tipo
+                                            </span>
+                                        </td>
+                                        <td class="text-end fw-bold @(det.Tipo == "Ingreso" ? "text-success" : "text-danger")">
+                                            @(det.Tipo == "Ingreso" ? "+" : "-") $@det.Monto.ToString("N2")
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="modalCierre" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title fw-bold">Arqueo y Cierre de Caja</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form asp-action="Cerrar" method="post">
+                        <div class="modal-body p-4">
+                            <p class="text-secondary small">Cuenta el efectivo físico del cajón detalladamente. El sistema contrastará tu conteo con el saldo digital para verificar descuadres.</p>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-dark">Monto Físico Total Encontrado:</label>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" name="montoReal" class="form-control" placeholder="0.00" step="0.01" required />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer bg-light">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Seguir Trabajando</button>
+                            <button type="submit" class="btn btn-danger fw-bold">Efectuar Cierre Definitivo</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+</div>

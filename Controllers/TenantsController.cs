@@ -173,4 +173,35 @@ public class TenantsController : Controller
 
         return RedirectToAction(nameof(DashboardSede));
     }
+    // GET: Tenants/SuperDashboard
+    [Authorize(Roles = "SuperAdmin")]
+    public async Task<IActionResult> SuperDashboard()
+    {
+        // 🌟 Apagamos los filtros globales para consolidar TODO el SaaS
+        var todosLosTenants = await _context.Tenants.IgnoreQueryFilters().ToListAsync();
+        var todosLosUsuarios = await _context.Usuarios.IgnoreQueryFilters().CountAsync();
+
+        // Calcular la plata estimada según los planes activos de tus clientes
+        decimal totalRecaudado = todosLosTenants.Where(t => t.Activo == true).Sum(t =>
+            t.PlanSuscripcion == "Oro" ? 150000m :
+            t.PlanSuscripcion == "Plata" ? 100000m : 50000m // Prejos de ejemplo en COP 🇨🇴
+        );
+
+        // Agrupar los planes para el gráfico de torta
+        var distribucionPlanes = todosLosTenants
+            .GroupBy(t => t.PlanSuscripcion)
+            .ToDictionary(g => g.Key ?? "Sin Plan", g => g.Count());
+
+        var viewModel = new SuperAdminDashboardViewModel
+        {
+            TotalTenants = todosLosTenants.Count,
+            TenantsActivos = todosLosTenants.Count(t => t.Activo == true),
+            TotalUsuarios = todosLosUsuarios,
+            RecaudacionEstimada = totalRecaudado,
+            UltimosTenants = todosLosTenants.OrderByDescending(t => t.FechaRegistro).Take(5).ToList(),
+            DatosPlanes = distribucionPlanes
+        };
+
+        return View(viewModel);
+    }
 }

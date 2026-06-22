@@ -1,0 +1,123 @@
+﻿@model SaaSBarberia.Models.SuperAdminDashboardViewModel
+
+@{
+    ViewData["Title"] = "Panel de Control Global";
+}
+
+<div class="container-fluid mt-3">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark m-0">👑 Panel de Control Global (SuperAdmin)</h2>
+        <span class="badge bg-dark px-3 py-2 fs-6">Consolidado General</span>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-primary text-white p-3 h-100">
+                <small class="text-white-50 uppercase fw-bold">Total Barberías</small>
+                <h1 class="fw-bold display-5 my-2">@Model.TotalTenants</h1>
+                <small>Registradas en total</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-success text-white p-3 h-100">
+                <small class="text-white-50 uppercase fw-bold">Sedes Activas</small>
+                <h1 class="fw-bold display-5 my-2">@Model.TenantsActivos</h1>
+                <small>Operando actualmente</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-warning text-dark p-3 h-100">
+                <small class="text-dark-50 uppercase fw-bold">Usuarios Totales</small>
+                <h1 class="fw-bold display-5 my-2">@Model.TotalUsuarios</h1>
+                <small>Cuentas en el sistema</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-dark text-white p-3 h-100">
+                <small class="text-white-50 uppercase fw-bold">Suscripción Mensual Est.</small>
+                <h1 class="fw-bold fs-2 my-2">$@Model.RecaudacionEstimada.ToString("N0")</h1>
+                <small>COP mensual proyectado</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-3 h-100">
+                <h5 class="fw-bold text-dark mb-3">📦 Distribución de Planes</h5>
+                <div style="position: relative; height:250px; width:100%">
+                    <canvas id="chartPlanes"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm p-3 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold text-dark m-0">🏢 Últimas Barberías Registradas</h5>
+                    <a asp-action="Index" class="btn btn-sm btn-outline-dark fw-semibold">Ver todas</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Negocio</th>
+                                <th>Subdominio</th>
+                                <th>Plan</th>
+                                <th>Estado</th>
+                                <th>Registro</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var tenant in Model.UltimosTenants)
+                            {
+                                <tr>
+                                    <td class="fw-bold">@tenant.NombreNegocio</td>
+                                    <td><code>@tenant.Subdominio</code></td>
+                                    <td><span class="badge bg-info text-dark">@tenant.PlanSuscripcion</span></td>
+                                    <td>
+                                        <span class="badge @(tenant.Activo == true ? "bg-success" : "bg-danger")">
+                                            @(tenant.Activo == true ? "Activo" : "Inactivo")
+                                        </span>
+                                    </td>
+                                    <td class="text-muted small">@tenant.FechaRegistro?.ToString("dd/MM/yyyy")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Serializamos los datos dictados por C# a formato JSON nativo de JS
+        const datosPlanes = @Html.Raw(Json.Serialize(Model.DatosPlanes));
+
+        const labels = Object.keys(datosPlanes);
+        const dataValues = Object.values(datosPlanes);
+
+        const ctx = document.getElementById('chartPlanes').getContext('2d');
+        new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+        labels: labels,
+        datasets: [{
+        data: dataValues,
+        backgroundColor: ['#ffc107', '#0dc6fd', '#198754', '#6c757d'],
+        borderWidth: 2
+        }]
+        },
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+        legend: { position: 'bottom' }
+        }
+        }
+        });
+    </script>
+}

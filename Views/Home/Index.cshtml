@@ -1,6 +1,9 @@
-﻿@{
+﻿@model SaaSBarberia.Models.AdminDashboardViewModel
+
+@{
     ViewData["Title"] = "Panel de Control";
 }
+
 <div class="container mt-4">
     <div class="p-5 mb-4 bg-dark text-white rounded-3 shadow-sm text-center position-relative overflow-hidden">
         <div class="position-absolute top-0 start-0 w-100 h-100 bg-gradient" style="opacity: 0.1; background: linear-gradient(45deg, #ff0000, #0000ff);"></div>
@@ -8,7 +11,74 @@
         <p class="fs-5 text-muted">Bienvenido al núcleo operacional de tu SaaS de Barberías. Todo está sincronizado y listo para camellar.</p>
     </div>
 
-    @* 🌟 SECCIÓN OPTIMIZADA PARA ROLES DE CLIENTE *@
+    @* 📊 ======================================================== *@
+    @* 🌟 SECCIÓN EXCLUSIVA DEL DASHBOARD PARA ADMINBARBERIA       *@
+    @* ========================================================== *@
+    @if (User.IsInRole("AdminBarberia") && Model != null)
+    {
+        <div class="mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="fw-bold text-dark m-0">📊 Dashboard de Operaciones Sede</h3>
+                <span class="badge bg-success px-3 py-2 fs-6">Datos en Tiempo Real</span>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm bg-white p-3 border-start border-4 border-primary h-100 transition-card">
+                        <small class="text-secondary uppercase fw-bold small">Citas de Hoy</small>
+                        <h2 class="fw-bold text-dark my-1">📆 @Model.CitasParaHoy</h2>
+                        <small class="text-muted">Por atender</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm bg-white p-3 border-start border-4 border-success h-100 transition-card">
+                        <small class="text-secondary uppercase fw-bold small">Ingresos Mensuales</small>
+                        <h2 class="fw-bold text-success my-1">$@Model.IngresosMesActual.ToString("N0")</h2>
+                        <small class="text-muted">Mes en curso</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm bg-white p-3 border-start border-4 border-info h-100 transition-card">
+                        <small class="text-secondary uppercase fw-bold small">Servicios Totales</small>
+                        <h2 class="fw-bold text-dark my-1">✂️ @Model.TotalServiciosRealizados</h2>
+                        <small class="text-muted">Cortes cobrados</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm bg-dark text-white p-3 h-100 transition-card">
+                        <small class="text-white-50 uppercase fw-bold small">🏆 Barbero Estrella</small>
+                        <h4 class="fw-bold text-warning mt-2 mb-1 text-truncate">@Model.BarberoEstrella</h4>
+                        <small class="text-white-50">@Model.CortesBarberoEstrella servicios completados</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-2">
+                <div class="col-md-7">
+                    <div class="card border-0 shadow-sm p-3 h-100">
+                        <h5 class="fw-bold text-dark mb-3">💵 Historial de Ventas (7 Días)</h5>
+                        <div style="position: relative; height:260px; width:100%">
+                            <canvas id="chartVentasSede"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-5">
+                    <div class="card border-0 shadow-sm p-3 h-100">
+                        <h5 class="fw-bold text-dark mb-3">💈 Servicios Más Demandados</h5>
+                        <div style="position: relative; height:260px; width:100%">
+                            <canvas id="chartServiciosSede"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <hr class="my-5" />
+    }
+
+    @* 📅 ======================================================== *@
+    @* 🌟 SECCIÓN OPTIMIZADA PARA ROLES DE CLIENTE                 *@
+    @* ========================================================== *@
     @if (User.IsInRole("Cliente"))
     {
         <h3 class="text-secondary fw-bold mb-3">📅 Tu Espacio Personal</h3>
@@ -52,7 +122,7 @@
     }
     else
     {
-        @* 👨‍💼 VISTA ORIGINAL PARA ADMINISTRADORES / SUPERADMINS *@
+        @* 👨‍💼 VISTA GENERAL DE ACCESOS RÁPIDOS (ADMINS Y SUPERADMINS) *@
         <h3 class="text-secondary fw-bold mb-3">🛠️ Accesos Rápidos del Sistema</h3>
         <div class="row row-cols-1 row-cols-md-3 g-4">
             <div class="col">
@@ -104,3 +174,50 @@
             box-shadow: 0 8px 15px rgba(0,0,0,0.1) !important;
         }
 </style>
+
+@* 🛠️ SCRIPTS DE CHART.JS EXCLUSIVOS PARA CUANDO SE RENDERICE EL DASHBOARD *@
+@if (User.IsInRole("AdminBarberia") && Model != null)
+{
+    @section Scripts {
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            // 1. Data del gráfico de Ventas Semanales
+            const datosVentas = @Html.Raw(Json.Serialize(Model.VentasUltimosDias));
+            const labelsVentas = Object.keys(datosVentas).length ? Object.keys(datosVentas) : ["Sin datos"];
+            const valoresVentas = Object.values(datosVentas).length ? Object.values(datosVentas) : [0];
+
+            const ctxVentas = document.getElementById('chartVentasSede').getContext('2d');
+            new Chart(ctxVentas, {
+            type: 'bar',
+            data: {
+            labels: labelsVentas,
+            datasets: [{
+            label: 'Ingresos ($)',
+            data: valoresVentas,
+            backgroundColor: '#0d6efd',
+            borderRadius: 5
+            }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            // 2. Data del gráfico de Servicios Populares
+            const datosServicios = @Html.Raw(Json.Serialize(Model.ServiciosMasPedidos));
+            const labelsServicios = Object.keys(datosServicios).length ? Object.keys(datosServicios) : ["Sin servicios"];
+            const valoresServicios = Object.values(datosServicios).length ? Object.values(datosServicios) : [0];
+
+            const ctxServicios = document.getElementById('chartServiciosSede').getContext('2d');
+            new Chart(ctxServicios, {
+            type: 'pie',
+            data: {
+            labels: labelsServicios,
+            datasets: [{
+            data: valoresServicios,
+            backgroundColor: ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#6c757d']
+            }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+            });
+        </script>
+    }
+}

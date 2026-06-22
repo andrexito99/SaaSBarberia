@@ -49,16 +49,16 @@
                         <p class="mb-0 text-muted small">🏢 <strong>Lugar de Trabajo:</strong> <span class="text-secondary fw-semibold">@(item.Tenant?.NombreNegocio ?? "Sede Desconocida")</span></p>
                     </div>
 
-                    <div class="card-footer bg-light border-0 d-flex justify-content-around py-3">
+                    <div class="card-footer bg-light border-0 d-flex flex-wrap justify-content-center gap-2 py-3">
                         @if (User.IsInRole("SuperAdmin") || User.IsInRole("AdminBarberia"))
                         {
-                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-warning w-25">Editar</a>
-                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info w-25">Detalles</a>
-                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger w-25">Borrar</a>
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-warning flex-grow-1">✏️ Editar</a>
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info flex-grow-1">🔍 Detalles</a>
+                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger flex-grow-1">🗑️ Borrar</a>
                         }
                         else
                         {
-                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info w-75">ℹ️ Ver Información del Barbero</a>
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info w-100">ℹ️ Ver Información del Barbero</a>
                         }
                     </div>
                 </div>

@@ -16,7 +16,6 @@
         var usuarioIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!string.IsNullOrEmpty(usuarioIdStr) && int.TryParse(usuarioIdStr, out int usuarioId))
         {
-            // 🌟 Usamos .IgnoreQueryFilters() aquí para que el Layout pueda cargar correctamente la metadata del Tenant sin importar las restricciones globales del login
             var usuarioDb = Context.Usuarios
                 .IgnoreQueryFilters()
                 .Include(u => u.Tenant)
@@ -24,7 +23,6 @@
 
             if (usuarioDb != null && usuarioDb.Tenant != null)
             {
-                // Si es SuperAdmin mantenemos diseño neutro superior, si no, cargamos sus estilos personalizados
                 if (!esSuperAdmin)
                 {
                     colorPrimario = usuarioDb.Tenant.ColorPrimario ?? colorPrimario;
@@ -34,7 +32,7 @@
                 }
                 else
                 {
-                    colorPrimario = "#0f172a"; // Azul oscuro para SuperAdmin
+                    colorPrimario = "#0f172a";
                     colorSecundario = "#258cfb";
                     estiloSidebar = "SuperiorClasico";
                     nombreNegocio = "Panel SuperAdmin";
@@ -43,7 +41,6 @@
         }
     }
 
-    // Evaluamos si requiere estructura lateral
     bool usaLayoutLateral = (estiloSidebar == "LateralOscuro" || estiloSidebar == "LateralClaro") && !esSuperAdmin;
 }
 
@@ -86,6 +83,7 @@
 
     <div class="@(usaLayoutLateral ? "saas-wrapper" : "")">
 
+        @* 📊 MENÚ LATERAL (Para PCs se queda a un lado, para móviles se apila arriba con el nuevo CSS) *@
         @if (usaLayoutLateral)
         {
             <nav class="saas-sidebar d-flex flex-column flex-shrink-0 p-3 shadow @(estiloSidebar == "LateralClaro" ? "bg-white text-dark border-end" : "text-white")"
@@ -115,58 +113,62 @@
                     }
                 </ul>
                 <hr>
-                <div class="p-1 small">
-                    <p class="mb-1">Hola, <strong>@User.Identity.Name</strong></p>
-                    <a class="btn btn-sm btn-danger w-100" asp-controller="Account" asp-action="Logout">Salir</a>
+                <div class="p-2 text-center text-md-start small bg-dark bg-opacity-10 rounded">
+                    <p class="mb-1 text-truncate">Hola, <strong>@User.Identity.Name</strong></p>
+                    <a class="btn btn-sm btn-danger w-100 mt-1" asp-controller="Account" asp-action="Logout">Salir</a>
                 </div>
             </nav>
         }
 
         <div class="saas-content @(usaLayoutLateral ? "has-sidebar" : "")">
 
+            @* 🍔 MENÚ SUPERIOR (Optimizado con Botón de Hamburguesa para pantallas móviles) *@
             @if (!usaLayoutLateral)
             {
                 <header>
                     <nav class="navbar navbar-expand-md navbar-dark border-bottom box-shadow mb-4 py-3" style="background-color: @colorPrimario !important;">
-                        <div class="container shadow-sm">
+                        <div class="container-fluid px-4">
                             <a class="navbar-brand fw-bold text-uppercase tracking-wider" asp-controller="Home" asp-action="Index">
                                 💈 <span class="text-tenant-brand">@nombreNegocio</span>
                             </a>
-                            <div class="navbar-collapse collapse d-md-inline-flex justify-content-between">
-                                <ul class="navbar-nav flex-grow-1 ms-3">
-                                    <li class="nav-item"><a class="nav-link text-white-50 fw-semibold" asp-controller="Home" asp-action="Index">🏠 Inicio</a></li>
+
+                            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsiveContent" aria-controls="navbarResponsiveContent" aria-expanded="false" aria-label="Toggle navigation">
+                                <span class="navbar-toggler-icon"></span>
+                            </button>
+
+                            <div class="navbar-collapse collapse" id="navbarResponsiveContent">
+                                <ul class="navbar-nav flex-grow-1 ms-md-3 my-2 my-md-0">
+                                    <li class="nav-item"><a class="nav-link text-white fw-semibold" asp-controller="Home" asp-action="Index">🏠 Inicio</a></li>
                                     @if (User.Identity.IsAuthenticated)
                                     {
-                                        <li class="nav-item ms-2"><a class="nav-link text-white-50 fw-semibold" asp-controller="Servicios" asp-action="Index">✂️ Servicios</a></li>
+                                        <li class="nav-item"><a class="nav-link text-white-50 fw-semibold" asp-controller="Servicios" asp-action="Index">✂️ Servicios</a></li>
                                         if (!User.IsInRole("Cliente"))
                                         {
-                                            <li class="nav-item ms-2"><a class="nav-link text-white-50 fw-semibold" asp-controller="Barberoes" asp-action="Index">💈 Barberos</a></li>
+                                            <li class="nav-item"><a class="nav-link text-white-50 fw-semibold" asp-controller="Barberoes" asp-action="Index">💈 Barberos</a></li>
                                         }
                                         if (User.IsInRole("SuperAdmin") || User.IsInRole("AdminBarberia"))
                                         {
-                                            <li class="nav-item ms-2"><a class="nav-link text-white-50 fw-semibold" asp-controller="Facturas" asp-action="Index">💵 Facturación</a></li>
+                                            <li class="nav-item"><a class="nav-link text-white-50 fw-semibold" asp-controller="Facturas" asp-action="Index">💵 Facturación</a></li>
                                         }
-
                                         if (User.IsInRole("AdminBarberia"))
                                         {
-                                            <li class="nav-item ms-2"><a class="nav-link text-white-50 fw-semibold" asp-controller="Caja" asp-action="Index">💰 Caja Chica</a></li>
+                                            <li class="nav-item"><a class="nav-link text-white-50 fw-semibold" asp-controller="Caja" asp-action="Index">💰 Caja Chica</a></li>
                                         }
-
-                                        <li class="nav-item ms-2"><a class="nav-link text-white-50 fw-semibold" asp-controller="Citas" asp-action="Index">📆 Citas</a></li>
+                                        <li class="nav-item"><a class="nav-link text-white-50 fw-semibold" asp-controller="Citas" asp-action="Index">📆 Citas</a></li>
                                         if (User.IsInRole("AdminBarberia"))
                                         {
-                                            <li class="nav-item ms-2"><a class="nav-link text-danger fw-bold" asp-controller="Tenants" asp-action="DashboardSede">🚨 CONTROL</a></li>
+                                            <li class="nav-item"><a class="nav-link text-danger fw-bold" asp-controller="Tenants" asp-action="DashboardSede">🚨 CONTROL</a></li>
                                         }
                                         @if (esSuperAdmin)
                                         {
-                                            <li class="nav-item ms-2 border-start border-secondary ps-2"><a class="nav-link text-info fw-bold" asp-controller="Tenants" asp-action="SuperDashboard">📈 Dashboard Global</a></li>
-                                            <li class="nav-item ms-2"><a class="nav-link text-warning fw-semibold" asp-controller="Tenants" asp-action="Index">🏢 Tenants</a></li>
-                                            <li class="nav-item ms-2"><a class="nav-link text-warning fw-semibold" asp-controller="Usuarios" asp-action="Index">👥 Usuarios Globales</a></li>
+                                            <li class="nav-item border-start border-secondary ps-md-2"><a class="nav-link text-info fw-bold" asp-controller="Tenants" asp-action="SuperDashboard">📈 Global</a></li>
+                                            <li class="nav-item"><a class="nav-link text-warning fw-semibold" asp-controller="Tenants" asp-action="Index">🏢 Tenants</a></li>
+                                            <li class="nav-item"><a class="nav-link text-warning fw-semibold" asp-controller="Usuarios" asp-action="Index">👥 Usuarios</a></li>
                                         }
                                     }
                                 </ul>
-                                <div class="d-flex align-items-center gap-3">
-                                    <span class="text-white small me-1">Hola, <strong>@User.Identity.Name</strong></span>
+                                <div class="d-flex flex-column flex-md-row align-items-md-center gap-2 mt-2 mt-md-0 pt-2 pt-md-0 border-top border-secondary border-md-0">
+                                    <span class="text-white small text-truncate">Hola, <strong>@User.Identity.Name</strong></span>
                                     <a class="btn btn-sm btn-danger" asp-controller="Account" asp-action="Logout">Salir</a>
                                 </div>
                             </div>
@@ -175,17 +177,19 @@
                 </header>
             }
 
-            <div class="container" style="margin-bottom: 80px; padding-top: @(usaLayoutLateral ? "20px" : "0px");">
+            @* 📱 CONTENEDOR PRINCIPAL FLUIDO *@
+            <div class="container-fluid px-3 px-md-4" style="margin-bottom: 100px; padding-top: @(usaLayoutLateral ? "20px" : "0px");">
                 <main role="main" class="pb-5">
                     @RenderBody()
                 </main>
             </div>
 
+            @* 🇨🇴 FOOTER CON PADDING DINÁMICO ADAPTATIVO *@
             <footer class="border-top footer text-muted bg-white py-3 position-fixed bottom-0 start-0 w-100 z-3"
-                    style="padding-left: @(usaLayoutLateral ? "280px" : "20px");">
-                <div class="container-fluid px-4 text-center text-md-start d-md-flex justify-content-between">
+                    style="padding-left: @(usaLayoutLateral ? "280px" : "20px"); transition: padding 0.3s ease;">
+                <div class="container-fluid px-4 text-center text-md-start d-md-flex justify-content-between small">
                     <span>&copy; 2026 - <strong>@nombreNegocio</strong> - Control SaaS Adaptativo.</span>
-                    <span class="text-secondary small">Valledupar, Cesar 🇨🇴</span>
+                    <span class="text-secondary d-block d-md-inline mt-1 mt-md-0">Valledupar, Cesar 🇨🇴</span>
                 </div>
             </footer>
         </div>
@@ -195,5 +199,14 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
+
+    @* 🔥 SCRIPT EXTRA PARA RESPONSIVE: Cierra el menú superior automáticamente al hacer clic en fondo móvil *@
+    <script>
+        $(document).ready(function () {
+        $('.navbar-nav a').click(function(){
+        $('.navbar-collapse').collapse('hide');
+        });
+        });
+    </script>
 </body>
 </html>

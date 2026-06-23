@@ -1,0 +1,30 @@
+@model SaaSBarberia.Models.AlquilerHerramienta
+
+@{
+    ViewData["Title"] = "Detalle del Alquiler";
+}
+
+<h1>Información del Préstamo</h1>
+<div>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-3">Equipo Alquilado</dt>
+        <dd class="col-sm-9">@Model.Herramienta?.Nombre (Serie: @Model.Herramienta?.NumeroSerie)</dd>
+
+        <dt class="col-sm-3">Barbero a Cargo</dt>
+        <dd class="col-sm-9">@Model.Barbero?.Usuario?.Nombre</dd>
+
+        <dt class="col-sm-3">Fecha de Salida</dt>
+        <dd class="col-sm-9">@Model.FechaPrestamo.ToString("dd/MM/yyyy hh:mm tt")</dd>
+
+        <dt class="col-sm-3">Fecha de Retorno</dt>
+        <dd class="col-sm-9">@(Model.FechaDevolucion.HasValue ? Model.FechaDevolucion.Value.ToString("dd/MM/yyyy hh:mm tt") : "Aún en posesión del barbero")</dd>
+
+        <dt class="col-sm-3">Costo de Operación</dt>
+        <dd class="col-sm-9">$@Model.CostoAlquiler.ToString("N2")</dd>
+    </dl>
+</div>
+<div>
+    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-warning">Procesar Estado</a> |
+    <a asp-action="Index" class="btn btn-secondary">Regresar al Registro</a>
+</div>

@@ -55,35 +55,35 @@
     <link rel="stylesheet" href="~/SaaSBarberia.styles.css" asp-append-version="true" />
 
     <style>
-            :root {
-                --tenant-primary: @colorPrimario;
-                --tenant-secondary: @colorSecundario;
-            }
+        :root {
+            --tenant-primary: @colorPrimario;
+            --tenant-secondary: @colorSecundario;
+        }
 
-            .bg-tenant-custom {
-                background-color: var(--tenant-primary) !important;
-            }
+        .bg-tenant-custom {
+            background-color: var(--tenant-primary) !important;
+        }
 
-            .text-tenant-brand {
-                color: var(--tenant-secondary) !important;
-            }
+        .text-tenant-brand {
+            color: var(--tenant-secondary) !important;
+        }
 
-            .btn-tenant-action {
-                background-color: var(--tenant-secondary) !important;
-                border-color: var(--tenant-secondary) !important;
-                color: #fff !important;
-            }
+        .btn-tenant-action {
+            background-color: var(--tenant-secondary) !important;
+            border-color: var(--tenant-secondary) !important;
+            color: #fff !important;
+        }
 
-                .btn-tenant-action:hover {
-                    filter: brightness(90%);
-                }
+        .btn-tenant-action:hover {
+            filter: brightness(90%);
+        }
     </style>
 </head>
 <body class="bg-light">
 
     <div class="@(usaLayoutLateral ? "saas-wrapper" : "")">
 
-        @* 📊 MENÚ LATERAL (Para PCs se queda a un lado, para móviles se apila arriba con el nuevo CSS) *@
+        @* 📊 MENÚ LATERAL *@
         @if (usaLayoutLateral)
         {
             <nav class="saas-sidebar d-flex flex-column flex-shrink-0 p-3 shadow @(estiloSidebar == "LateralClaro" ? "bg-white text-dark border-end" : "text-white")"
@@ -102,7 +102,9 @@
                         <li><a class="nav-link @(estiloSidebar == "LateralClaro" ? "text-dark" : "text-white-50") fw-semibold" asp-controller="Servicios" asp-action="Index">✂️ Servicios</a></li>
                         if (!User.IsInRole("Cliente"))
                         {
-                            <li><a class="nav-link @(estiloSidebar == "LateralClaro" ? "text-dark" : "text-white-50") fw-semibold" asp-controller="Barberoes" asp-action="Index">💈 Barberos</a></li>
+                            <li><a class="nav-link @(estiloSidebar == "LateralClaro" ? "text-dark" : "text-white-50") fw-semibold" asp-controller="Barberos" asp-action="Index">💈 Barberos</a></li>
+                            <li><a class="nav-link @(estiloSidebar == "LateralClaro" ? "text-dark" : "text-white-50") fw-semibold" asp-controller="AlquileresHerramientas" asp-action="Index">🔧 Alquiler Máquinas</a></li>
+                            <li><a class="nav-link @(estiloSidebar == "LateralClaro" ? "text-dark" : "text-white-50") fw-semibold text-warning" asp-controller="Herramientas" asp-action="Create">⚙️ + Herramienta</a></li>
                         }
                         if (User.IsInRole("AdminBarberia"))
                         {
@@ -122,7 +124,7 @@
 
         <div class="saas-content @(usaLayoutLateral ? "has-sidebar" : "")">
 
-            @* 🍔 MENÚ SUPERIOR (Optimizado con Botón de Hamburguesa para pantallas móviles) *@
+            @* 🍔 MENÚ SUPERIOR *@
             @if (!usaLayoutLateral)
             {
                 <header>
@@ -144,7 +146,9 @@
                                         <li class="nav-item"><a class="nav-link text-white-50 fw-semibold" asp-controller="Servicios" asp-action="Index">✂️ Servicios</a></li>
                                         if (!User.IsInRole("Cliente"))
                                         {
-                                            <li class="nav-item"><a class="nav-link text-white-50 fw-semibold" asp-controller="Barberoes" asp-action="Index">💈 Barberos</a></li>
+                                            <li class="nav-item"><a class="nav-link text-white-50 fw-semibold" asp-controller="Barberos" asp-action="Index">💈 Barberos</a></li>
+                                            <li class="nav-item"><a class="nav-link text-white-50 fw-semibold" asp-controller="AlquileresHerramientas" asp-action="Index">🔧 Alquiler Máquinas</a></li>
+                                            <li class="nav-item"><a class="nav-link text-warning fw-semibold" asp-controller="Herramientas" asp-action="Create">⚙️ + Herramienta</a></li>
                                         }
                                         if (User.IsInRole("SuperAdmin") || User.IsInRole("AdminBarberia"))
                                         {
@@ -159,7 +163,7 @@
                                         {
                                             <li class="nav-item"><a class="nav-link text-danger fw-bold" asp-controller="Tenants" asp-action="DashboardSede">🚨 CONTROL</a></li>
                                         }
-                                        @if (esSuperAdmin)
+                                        if (esSuperAdmin)
                                         {
                                             <li class="nav-item border-start border-secondary ps-md-2"><a class="nav-link text-info fw-bold" asp-controller="Tenants" asp-action="SuperDashboard">📈 Global</a></li>
                                             <li class="nav-item"><a class="nav-link text-warning fw-semibold" asp-controller="Tenants" asp-action="Index">🏢 Tenants</a></li>
@@ -184,7 +188,7 @@
                 </main>
             </div>
 
-            @* 🇨🇴 FOOTER CON PADDING DINÁMICO ADAPTATIVO *@
+            @* 🇨🇴 FOOTER *@
             <footer class="border-top footer text-muted bg-white py-3 position-fixed bottom-0 start-0 w-100 z-3"
                     style="padding-left: @(usaLayoutLateral ? "280px" : "20px"); transition: padding 0.3s ease;">
                 <div class="container-fluid px-4 text-center text-md-start d-md-flex justify-content-between small">
@@ -200,12 +204,11 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 
-    @* 🔥 SCRIPT EXTRA PARA RESPONSIVE: Cierra el menú superior automáticamente al hacer clic en fondo móvil *@
     <script>
         $(document).ready(function () {
-        $('.navbar-nav a').click(function(){
-        $('.navbar-collapse').collapse('hide');
-        });
+            $('.navbar-nav a').click(function(){
+                $('.navbar-collapse').collapse('hide');
+            });
         });
     </script>
 </body>

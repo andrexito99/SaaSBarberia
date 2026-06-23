@@ -20,7 +20,6 @@ namespace SaaSBarberia.Controllers
         [HttpGet]
         public IActionResult Login()
         {
-            // Si ya está logueado, lo mandamos al inicio
             if (User.Identity != null && User.Identity.IsAuthenticated)
             {
                 return RedirectToAction("Index", "Home");
@@ -57,7 +56,7 @@ namespace SaaSBarberia.Controllers
                 new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
                 new Claim(ClaimTypes.Name, usuario.Nombre),
                 new Claim(ClaimTypes.Email, usuario.Email),
-                new Claim(ClaimTypes.Role, usuario.Role.NombreRole), // 🌟 Cambiado a 'NombreRole' según tu modelo
+                new Claim(ClaimTypes.Role, usuario.Role.NombreRole), 
                 new Claim("TenantId", usuario.TenantId?.ToString() ?? "0")
             };
 

@@ -1,0 +1,25 @@
+@model SaaSBarberia.Models.AlquilerHerramienta
+
+@{
+    ViewData["Title"] = "Eliminar Registro de Alquiler";
+}
+
+<h1>Anular Operación</h1>
+<h3>¿Estás seguro de que quieres eliminar este registro? La máquina volverá a marcarse como disponible.</h3>
+<div>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-3">Máquina</dt>
+        <dd class="col-sm-9">@Model.Herramienta?.Nombre</dd>
+        <dt class="col-sm-3">Barbero</dt>
+        <dd class="col-sm-9">@Model.Barbero?.Usuario?.Nombre</dd>
+        <dt class="col-sm-3">Fecha Prestamo</dt>
+        <dd class="col-sm-9">@Model.FechaPrestamo</dd>
+    </dl>
+    
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="Id" />
+        <input type="submit" value="Anular de una" class="btn btn-danger" /> |
+        <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>

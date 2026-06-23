@@ -24,6 +24,9 @@ builder.Services.AddScoped<ServicioService>();
 builder.Services.AddScoped<BarberoService>();
 builder.Services.AddScoped<FacturaService>();
 builder.Services.AddScoped<CajaService>();
+builder.Services.AddScoped<IHerramientasService, HerramientasService>();
+builder.Services.AddScoped<IProductosService, ProductosService>();
+builder.Services.AddScoped<IAlquileresHerramientasService, AlquileresHerramientasService>();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddControllersWithViews();

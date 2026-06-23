@@ -1,0 +1,50 @@
+@model IEnumerable<SaaSBarberia.Models.AlquilerHerramienta>
+
+@{
+    ViewData["Title"] = "Historial de Alquileres";
+}
+
+<h1>Control de Alquiler de Máquinas</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Registrar Préstamo / Alquiler</a>
+</p>
+<table class="table table-striped table-hover">
+    <thead>
+        <tr>
+            <th>Herramienta / Máquina</th>
+            <th>Barbero Responsable</th>
+            <th>Fecha Préstamo</th>
+            <th>Fecha Devolución</th>
+            <th>Costo Alquiler</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td><strong>@item.Herramienta?.Nombre</strong></td>
+            <td>@item.Barbero?.Usuario?.Nombre</td>
+            <td>@item.FechaPrestamo.ToString("dd/MM/yyyy hh:mm tt")</td>
+            <td>@(item.FechaDevolucion.HasValue ? item.FechaDevolucion.Value.ToString("dd/MM/yyyy hh:mm tt") : "Pendiente")</td>
+            <td>$@item.CostoAlquiler.ToString("N2")</td>
+            <td>
+                @if (item.FechaDevolucion.HasValue)
+                {
+                    <span class="badge bg-success">Devuelto ✔️</span>
+                }
+                else
+                {
+                    <span class="badge bg-danger">En Uso 🔴</span>
+                }
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Procesar / Editar</a> |
+                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-secondary">Detalles</a> |
+                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Eliminar</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

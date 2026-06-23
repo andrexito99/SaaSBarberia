@@ -3,11 +3,11 @@
 @inject SaaSBarberia.Data.BarberSaaSDbContext Context
 
 @{
-    // Valores por defecto globales
     string colorPrimario = "#212529";
     string colorSecundario = "#0d6efd";
     string estiloSidebar = "SuperiorClasico";
     string nombreNegocio = "SaaS Barbería";
+    bool tieneHerramientas = false;
 
     bool esSuperAdmin = User.IsInRole("SuperAdmin");
 
@@ -23,6 +23,8 @@
 
             if (usuarioDb != null && usuarioDb.Tenant != null)
             {
+                tieneHerramientas = usuarioDb.Tenant.TieneModuloHerramientas;
+
                 if (!esSuperAdmin)
                 {
                     colorPrimario = usuarioDb.Tenant.ColorPrimario ?? colorPrimario;
@@ -36,6 +38,7 @@
                     colorSecundario = "#258cfb";
                     estiloSidebar = "SuperiorClasico";
                     nombreNegocio = "Panel SuperAdmin";
+                    tieneHerramientas = true;
                 }
             }
         }
@@ -53,6 +56,7 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/SaaSBarberia.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <style>
             :root {
@@ -83,7 +87,7 @@
 
     <div class="@(usaLayoutLateral ? "saas-wrapper" : "")">
 
-        @* 📊 MENÚ LATERAL (Para PCs se queda a un lado, para móviles se apila arriba con el nuevo CSS) *@
+        @* 📊 MENÚ LATERAL *@
         @if (usaLayoutLateral)
         {
             <nav class="saas-sidebar d-flex flex-column flex-shrink-0 p-3 shadow @(estiloSidebar == "LateralClaro" ? "bg-white text-dark border-end" : "text-white")"
@@ -100,9 +104,19 @@
                     @if (User.Identity.IsAuthenticated)
                     {
                         <li><a class="nav-link @(estiloSidebar == "LateralClaro" ? "text-dark" : "text-white-50") fw-semibold" asp-controller="Servicios" asp-action="Index">✂️ Servicios</a></li>
+
+                        @* 🌟 NUEVO BOTÓN PRODUCTOS EN SIDEBAR (Visible para todos) *@
+                        <li><a class="nav-link @(estiloSidebar == "LateralClaro" ? "text-dark" : "text-white-50") fw-semibold" asp-controller="Productos" asp-action="Index">🛒 Productos</a></li>
+
                         if (!User.IsInRole("Cliente"))
                         {
                             <li><a class="nav-link @(estiloSidebar == "LateralClaro" ? "text-dark" : "text-white-50") fw-semibold" asp-controller="Barberoes" asp-action="Index">💈 Barberos</a></li>
+
+                            @if (tieneHerramientas)
+                            {
+                                <li><a class="nav-link @(estiloSidebar == "LateralClaro" ? "text-dark" : "text-white-50") fw-semibold" asp-controller="AlquileresHerramientas" asp-action="Index">🔧 Alquiler Máquinas</a></li>
+                                <li><a class="nav-link @(estiloSidebar == "LateralClaro" ? "text-dark" : "text-white-50") fw-semibold text-warning" asp-controller="Herramientas" asp-action="Create">⚙️ + Herramienta</a></li>
+                            }
                         }
                         if (User.IsInRole("AdminBarberia"))
                         {
@@ -113,16 +127,26 @@
                     }
                 </ul>
                 <hr>
-                <div class="p-2 text-center text-md-start small bg-dark bg-opacity-10 rounded">
-                    <p class="mb-1 text-truncate">Hola, <strong>@User.Identity.Name</strong></p>
-                    <a class="btn btn-sm btn-danger w-100 mt-1" asp-controller="Account" asp-action="Logout">Salir</a>
-                </div>
+                @* 🔐 CONTROL DE ACCESO EN LA BARRA SUPERIOR *@
+                @if (User.Identity != null && User.Identity.IsAuthenticated)
+                {
+                    <div class="d-flex flex-column flex-md-row align-items-md-center gap-2 mt-2 mt-md-0 pt-2 pt-md-0 border-top border-secondary border-md-0">
+                        <span class="text-white small text-truncate">Hola, <strong>@User.Identity.Name</strong></span>
+                        <a class="btn btn-sm btn-danger" asp-controller="Account" asp-action="Logout">Salir</a>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex align-items-center mt-2 mt-md-0">
+                        <a class="btn btn-sm btn-tenant-action" asp-controller="Account" asp-action="Login">Iniciar Sesión 🔑</a>
+                    </div>
+                }
             </nav>
         }
 
         <div class="saas-content @(usaLayoutLateral ? "has-sidebar" : "")">
 
-            @* 🍔 MENÚ SUPERIOR (Optimizado con Botón de Hamburguesa para pantallas móviles) *@
+            @* 🍔 MENÚ SUPERIOR *@
             @if (!usaLayoutLateral)
             {
                 <header>
@@ -142,9 +166,19 @@
                                     @if (User.Identity.IsAuthenticated)
                                     {
                                         <li class="nav-item"><a class="nav-link text-white-50 fw-semibold" asp-controller="Servicios" asp-action="Index">✂️ Servicios</a></li>
+
+                                        @* 🌟 NUEVO BOTÓN PRODUCTOS EN MENÚ SUPERIOR (Visible para todos) *@
+                                        <li class="nav-item"><a class="nav-link text-white-50 fw-semibold" asp-controller="Productoes" asp-action="Index">🛒 Productos</a></li>
+
                                         if (!User.IsInRole("Cliente"))
                                         {
                                             <li class="nav-item"><a class="nav-link text-white-50 fw-semibold" asp-controller="Barberoes" asp-action="Index">💈 Barberos</a></li>
+
+                                            @if (tieneHerramientas)
+                                            {
+                                                <li class="nav-item"><a class="nav-link text-white-50 fw-semibold" asp-controller="AlquileresHerramientas" asp-action="Index">🔧 Alquiler Máquinas</a></li>
+                                                <li class="nav-item"><a class="nav-link text-warning fw-semibold" asp-controller="Herramientas" asp-action="Create">⚙️ + Herramienta</a></li>
+                                            }
                                         }
                                         if (User.IsInRole("SuperAdmin") || User.IsInRole("AdminBarberia"))
                                         {
@@ -159,11 +193,19 @@
                                         {
                                             <li class="nav-item"><a class="nav-link text-danger fw-bold" asp-controller="Tenants" asp-action="DashboardSede">🚨 CONTROL</a></li>
                                         }
-                                        @if (esSuperAdmin)
+                                        if (esSuperAdmin)
                                         {
                                             <li class="nav-item border-start border-secondary ps-md-2"><a class="nav-link text-info fw-bold" asp-controller="Tenants" asp-action="SuperDashboard">📈 Global</a></li>
                                             <li class="nav-item"><a class="nav-link text-warning fw-semibold" asp-controller="Tenants" asp-action="Index">🏢 Tenants</a></li>
                                             <li class="nav-item"><a class="nav-link text-warning fw-semibold" asp-controller="Usuarios" asp-action="Index">👥 Usuarios</a></li>
+                                        }
+                                        @if (User.Identity != null && User.Identity.IsAuthenticated && User.IsInRole("SuperAdmin"))
+                                        {
+                                            <li class="nav-item">
+                                                <a class="nav-link text-dark fw-bold" asp-area="" asp-controller="Auditoria" asp-action="Index">
+                                                    <i class="bi bi-shield-lock-fill text-danger"></i> Auditoría Global
+                                                </a>
+                                            </li>
                                         }
                                     }
                                 </ul>
@@ -177,14 +219,12 @@
                 </header>
             }
 
-            @* 📱 CONTENEDOR PRINCIPAL FLUIDO *@
             <div class="container-fluid px-3 px-md-4" style="margin-bottom: 100px; padding-top: @(usaLayoutLateral ? "20px" : "0px");">
                 <main role="main" class="pb-5">
                     @RenderBody()
                 </main>
             </div>
 
-            @* 🇨🇴 FOOTER CON PADDING DINÁMICO ADAPTATIVO *@
             <footer class="border-top footer text-muted bg-white py-3 position-fixed bottom-0 start-0 w-100 z-3"
                     style="padding-left: @(usaLayoutLateral ? "280px" : "20px"); transition: padding 0.3s ease;">
                 <div class="container-fluid px-4 text-center text-md-start d-md-flex justify-content-between small">
@@ -199,14 +239,5 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
-
-    @* 🔥 SCRIPT EXTRA PARA RESPONSIVE: Cierra el menú superior automáticamente al hacer clic en fondo móvil *@
-    <script>
-        $(document).ready(function () {
-        $('.navbar-nav a').click(function(){
-        $('.navbar-collapse').collapse('hide');
-        });
-        });
-    </script>
 </body>
 </html>

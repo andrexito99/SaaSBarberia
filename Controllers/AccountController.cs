@@ -3,6 +3,9 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SaaSBarberia.Data;
+using SaaSBarberia.Models;
+using SaaSBarberia.Services;
+using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -11,16 +14,19 @@ namespace SaaSBarberia.Controllers
     public class AccountController : Controller
     {
         private readonly BarberSaaSDbContext _context;
+        private readonly IAuditoriaService _auditoriaService;
 
-        public AccountController(BarberSaaSDbContext context)
+        public AccountController(BarberSaaSDbContext context, IAuditoriaService auditoriaService)
         {
             _context = context;
+            _auditoriaService = auditoriaService;
         }
+
+        private string CurrentUserIp => HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
 
         [HttpGet]
         public IActionResult Login()
         {
-            // Si ya está logueado, lo mandamos al inicio
             if (User.Identity != null && User.Identity.IsAuthenticated)
             {
                 return RedirectToAction("Index", "Home");
@@ -38,32 +44,58 @@ namespace SaaSBarberia.Controllers
                 return View();
             }
 
-            // 🌟 CORRECCIÓN AQUÍ: Metemos .IgnoreQueryFilters() para saltarnos el filtro global de multi-tenant durante el login
             var usuario = await _context.Usuarios
                 .IgnoreQueryFilters()
                 .Include(u => u.Role)
                 .FirstOrDefaultAsync(u => u.Email == email);
 
-            // Validación de credenciales en texto plano (como lo tienes actualmente)
+            // ⚠️ CONTROL DE FALLOS: Se queda activo para registrar intrusos o bloqueos
             if (usuario == null || usuario.PasswordHash != password || usuario.Activo == false)
             {
+                int tenantFallo = usuario?.TenantId ?? 0;
+                int usuarioFalloId = usuario?.Id ?? 0;
+                string causa = usuario == null ? "Correo no registrado" : (usuario.Activo == false ? "Cuenta deshabilitada" : "Contraseña incorrecta");
+
+                // 🔥 AUDITORÍA: Deja el rastro si intentan reventar el login
+                await _auditoriaService.RegistrarAsync(
+                    tenantFallo,
+                    usuarioFalloId,
+                    "Login",
+                    "0",
+                    "Fallo Login",
+                    $"Intento fallido de inicio de sesión para el correo '{email}'. Causa sospechosa: {causa}.",
+                    CurrentUserIp
+                );
+
                 ModelState.AddModelError("", "Credenciales incorrectas o usuario deshabilitado.");
                 return View();
             }
 
-            // 🌟 Creamos la identidad con Claims adaptados a tu base de datos
+            // 🎯 CREACIÓN DE IDENTIDAD CON CLAIMS CRÍTICOS
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
                 new Claim(ClaimTypes.Name, usuario.Nombre),
                 new Claim(ClaimTypes.Email, usuario.Email),
-                new Claim(ClaimTypes.Role, usuario.Role.NombreRole), // 🌟 Cambiado a 'NombreRole' según tu modelo
+                new Claim(ClaimTypes.Role, usuario.Role.NombreRole),
                 new Claim("TenantId", usuario.TenantId?.ToString() ?? "0")
             };
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
-            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity));
+            var authProperties = new AuthenticationProperties
+            {
+                IsPersistent = true,
+                ExpiresUtc = System.DateTimeOffset.UtcNow.AddHours(8)
+            };
+
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(claimsIdentity),
+                authProperties
+            );
+
+            // 🪓 Se eliminó el registro de "Acceso Exitoso" para no llenar de basura la tabla.
 
             return RedirectToAction("Index", "Home");
         }
@@ -71,6 +103,9 @@ namespace SaaSBarberia.Controllers
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+            // 🪓 Se eliminó el registro de "Logout" para optimizar el almacenamiento.
+
             return RedirectToAction("Login");
         }
 

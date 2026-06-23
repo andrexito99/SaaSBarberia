@@ -1,20 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-namespace SaaSBarberia.Models;
-
-public class AdminDashboardViewModel
+namespace SaaSBarberia.Models
 {
-    // KPIs en Tarjetas
-    public int CitasParaHoy { get; set; }
-    public decimal IngresosMesActual { get; set; }
-    public int TotalServiciosRealizados { get; set; }
+    public class AdminDashboardViewModel
+    {
+        public int CitasParaHoy { get; set; }
+        public int TotalBarberos { get; set; }
+        public int TotalServiciosOfrecidos { get; set; }
+        public int TotalClientesRegistrados { get; set; }
 
-    // Barbero estrella del mes
-    public string BarberoEstrella { get; set; } = "Ninguno todavía";
-    public int CortesBarberoEstrella { get; set; }
+        // 🌟 NUEVOS CAMPOS FINANCIEROS
+        public decimal IngresosHoy { get; set; }
+        public decimal IngresosMes { get; set; }
+        public decimal GananciaBarberoEstrella { get; set; }
 
-    // Data en diccionarios para que Chart.js los dibuje rápido
-    public Dictionary<string, decimal> VentasUltimosDias { get; set; } = new(); // Fecha -> Total Ventas
-    public Dictionary<string, int> ServiciosMasPedidos { get; set; } = new();   // Nombre Servicio -> Cantidad
+        public string BarberoEstrella { get; set; } = null!;
+        public int CortesBarberoEstrella { get; set; }
+
+        public Dictionary<string, int> ResumenCitasPorEstado { get; set; } = new Dictionary<string, int>();
+        public Dictionary<string, int> ClientesPorBarbero { get; set; } = new Dictionary<string, int>();
+    }
 }

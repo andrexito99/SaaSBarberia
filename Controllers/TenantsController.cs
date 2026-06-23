@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using SaaSBarberia.Data; // ⚠️ Asegúrate de que apunte a tu carpeta Data
+using SaaSBarberia.Data;
 using SaaSBarberia.Models;
 using SaaSBarberia.Services;
 using System;
@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 public class TenantsController : Controller
 {
     private readonly TenantService _tenantService;
-    private readonly BarberSaaSDbContext _context; // ⚡ Inyectamos el contexto directo para consultas avanzadas
+    private readonly BarberSaaSDbContext _context;
 
     public TenantsController(TenantService tenantService, BarberSaaSDbContext context)
     {
@@ -20,14 +20,12 @@ public class TenantsController : Controller
         _context = context;
     }
 
-    // GET: Tenants
     public async Task<IActionResult> Index()
     {
         var lista = await _tenantService.ObtenerTodosAsync();
         return View(lista);
     }
 
-    // GET: Tenants/Details/5
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null) return NotFound();
@@ -38,16 +36,15 @@ public class TenantsController : Controller
         return View(tenant);
     }
 
-    // GET: Tenants/Create
     public IActionResult Create()
     {
         return View();
     }
 
-    // POST: Tenants/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,NombreNegocio,Subdominio,PlanSuscripcion,Activo,FechaRegistro,ColorPrimario,ColorSecundario,EstiloSidebar")] Tenant tenant)
+    // 🔌 Agregado 'TieneModuloHerramientas' al Bind de creación
+    public async Task<IActionResult> Create([Bind("Id,NombreNegocio,Subdominio,PlanSuscripcion,Activo,FechaRegistro,ColorPrimario,ColorSecundario,EstiloSidebar,TieneModuloHerramientas")] Tenant tenant)
     {
         if (ModelState.IsValid)
         {
@@ -58,7 +55,6 @@ public class TenantsController : Controller
         return View(tenant);
     }
 
-    // GET: Tenants/Edit/5
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
@@ -69,10 +65,10 @@ public class TenantsController : Controller
         return View(tenant);
     }
 
-    // POST: Tenants/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,NombreNegocio,Subdominio,PlanSuscripcion,Activo,FechaRegistro,CerradoPorEmergencia,FechaUltimoCierre,ColorPrimario,ColorSecundario,EstiloSidebar")] Tenant tenant)
+    // 🔌 Agregado 'TieneModuloHerramientas' al Bind de edición
+    public async Task<IActionResult> Edit(int id, [Bind("Id,NombreNegocio,Subdominio,PlanSuscripcion,Activo,FechaRegistro,CerradoPorEmergencia,FechaUltimoCierre,ColorPrimario,ColorSecundario,EstiloSidebar,TieneModuloHerramientas")] Tenant tenant)
     {
         if (id != tenant.Id) return NotFound();
 
@@ -92,7 +88,6 @@ public class TenantsController : Controller
         return View(tenant);
     }
 
-    // GET: Tenants/Delete/5
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
@@ -103,7 +98,6 @@ public class TenantsController : Controller
         return View(tenant);
     }
 
-    // POST: Tenants/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
@@ -112,16 +106,9 @@ public class TenantsController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-
-    // =======================================================
-    // 🚨 MÉTODOS DE CONTINGENCIA: CIERRE DE EMERGENCIA (SaaS)
-    // =======================================================
-
-    // GET: Tenants/DashboardSede
     [Authorize(Roles = "AdminBarberia")]
     public async Task<IActionResult> DashboardSede()
     {
-        // 1. Conseguir el TenantId del Administrador logueado
         var usuarioIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(usuarioIdStr)) return RedirectToAction("Login", "Account");
         int usuarioId = int.Parse(usuarioIdStr);
@@ -132,7 +119,6 @@ public class TenantsController : Controller
         int miTenantId = usuarioDb.TenantId.Value;
         var tenant = await _context.Tenants.FindAsync(miTenantId);
 
-        // 2. Control inteligente: Si el cierre fue ayer o antes, auto-reabrir la agenda hoy
         if (tenant.CerradoPorEmergencia && tenant.FechaUltimoCierre.HasValue && tenant.FechaUltimoCierre.Value.Date < DateTime.Today)
         {
             tenant.CerradoPorEmergencia = false;
@@ -141,7 +127,6 @@ public class TenantsController : Controller
             await _context.SaveChangesAsync();
         }
 
-        // 3. Buscar las citas puestas para HOY que se van a joder por el cierre
         var citasAfectadasHoy = await _context.Citas
             .Where(c => c.TenantId == miTenantId
                      && c.FechaHora.Date == DateTime.Today
@@ -156,7 +141,6 @@ public class TenantsController : Controller
         return View(tenant);
     }
 
-    // POST: Tenants/CambiarEstadoEmergencia
     [HttpPost]
     [Authorize(Roles = "AdminBarberia")]
     [ValidateAntiForgeryToken]
@@ -173,21 +157,18 @@ public class TenantsController : Controller
 
         return RedirectToAction(nameof(DashboardSede));
     }
-    // GET: Tenants/SuperDashboard
+
     [Authorize(Roles = "SuperAdmin")]
     public async Task<IActionResult> SuperDashboard()
     {
-        // 🌟 Apagamos los filtros globales para consolidar TODO el SaaS
         var todosLosTenants = await _context.Tenants.IgnoreQueryFilters().ToListAsync();
         var todosLosUsuarios = await _context.Usuarios.IgnoreQueryFilters().CountAsync();
 
-        // Calcular la plata estimada según los planes activos de tus clientes
         decimal totalRecaudado = todosLosTenants.Where(t => t.Activo == true).Sum(t =>
             t.PlanSuscripcion == "Oro" ? 150000m :
-            t.PlanSuscripcion == "Plata" ? 100000m : 50000m // Prejos de ejemplo en COP 🇨🇴
+            t.PlanSuscripcion == "Plata" ? 100000m : 50000m
         );
 
-        // Agrupar los planes para el gráfico de torta
         var distribucionPlanes = todosLosTenants
             .GroupBy(t => t.PlanSuscripcion)
             .ToDictionary(g => g.Key ?? "Sin Plan", g => g.Count());

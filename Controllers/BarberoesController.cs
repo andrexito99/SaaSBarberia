@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -9,10 +10,11 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
+[Authorize]
 public class BarberoesController : Controller
 {
     private readonly BarberoService _barberoService;
-    private readonly CitaService _citaService; // 🌟 Inyectamos para reutilizar la búsqueda del usuario base
+    private readonly CitaService _citaService;
 
     public BarberoesController(BarberoService barberoService, CitaService citaService)
     {
@@ -20,30 +22,23 @@ public class BarberoesController : Controller
         _citaService = citaService;
     }
 
+    // 🔍 PROPIEDADES DINÁMICAS PARA LOGS Y AUDITORÍA
+    private int CurrentUsuarioId => int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out int userId) ? userId : 0;
+    private string CurrentUserIp => HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+
     // GET: Barberoes
     public async Task<IActionResult> Index()
     {
-        var usuarioIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrEmpty(usuarioIdStr)) return RedirectToAction("Login", "Account");
-        int usuarioId = int.Parse(usuarioIdStr);
+        if (CurrentUsuarioId == 0) return RedirectToAction("Login", "Account");
 
         var barberos = await _barberoService.ObtenerTodosConRelacionesAsync();
 
-        // 🔒 AISLAMIENTO MULTI-TENANT: Si es Admin local o Barbero, solo ve su sede
-        if (User.IsInRole("AdminBarberia") || User.IsInRole("Barbero"))
+        if (User.IsInRole("AdminBarberia") || User.IsInRole("Barbero") || User.IsInRole("Cliente"))
         {
-            var empleado = await _citaService.ObtenerClientePorIdAsync(usuarioId);
-            if (empleado != null && empleado.TenantId != null)
+            var cuenta = await _citaService.ObtenerClientePorIdAsync(CurrentUsuarioId);
+            if (cuenta != null && cuenta.TenantId != null)
             {
-                barberos = barberos.Where(b => b.TenantId == empleado.TenantId.Value).ToList();
-            }
-        }
-        else if (User.IsInRole("Cliente"))
-        {
-            var cliente = await _citaService.ObtenerClientePorIdAsync(usuarioId);
-            if (cliente != null && cliente.TenantId != null)
-            {
-                barberos = barberos.Where(b => b.TenantId == cliente.TenantId.Value).ToList();
+                barberos = barberos.Where(b => b.TenantId == cuenta.TenantId.Value).ToList();
             }
         }
 
@@ -64,19 +59,17 @@ public class BarberoesController : Controller
     // GET: Barberoes/Create
     public async Task<IActionResult> Create()
     {
-        var usuarioIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        int usuarioId = int.Parse(usuarioIdStr ?? "0");
+        if (CurrentUsuarioId == 0) return RedirectToAction("Login", "Account");
 
         var usuarios = await _barberoService.ObtenerUsuariosDisponiblesAsync();
         var tenants = await _barberoService.ObtenerTenantsAsync();
 
         if (User.IsInRole("AdminBarberia"))
         {
-            var adminDb = await _citaService.ObtenerClientePorIdAsync(usuarioId);
+            var adminDb = await _citaService.ObtenerClientePorIdAsync(CurrentUsuarioId);
             if (adminDb != null && adminDb.TenantId != null)
             {
                 int miTenantId = adminDb.TenantId.Value;
-                // Filtrar usuarios que pertenecen a esta misma sede
                 ViewBag.UsuarioId = new SelectList(usuarios.Where(u => u.TenantId == miTenantId), "Id", "Nombre");
                 ViewBag.TenantId = new SelectList(tenants.Where(t => t.Id == miTenantId), "Id", "NombreNegocio", miTenantId);
             }
@@ -110,7 +103,7 @@ public class BarberoesController : Controller
                 }
             }
 
-            await _barberoService.GuardarAsync(barbero);
+            await _barberoService.GuardarAsync(barbero, CurrentUsuarioId, CurrentUserIp);
             return RedirectToAction(nameof(Index));
         }
 
@@ -186,7 +179,7 @@ public class BarberoesController : Controller
                     }
                 }
 
-                await _barberoService.GuardarAsync(barbero);
+                await _barberoService.GuardarAsync(barbero, CurrentUsuarioId, CurrentUserIp);
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -228,7 +221,7 @@ public class BarberoesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await _barberoService.EliminarAsync(id);
+        await _barberoService.EliminarAsync(id, CurrentUsuarioId, CurrentUserIp);
         return RedirectToAction(nameof(Index));
     }
 }

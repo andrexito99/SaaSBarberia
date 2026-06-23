@@ -50,6 +50,13 @@
                     <span asp-validation-for="ColorSecundario" class="text-danger"></span>
                 </div>
             </div>
+            <div class="form-check form-switch mb-3 card p-3 shadow-sm border-warning">
+                <input class="form-check-input ms-0 me-2" type="checkbox" asp-for="TieneModuloHerramientas" id="TieneModuloHerramientas">
+                <label class="form-check-label fw-bold text-dark" for="TieneModuloHerramientas">
+                    🔌 Habilitar Módulo de Alquiler de Máquinas / Herramientas
+                </label>
+                <small class="text-muted d-block mt-1">Si activas esto, esta barbería tendrá acceso prioritario al inventario y préstamo interno de maquinaria.</small>
+            </div>
 
             <div class="mb-3">
                 <label asp-for="EstiloSidebar" class="form-label fw-semibold">Diseño y Posición del Menú</label>

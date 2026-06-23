@@ -1,130 +1,137 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SaaSBarberia.Models;
 using SaaSBarberia.Services;
 using System;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
-public class FacturasController : Controller
+namespace SaaSBarberia.Controllers
 {
-    private readonly FacturaService _facturaService;
-
-    public FacturasController(FacturaService facturaService)
+    [Authorize]
+    public class FacturasController : Controller
     {
-        _facturaService = facturaService;
-    }
+        private readonly FacturaService _facturaService;
 
-    // GET: Facturas
-    public async Task<IActionResult> Index()
-    {
-        return View(await _facturaService.ObtenerTodasConRelacionesAsync());
-    }
-
-    // GET: Facturas/Details/5
-    public async Task<IActionResult> Details(int? id)
-    {
-        if (id == null) return NotFound();
-
-        var factura = await _facturaService.ObtenerPorIdAsync(id.Value);
-        if (factura == null) return NotFound();
-
-        return View(factura);
-    }
-
-    // GET: Facturas/Create
-    public async Task<IActionResult> Create()
-    {
-        var citas = await _facturaService.ObtenerCitasDisponiblesAsync();
-        ViewBag.CitaId = new SelectList(citas, "Id", "Id");
-        ViewBag.TenantId = new SelectList(await _facturaService.ObtenerTenantsAsync(), "Id", "NombreNegocio");
-
-        // 🌟 CORRECCIÓN: Limpiamos los segundos y milisegundos del DateTime actual
-        var ahora = DateTime.Now;
-        var fechaLimpia = new DateTime(ahora.Year, ahora.Month, ahora.Day, ahora.Hour, ahora.Minute, 0, 0);
-
-        return View(new Factura { FechaPago = fechaLimpia });
-    }
-
-    // POST: Facturas/Create
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,TenantId,CitaId,Total,MetodoPago,FechaPago")] Factura factura)
-    {
-        // 🌟 CORRECCIÓN: Remoción estratégica de relaciones virtuales para que pase la validación básica
-        ModelState.Remove(nameof(factura.Tenant));
-        ModelState.Remove(nameof(factura.Cita));
-
-        if (ModelState.IsValid)
+        public FacturasController(FacturaService facturaService)
         {
-            await _facturaService.GuardarAsync(factura);
-            return RedirectToAction(nameof(Index));
+            _facturaService = facturaService;
         }
 
-        ViewBag.CitaId = new SelectList(await _facturaService.ObtenerCitasDisponiblesAsync(), "Id", "Id", factura.CitaId);
-        ViewBag.TenantId = new SelectList(await _facturaService.ObtenerTenantsAsync(), "Id", "NombreNegocio", factura.TenantId);
-        return View(factura);
-    }
+        // 🔍 PROPIEDADES DINÁMICAS DE ENTRADA DE AUDITORÍA
+        private int CurrentUsuarioId => int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out int userId) ? userId : 0;
+        private string CurrentUserIp => HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
 
-    // GET: Facturas/Edit/5
-    public async Task<IActionResult> Edit(int? id)
-    {
-        if (id == null) return NotFound();
-
-        var factura = await _facturaService.ObtenerPorIdAsync(id.Value);
-        if (factura == null) return NotFound();
-
-        ViewBag.CitaId = new SelectList(await _facturaService.ObtenerCitasDisponiblesAsync(), "Id", "Id", factura.CitaId);
-        ViewBag.TenantId = new SelectList(await _facturaService.ObtenerTenantsAsync(), "Id", "NombreNegocio", factura.TenantId);
-        return View(factura);
-    }
-
-    // POST: Facturas/Edit/5
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,TenantId,CitaId,Total,MetodoPago,FechaPago")] Factura factura)
-    {
-        if (id != factura.Id) return NotFound();
-
-        // 🌟 CORRECCIÓN: También removemos los objetos virtuales en el Edit
-        ModelState.Remove(nameof(factura.Tenant));
-        ModelState.Remove(nameof(factura.Cita));
-
-        if (ModelState.IsValid)
+        // GET: Facturas
+        public async Task<IActionResult> Index()
         {
-            try
+            return View(await _facturaService.ObtenerTodasConRelacionesAsync());
+        }
+
+        // GET: Facturas/Details/5
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var factura = await _facturaService.ObtenerPorIdAsync(id.Value);
+            if (factura == null) return NotFound();
+
+            return View(factura);
+        }
+
+        // GET: Facturas/Create
+        public async Task<IActionResult> Create()
+        {
+            var citas = await _facturaService.ObtenerCitasDisponiblesAsync();
+            ViewBag.CitaId = new SelectList(citas, "Id", "Id");
+            ViewBag.TenantId = new SelectList(await _facturaService.ObtenerTenantsAsync(), "Id", "NombreNegocio");
+
+            var ahora = DateTime.Now;
+            var fechaLimpia = new DateTime(ahora.Year, ahora.Month, ahora.Day, ahora.Hour, ahora.Minute, 0, 0);
+
+            return View(new Factura { FechaPago = fechaLimpia });
+        }
+
+        // POST: Facturas/Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create([Bind("Id,TenantId,CitaId,Total,MetodoPago,FechaPago")] Factura factura)
+        {
+            ModelState.Remove(nameof(factura.Tenant));
+            ModelState.Remove(nameof(factura.Cita));
+
+            if (ModelState.IsValid)
             {
-                await _facturaService.GuardarAsync(factura);
+                await _facturaService.GuardarAsync(factura, CurrentUsuarioId, CurrentUserIp);
+                return RedirectToAction(nameof(Index));
             }
-            catch (DbUpdateConcurrencyException)
+
+            ViewBag.CitaId = new SelectList(await _facturaService.ObtenerCitasDisponiblesAsync(), "Id", "Id", factura.CitaId);
+            ViewBag.TenantId = new SelectList(await _facturaService.ObtenerTenantsAsync(), "Id", "NombreNegocio", factura.TenantId);
+            return View(factura);
+        }
+
+        // GET: Facturas/Edit/5
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var factura = await _facturaService.ObtenerPorIdAsync(id.Value);
+            if (factura == null) return NotFound();
+
+            ViewBag.CitaId = new SelectList(await _facturaService.ObtenerCitasDisponiblesAsync(), "Id", "Id", factura.CitaId);
+            ViewBag.TenantId = new SelectList(await _facturaService.ObtenerTenantsAsync(), "Id", "NombreNegocio", factura.TenantId);
+            return View(factura);
+        }
+
+        // POST: Facturas/Edit/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, [Bind("Id,TenantId,CitaId,Total,MetodoPago,FechaPago")] Factura factura)
+        {
+            if (id != factura.Id) return NotFound();
+
+            ModelState.Remove(nameof(factura.Tenant));
+            ModelState.Remove(nameof(factura.Cita));
+
+            if (ModelState.IsValid)
             {
-                if (!_facturaService.Existe(factura.Id)) return NotFound();
-                else throw;
+                try
+                {
+                    await _facturaService.GuardarAsync(factura, CurrentUsuarioId, CurrentUserIp);
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!_facturaService.Existe(factura.Id)) return NotFound();
+                    else throw;
+                }
+                return RedirectToAction(nameof(Index));
             }
+            ViewBag.CitaId = new SelectList(await _facturaService.ObtenerCitasDisponiblesAsync(), "Id", "Id", factura.CitaId);
+            ViewBag.TenantId = new SelectList(await _facturaService.ObtenerTenantsAsync(), "Id", "NombreNegocio", factura.TenantId);
+            return View(factura);
+        }
+
+        // GET: Facturas/Delete/5
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var factura = await _facturaService.ObtenerPorIdAsync(id.Value);
+            if (factura == null) return NotFound();
+
+            return View(factura);
+        }
+
+        // POST: Facturas/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            await _facturaService.EliminarAsync(id, CurrentUsuarioId, CurrentUserIp);
             return RedirectToAction(nameof(Index));
         }
-        ViewBag.CitaId = new SelectList(await _facturaService.ObtenerCitasDisponiblesAsync(), "Id", "Id", factura.CitaId);
-        ViewBag.TenantId = new SelectList(await _facturaService.ObtenerTenantsAsync(), "Id", "NombreNegocio", factura.TenantId);
-        return View(factura);
-    }
-
-    // GET: Facturas/Delete/5
-    public async Task<IActionResult> Delete(int? id)
-    {
-        if (id == null) return NotFound();
-
-        var factura = await _facturaService.ObtenerPorIdAsync(id.Value);
-        if (factura == null) return NotFound();
-
-        return View(factura);
-    }
-
-    // POST: Facturas/Delete/5
-    [HttpPost, ActionName("Delete")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(int id)
-    {
-        await _facturaService.EliminarAsync(id);
-        return RedirectToAction(nameof(Index));
     }
 }

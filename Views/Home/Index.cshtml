@@ -7,12 +7,12 @@
 <div class="container mt-4">
     <div class="p-5 mb-4 bg-dark text-white rounded-3 shadow-sm text-center position-relative overflow-hidden">
         <div class="position-absolute top-0 start-0 w-100 h-100 bg-gradient" style="opacity: 0.1; background: linear-gradient(45deg, #ff0000, #0000ff);"></div>
-        <h1 class="display-4 fw-bold mb-2">¡Otra vez tu, care verga, ¿ahora que?! 💈😂</h1>
+        <h1 class="display-4 fw-bold mb-2">Hola, Administrador 💈😂</h1>
         <p class="fs-5 text-muted">Bienvenido al núcleo operacional de tu SaaS de Barberías. Todo está sincronizado y listo para camellar.</p>
     </div>
 
     @* 📊 ======================================================== *@
-    @* 🌟 SECCIÓN EXCLUSIVA DEL DASHBOARD PARA ADMINBARBERIA       *@
+    @* 🌟 SECCIÓN OPERATIVA DEL DASHBOARD PARA ADMINBARBERIA        *@
     @* ========================================================== *@
     @if (User.IsInRole("AdminBarberia") && Model != null)
     {
@@ -27,47 +27,49 @@
                     <div class="card border-0 shadow-sm bg-white p-3 border-start border-4 border-primary h-100 transition-card">
                         <small class="text-secondary uppercase fw-bold small">Citas de Hoy</small>
                         <h2 class="fw-bold text-dark my-1">📆 @Model.CitasParaHoy</h2>
-                        <small class="text-muted">Por atender</small>
+                        <small class="text-muted">Por atender hoy</small>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="card border-0 shadow-sm bg-white p-3 border-start border-4 border-success h-100 transition-card">
-                        <small class="text-secondary uppercase fw-bold small">Ingresos Mensuales</small>
-                        <h2 class="fw-bold text-success my-1">$@Model.IngresosMesActual.ToString("N0")</h2>
-                        <small class="text-muted">Mes en curso</small>
+                        <small class="text-secondary uppercase fw-bold small">Personal de Staff</small>
+                        <h2 class="fw-bold text-success my-1">💈 @Model.TotalBarberos</h2>
+                        <small class="text-muted">Barberos activos</small>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="card border-0 shadow-sm bg-white p-3 border-start border-4 border-info h-100 transition-card">
-                        <small class="text-secondary uppercase fw-bold small">Servicios Totales</small>
-                        <h2 class="fw-bold text-dark my-1">✂️ @Model.TotalServiciosRealizados</h2>
-                        <small class="text-muted">Cortes cobrados</small>
+                        <small class="text-secondary uppercase fw-bold small">Portafolio Actual</small>
+                        <h2 class="fw-bold text-dark my-1">✂️ @Model.TotalServiciosOfrecidos</h2>
+                        <small class="text-muted">Servicios en el catálogo</small>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="card border-0 shadow-sm bg-dark text-white p-3 h-100 transition-card">
-                        <small class="text-white-50 uppercase fw-bold small">🏆 Barbero Estrella</small>
+                        <small class="text-white-50 uppercase fw-bold small">🏆 Líder en Citas (Mes)</small>
                         <h4 class="fw-bold text-warning mt-2 mb-1 text-truncate">@Model.BarberoEstrella</h4>
-                        <small class="text-white-50">@Model.CortesBarberoEstrella servicios completados</small>
+                        <small class="text-white-50">@Model.CortesBarberoEstrella turnos reservados</small>
                     </div>
                 </div>
             </div>
 
             <div class="row g-4 mb-2">
+                @* Gráfico de Citas por Barbero *@
                 <div class="col-md-7">
                     <div class="card border-0 shadow-sm p-3 h-100">
-                        <h5 class="fw-bold text-dark mb-3">💵 Historial de Ventas (7 Días)</h5>
+                        <h5 class="fw-bold text-dark mb-3">💇‍♂️ Citas Asignadas por Barbero</h5>
                         <div style="position: relative; height:260px; width:100%">
-                            <canvas id="chartVentasSede"></canvas>
+                            <canvas id="chartBarberosSede"></canvas>
                         </div>
                     </div>
                 </div>
 
+                @* Gráfico del Estado de las Citas *@
                 <div class="col-md-5">
                     <div class="card border-0 shadow-sm p-3 h-100">
-                        <h5 class="fw-bold text-dark mb-3">💈 Servicios Más Demandados</h5>
+                        <h5 class="fw-bold text-dark mb-3">📈 Estado de las Citas del Mes</h5>
                         <div style="position: relative; height:260px; width:100%">
-                            <canvas id="chartServiciosSede"></canvas>
+                            <canvas id="chartEstadosCitas"></canvas>
                         </div>
                     </div>
                 </div>
@@ -175,45 +177,54 @@
         }
 </style>
 
-@* 🛠️ SCRIPTS DE CHART.JS EXCLUSIVOS PARA CUANDO SE RENDERICE EL DASHBOARD *@
+@* 🛠️ SCRIPTS DE CHART.JS CORREGIDOS CON LA NUEVA DATA OPERATIVA *@
 @if (User.IsInRole("AdminBarberia") && Model != null)
 {
     @section Scripts {
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
-            // 1. Data del gráfico de Ventas Semanales
-            const datosVentas = @Html.Raw(Json.Serialize(Model.VentasUltimosDias));
-            const labelsVentas = Object.keys(datosVentas).length ? Object.keys(datosVentas) : ["Sin datos"];
-            const valoresVentas = Object.values(datosVentas).length ? Object.values(datosVentas) : [0];
+            // 1. Gráfico de Citas Totales por Barbero (Barras)
+            const datosBarberos = @Html.Raw(Json.Serialize(Model.ClientesPorBarbero));
+            const labelsBarberos = Object.keys(datosBarberos).length ? Object.keys(datosBarberos) : ["Sin barberos"];
+            const valoresBarberos = Object.values(datosBarberos).length ? Object.values(datosBarberos) : [0];
 
-            const ctxVentas = document.getElementById('chartVentasSede').getContext('2d');
-            new Chart(ctxVentas, {
+            const ctxBarberos = document.getElementById('chartBarberosSede').getContext('2d');
+            new Chart(ctxBarberos, {
             type: 'bar',
             data: {
-            labels: labelsVentas,
+            labels: labelsBarberos,
             datasets: [{
-            label: 'Ingresos ($)',
-            data: valoresVentas,
+            label: 'Número de Citas',
+            data: valoresBarberos,
             backgroundColor: '#0d6efd',
             borderRadius: 5
             }]
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+            y: {
+            beginAtZero: true,
+            ticks: { stepSize: 1 }
+            }
+            }
+            }
             });
 
-            // 2. Data del gráfico de Servicios Populares
-            const datosServicios = @Html.Raw(Json.Serialize(Model.ServiciosMasPedidos));
-            const labelsServicios = Object.keys(datosServicios).length ? Object.keys(datosServicios) : ["Sin servicios"];
-            const valoresServicios = Object.values(datosServicios).length ? Object.values(datosServicios) : [0];
+            // 2. Gráfico de Resumen de Citas por Estado (Torta)
+            const datosEstados = @Html.Raw(Json.Serialize(Model.ResumenCitasPorEstado));
+            const labelsEstados = Object.keys(datosEstados).length ? Object.keys(datosEstados) : ["Sin estados"];
+            const valoresEstados = Object.values(datosEstados).length ? Object.values(datosEstados) : [0];
 
-            const ctxServicios = document.getElementById('chartServiciosSede').getContext('2d');
-            new Chart(ctxServicios, {
+            const ctxEstados = document.getElementById('chartEstadosCitas').getContext('2d');
+            new Chart(ctxEstados, {
             type: 'pie',
             data: {
-            labels: labelsServicios,
+            labels: labelsEstados,
             datasets: [{
-            data: valoresServicios,
-            backgroundColor: ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#6c757d']
+            data: valoresEstados,
+            backgroundColor: ['#ffc107', '#198754', '#dc3545'] // Amarillo (Pendiente), Verde (Completada), Rojo (Cancelada)
             }]
             },
             options: { responsive: true, maintainAspectRatio: false }

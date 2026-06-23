@@ -4,6 +4,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http; // 🌟 Necesario para acceder a HttpContext
 using Microsoft.EntityFrameworkCore;
 using SaaSBarberia.Models;
+using SaaSBarberia.Services;
 
 namespace SaaSBarberia.Data;
 
@@ -11,7 +12,7 @@ public partial class BarberSaaSDbContext : DbContext
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
 
-    // Conductor por defecto obligatorio para migraciones o herramientas de EF
+    // Constructor por defecto obligatorio para migraciones o herramientas de EF
     public BarberSaaSDbContext()
     {
     }
@@ -42,15 +43,28 @@ public partial class BarberSaaSDbContext : DbContext
     // 👑 PROPIEDAD INTELIGENTE: Evalúa si el usuario en sesión es SuperAdmin
     public bool EsSuperAdmin => _httpContextAccessor?.HttpContext?.User?.IsInRole("SuperAdmin") ?? false;
 
+    // ========================================================
+    // 🗄️ DBSETS DEL NÚCLEO DEL NEGOCIO
+    // ========================================================
     public virtual DbSet<Barbero> Barberos { get; set; }
     public virtual DbSet<Cita> Citas { get; set; }
     public virtual DbSet<Factura> Facturas { get; set; }
     public virtual DbSet<Role> Roles { get; set; }
     public virtual DbSet<Servicio> Servicios { get; set; }
     public virtual DbSet<Tenant> Tenants { get; set; }
+    public DbSet<Auditoria> Auditorias { get; set; }
     public virtual DbSet<Usuario> Usuarios { get; set; }
 
-    // 💵 NUEVOS DBSETS PARA EL MÓDULO DE CAJA
+    // ========================================================
+    // 🗄️ DBSETS DE CATÁLOGO Y GESTIÓN DE HERRAMIENTAS (¡Solo Plurales!)
+    // ========================================================
+    public DbSet<Producto> Productos { get; set; }
+    public DbSet<Herramienta> Herramientas { get; set; }
+    public DbSet<AlquilerHerramienta> AlquileresHerramientas { get; set; }
+
+    // ========================================================
+    // 🗄️ DBSETS MÓDULO DE CAJA
+    // ========================================================
     public virtual DbSet<MovimientoCaja> MovimientosCaja { get; set; }
     public virtual DbSet<DetalleCaja> DetallesCaja { get; set; }
 
@@ -60,18 +74,45 @@ public partial class BarberSaaSDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // ========================================================
-        // 🛡️ REGLAS DE FILTRADO GLOBAL MULTI-TENANT
-        // ========================================================
+        // Global Query Filters para Multi-tenant
         modelBuilder.Entity<Servicio>().HasQueryFilter(s => EsSuperAdmin || s.TenantId == TenantIdActual);
         modelBuilder.Entity<Cita>().HasQueryFilter(c => EsSuperAdmin || c.TenantId == TenantIdActual);
         modelBuilder.Entity<Barbero>().HasQueryFilter(b => EsSuperAdmin || b.TenantId == TenantIdActual);
         modelBuilder.Entity<Factura>().HasQueryFilter(f => EsSuperAdmin || f.TenantId == TenantIdActual);
         modelBuilder.Entity<Usuario>().HasQueryFilter(u => EsSuperAdmin || u.TenantId == TenantIdActual);
-
-        // 🌟 Filtro automático asignado a los movimientos de la caja
         modelBuilder.Entity<MovimientoCaja>().HasQueryFilter(mc => EsSuperAdmin || mc.TenantId == TenantIdActual);
 
+        // ========================================================
+        // 📐 MAPEOS: PRODUCTOS, HERRAMIENTAS Y ALQUILERES
+        // ========================================================
+        modelBuilder.Entity<Producto>(entity =>
+        {
+            entity.ToTable("Productos");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.PrecioVenta).HasColumnType("decimal(18, 2)");
+        });
+
+        modelBuilder.Entity<Herramienta>(entity =>
+        {
+            entity.ToTable("Herramientas");
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<AlquilerHerramienta>(entity =>
+        {
+            entity.ToTable("AlquileresHerramientas"); // Forzamos el nombre exacto de la BD
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.CostoAlquiler).HasColumnType("decimal(18, 2)");
+
+            // Mapeo manual de llaves foráneas
+            entity.HasOne(a => a.Herramienta)
+                  .WithMany()
+                  .HasForeignKey(a => a.HerramientaId);
+
+            entity.HasOne(a => a.Barbero)
+                  .WithMany()
+                  .HasForeignKey(a => a.BarberoId);
+        });
 
         // ========================================================
         // 📐 MAPEOS Y CONFIGURACIONES DE TABLAS (Módulo de Caja)
@@ -115,9 +156,8 @@ public partial class BarberSaaSDbContext : DbContext
                 .HasConstraintName("FK_DetallesCaja_MovimientosCaja");
         });
 
-
         // ========================================================
-        // 📐 MAPEOS ORIGINALES DE TU BASE DE DATO
+        // 📐 MAPEOS ORIGINALES DE LA BASE DE DATOS
         // ========================================================
         modelBuilder.Entity<Barbero>(entity =>
         {

@@ -9,20 +9,23 @@ namespace SaaSBarberia.Services;
 public class CajaService
 {
     private readonly BarberSaaSDbContext _context;
+    private readonly IAuditoriaService _auditoriaService; // 🚨 El vigilante inyectado
 
-    public CajaService(BarberSaaSDbContext context)
+    public CajaService(BarberSaaSDbContext context, IAuditoriaService auditoriaService)
     {
         _context = context;
+        _auditoriaService = auditoriaService;
     }
 
-    public async Task<MovimientoCaja> ObtenerCajaActivaAsync()
+    public async Task<MovimientoCaja?> ObtenerCajaActivaAsync()
     {
         return await _context.MovimientosCaja
             .Include(c => c.DetallesCaja)
             .FirstOrDefaultAsync(c => c.Estado == "Abierta");
     }
 
-    public async Task AbrirCajaAsync(decimal montoInicial, int usuarioId, int tenantId)
+    // 🔓 APERTURA DE CAJA CON AUDITORÍA
+    public async Task AbrirCajaAsync(decimal montoInicial, int usuarioId, int tenantId, string ip)
     {
         var nuevaCaja = new MovimientoCaja
         {
@@ -36,9 +39,21 @@ public class CajaService
 
         _context.MovimientosCaja.Add(nuevaCaja);
         await _context.SaveChangesAsync();
+
+        // 🔥 Registrar el rastro de apertura
+        await _auditoriaService.RegistrarAsync(
+            tenantId,
+            usuarioId,
+            "Caja",
+            nuevaCaja.Id.ToString(),
+            "Abrir Caja",
+            $"Se realizó la apertura de caja chica ID {nuevaCaja.Id}. Monto inicial reportado: ${montoInicial.ToString("N2")}.",
+            ip
+        );
     }
 
-    public async Task RegistrarMovimientoManualAsync(int cajaId, decimal monto, string tipo, string descripcion)
+    // 💸 MOVIMIENTOS MANUALES (INGRESOS / EGRESOS)
+    public async Task RegistrarMovimientoManualAsync(int cajaId, decimal monto, string tipo, string descripcion, int usuarioId, string ip)
     {
         var caja = await _context.MovimientosCaja.FindAsync(cajaId);
         if (caja == null || caja.Estado == "Cerrada") return;
@@ -57,9 +72,21 @@ public class CajaService
 
         _context.DetallesCaja.Add(detalle);
         await _context.SaveChangesAsync();
+
+        // 🔥 Registrar si fue entrada o salida de plata
+        await _auditoriaService.RegistrarAsync(
+            caja.TenantId,
+            usuarioId,
+            "Caja",
+            cajaId.ToString(),
+            $"Movimiento_{tipo}",
+            $"Registro manual de {tipo}. Monto: ${monto.ToString("N2")}. Descripción: {descripcion}. Nuevo saldo calculado: ${caja.MontoFinalCalculado.ToString("N2")}.",
+            ip
+        );
     }
 
-    public async Task CerrarCajaAsync(int cajaId, decimal montoReal)
+    // 🔒 CIERRE DE CAJA (CÁLCULO DE DESCUADRES)
+    public async Task CerrarCajaAsync(int cajaId, decimal montoReal, int usuarioId, string ip)
     {
         var caja = await _context.MovimientosCaja.FindAsync(cajaId);
         if (caja == null) return;
@@ -68,6 +95,22 @@ public class CajaService
         caja.Estado = "Cerrada";
         caja.FechaCierre = DateTime.Now;
 
+        decimal diferencia = montoReal - caja.MontoFinalCalculado;
+        string estadoDescuadre = diferencia == 0
+            ? "Caja cuadrada a la perfección."
+            : $"¡Caja Descuadrada! Diferencia: ${(diferencia).ToString("N2")} (Calculado: ${caja.MontoFinalCalculado.ToString("N2")} vs Real: ${montoReal.ToString("N2")}).";
+
         await _context.SaveChangesAsync();
+
+        // 🔥 Registrar el cierre de caja con la alerta del dinero real
+        await _auditoriaService.RegistrarAsync(
+            caja.TenantId,
+            usuarioId,
+            "Caja",
+            cajaId.ToString(),
+            "Cerrar Caja",
+            $"Cierre de caja ID {cajaId}. {estadoDescuadre}",
+            ip
+        );
     }
 }

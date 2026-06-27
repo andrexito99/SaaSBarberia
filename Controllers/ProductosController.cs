@@ -13,11 +13,11 @@ namespace SaaSBarberia.Controllers
 {
     [Authorize]
     [TenantAuthorize]
-    public class ProductoesController : Controller
+    public class ProductosController : Controller
     {
         private readonly IProductosService _productosService;
 
-        public ProductoesController(IProductosService productosService)
+        public ProductosController(IProductosService productosService)
         {
             _productosService = productosService;
         }

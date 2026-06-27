@@ -11,12 +11,12 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 
 [Authorize]
-public class BarberoesController : Controller
+public class BarberosController : Controller
 {
     private readonly BarberoService _barberoService;
     private readonly CitaService _citaService;
 
-    public BarberoesController(BarberoService barberoService, CitaService citaService)
+    public BarberosController(BarberoService barberoService, CitaService citaService)
     {
         _barberoService = barberoService;
         _citaService = citaService;

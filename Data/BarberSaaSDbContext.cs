@@ -74,7 +74,9 @@ public partial class BarberSaaSDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Global Query Filters para Multi-tenant
+        // ========================================================
+        // 🔒 GLOBAL QUERY FILTERS PARA MULTI-TENANT
+        // ========================================================
         modelBuilder.Entity<Servicio>().HasQueryFilter(s => EsSuperAdmin || s.TenantId == TenantIdActual);
         modelBuilder.Entity<Cita>().HasQueryFilter(c => EsSuperAdmin || c.TenantId == TenantIdActual);
         modelBuilder.Entity<Barbero>().HasQueryFilter(b => EsSuperAdmin || b.TenantId == TenantIdActual);

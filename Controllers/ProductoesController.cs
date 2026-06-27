@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -35,7 +36,7 @@ namespace SaaSBarberia.Controllers
             }
         }
 
-        // 🔍 MÉTODOS DE AYUDA INTERNOS PARA EXTRAER USUARIO E IP
+        // 🔍 MÉTODOS DE AYUDA INTERNOS PARA EXTRAER USUARIO E IP (Para la Auditoría)
         private int CurrentUsuarioId => int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out int userId) ? userId : 0;
         private string CurrentUserIp => HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
 
@@ -43,14 +44,14 @@ namespace SaaSBarberia.Controllers
         // 🔓 VISTAS COMPARTIDAS (Entran Clientes, AdminBarberia y SuperAdmin)
         // =======================================================================
 
-        // GET: Productoes
+        // GET: Productos
         public async Task<IActionResult> Index()
         {
             var productos = await _productosService.GetAllAsync(CurrentTenantId);
             return View(productos);
         }
 
-        // GET: Productoes/Details/5
+        // GET: Productos/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
@@ -65,14 +66,14 @@ namespace SaaSBarberia.Controllers
         // 🚨 MÉTODOS ADMINISTRATIVOS (El Cliente tiene el acceso totalmente denegado)
         // =======================================================================
 
-        // GET: Productoes/Create
+        // GET: Productos/Create
         [Authorize(Roles = "AdminBarberia,SuperAdmin")]
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Productoes/Create
+        // POST: Productos/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "AdminBarberia,SuperAdmin")]
@@ -86,7 +87,7 @@ namespace SaaSBarberia.Controllers
             return View(producto);
         }
 
-        // GET: Productoes/Edit/5
+        // GET: Productos/Edit/5
         [Authorize(Roles = "AdminBarberia,SuperAdmin")]
         public async Task<IActionResult> Edit(int? id)
         {
@@ -98,7 +99,7 @@ namespace SaaSBarberia.Controllers
             return View(producto);
         }
 
-        // POST: Productoes/Edit/5
+        // POST: Productos/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "AdminBarberia,SuperAdmin")]
@@ -126,7 +127,7 @@ namespace SaaSBarberia.Controllers
             return View(producto);
         }
 
-        // GET: Productoes/Delete/5
+        // GET: Productos/Delete/5
         [Authorize(Roles = "AdminBarberia,SuperAdmin")]
         public async Task<IActionResult> Delete(int? id)
         {
@@ -138,7 +139,7 @@ namespace SaaSBarberia.Controllers
             return View(producto);
         }
 
-        // POST: Productoes/Delete/5
+        // POST: Productos/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "AdminBarberia,SuperAdmin")]

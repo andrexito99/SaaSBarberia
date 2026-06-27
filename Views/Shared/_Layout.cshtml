@@ -94,7 +94,7 @@
                  style="@(estiloSidebar == "LateralOscuro" ? $"background-color: {colorPrimario} !important;" : "")">
 
                 <a class="navbar-brand fw-bold text-uppercase tracking-wider text-center py-2" asp-controller="Home" asp-action="Index">
-                    💈 <span class="text-tenant-brand">@nombreNegocio</span>
+                    放置 <span class="text-tenant-brand">@nombreNegocio</span>
                 </a>
                 <hr>
                 <ul class="nav nav-pills flex-column mb-auto gap-1">
@@ -104,8 +104,6 @@
                     @if (User.Identity.IsAuthenticated)
                     {
                         <li><a class="nav-link @(estiloSidebar == "LateralClaro" ? "text-dark" : "text-white-50") fw-semibold" asp-controller="Servicios" asp-action="Index">✂️ Servicios</a></li>
-
-                        @* 🌟 NUEVO BOTÓN PRODUCTOS EN SIDEBAR (Visible para todos) *@
                         <li><a class="nav-link @(estiloSidebar == "LateralClaro" ? "text-dark" : "text-white-50") fw-semibold" asp-controller="Productos" asp-action="Index">🛒 Productos</a></li>
 
                         if (!User.IsInRole("Cliente"))
@@ -127,18 +125,17 @@
                     }
                 </ul>
                 <hr>
-                @* 🔐 CONTROL DE ACCESO EN LA BARRA SUPERIOR *@
                 @if (User.Identity != null && User.Identity.IsAuthenticated)
                 {
-                    <div class="d-flex flex-column flex-md-row align-items-md-center gap-2 mt-2 mt-md-0 pt-2 pt-md-0 border-top border-secondary border-md-0">
-                        <span class="text-white small text-truncate">Hola, <strong>@User.Identity.Name</strong></span>
-                        <a class="btn btn-sm btn-danger" asp-controller="Account" asp-action="Logout">Salir</a>
+                    <div class="d-flex flex-column gap-2 pt-2 border-top border-secondary">
+                        <span class="small text-truncate text-white-50">Hola, <strong>@User.Identity.Name</strong></span>
+                        <a class="btn btn-sm btn-danger w-100" asp-controller="Account" asp-action="Logout">Salir</a>
                     </div>
                 }
                 else
                 {
-                    <div class="d-flex align-items-center mt-2 mt-md-0">
-                        <a class="btn btn-sm btn-tenant-action" asp-controller="Account" asp-action="Login">Iniciar Sesión 🔑</a>
+                    <div class="pt-2">
+                        <a class="btn btn-sm btn-tenant-action w-100" asp-controller="Account" asp-action="Login">Iniciar Sesión 🔑</a>
                     </div>
                 }
             </nav>
@@ -166,9 +163,7 @@
                                     @if (User.Identity.IsAuthenticated)
                                     {
                                         <li class="nav-item"><a class="nav-link text-white-50 fw-semibold" asp-controller="Servicios" asp-action="Index">✂️ Servicios</a></li>
-
-                                        @* 🌟 NUEVO BOTÓN PRODUCTOS EN MENÚ SUPERIOR (Visible para todos) *@
-                                        <li class="nav-item"><a class="nav-link text-white-50 fw-semibold" asp-controller="Productoes" asp-action="Index">🛒 Productos</a></li>
+                                        <li class="nav-item"><a class="nav-link text-white-50 fw-semibold" asp-controller="Productos" asp-action="Index">🛒 Productos</a></li>
 
                                         if (!User.IsInRole("Cliente"))
                                         {
@@ -202,7 +197,7 @@
                                         @if (User.Identity != null && User.Identity.IsAuthenticated && User.IsInRole("SuperAdmin"))
                                         {
                                             <li class="nav-item">
-                                                <a class="nav-link text-dark fw-bold" asp-area="" asp-controller="Auditoria" asp-action="Index">
+                                                <a class="nav-link text-dark fw-bold" asp-controller="Auditoria" asp-action="Index">
                                                     <i class="bi bi-shield-lock-fill text-danger"></i> Auditoría Global
                                                 </a>
                                             </li>

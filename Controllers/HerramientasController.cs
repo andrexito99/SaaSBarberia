@@ -3,17 +3,17 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using SaaSBarberia.Data; // Asegúrate de que apunte a tu namespace de Data
+using SaaSBarberia.Data;
 using SaaSBarberia.Models;
 using SaaSBarberia.Services;
 
 namespace SaaSBarberia.Controllers
 {
-    [Authorize(Roles = "AdminBarberia,SuperAdmin")] // 🚨 Seguridad activada
+    [Authorize(Roles = "AdminBarberia,SuperAdmin")] // 🚨 Seguridad activada full
     public class HerramientasController : Controller
     {
         private readonly IHerramientasService _herramientasService;
-        private readonly BarberSaaSDbContext _context; // 🌟 Inyectamos el contexto para leer la sesión
+        private readonly BarberSaaSDbContext _context; // 🌟 Inyectamos el contexto para leer la sesión distribuida
 
         public HerramientasController(IHerramientasService herramientasService, BarberSaaSDbContext context)
         {
@@ -21,7 +21,7 @@ namespace SaaSBarberia.Controllers
             _context = context;
         }
 
-        // 🔑 PROPIEDAD DINÁMICA: Extrae el Tenant real del usuario en sesión
+        // 🔑 PROPIEDAD DINÁMICA: Extrae el Tenant real del usuario usando tu DbContext inteligente
         private int CurrentTenantId
         {
             get
@@ -30,14 +30,14 @@ namespace SaaSBarberia.Controllers
             }
         }
 
-        // GET: HERRAMIENTAS
+        // GET: Herramientas
         public async Task<IActionResult> Index()
         {
             var lista = await _herramientasService.GetAllAsync(CurrentTenantId);
             return View(lista);
         }
 
-        // GET: HERRAMIENTAS/Details/5
+        // GET: Herramientas/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
@@ -48,13 +48,13 @@ namespace SaaSBarberia.Controllers
             return View(herramienta);
         }
 
-        // GET: HERRAMIENTAS/Create
+        // GET: Herramientas/Create
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: HERRAMIENTAS/Create
+        // POST: Herramientas/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Nombre,Marca,NumeroSerie,Estado")] Herramienta herramienta)
@@ -67,7 +67,7 @@ namespace SaaSBarberia.Controllers
             return View(herramienta);
         }
 
-        // GET: HERRAMIENTAS/Edit/5
+        // GET: Herramientas/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -78,7 +78,7 @@ namespace SaaSBarberia.Controllers
             return View(herramienta);
         }
 
-        // POST: HERRAMIENTAS/Edit/5
+        // POST: Herramientas/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int? id, [Bind("Id,Nombre,Marca,NumeroSerie,Estado")] Herramienta herramienta)
@@ -105,7 +105,7 @@ namespace SaaSBarberia.Controllers
             return View(herramienta);
         }
 
-        // GET: HERRAMIENTAS/Delete/5
+        // GET: Herramientas/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
@@ -116,7 +116,7 @@ namespace SaaSBarberia.Controllers
             return View(herramienta);
         }
 
-        // POST: HERRAMIENTAS/Delete/5
+        // POST: Herramientas/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)

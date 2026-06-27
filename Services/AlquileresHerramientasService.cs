@@ -54,7 +54,6 @@ namespace SaaSBarberia.Services
         public async Task CreateAsync(AlquilerHerramienta alquiler, int tenantId)
         {
             alquiler.TenantId = tenantId;
-
             // 🔥 Corregido a Plural: Herramientas
             var herramienta = await _context.Herramientas.FirstOrDefaultAsync(h => h.Id == alquiler.HerramientaId && h.TenantId == tenantId);
             if (herramienta != null)
@@ -73,7 +72,6 @@ namespace SaaSBarberia.Services
             if (!existe) throw new UnauthorizedAccessException("No tienes permiso.");
 
             alquiler.TenantId = tenantId;
-
             // 🔥 Corregido a Plural: Herramientas
             var herramienta = await _context.Herramientas.FirstOrDefaultAsync(h => h.Id == alquiler.HerramientaId && h.TenantId == tenantId);
             if (herramienta != null)

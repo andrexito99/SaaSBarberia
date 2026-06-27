@@ -75,7 +75,7 @@ namespace SaaSBarberia.Services
 
             await _context.SaveChangesAsync();
 
-            // 🔥 AUDITORÍA: Detectamos qué monda cambió para guardar un reporte limpio
+            // 🔥 AUDITORÍA: Detectamos qué cambió para guardar un reporte limpio
             string cambios = $"Se modificó el producto ID {producto.Id}. ";
             if (original.Nombre != producto.Nombre) cambios += $"Nombre: '{original.Nombre}' -> '{producto.Nombre}'. ";
             if (original.Descripcion != producto.Descripcion) cambios += $"Descripción: '{original.Descripcion}' -> '{producto.Descripcion}'. ";

@@ -1,37 +1,169 @@
-﻿@{
+﻿@model SaaSBarberia.Models.AdminDashboardViewModel
+
+@{
     ViewData["Title"] = "Administración de Sede";
 }
 
-<div class="container mt-4">
-    <div class="p-4 bg-white border rounded-4 shadow-sm mb-4">
-        <h2 class="fw-bold text-dark mb-1">💼 Panel de Administración</h2>
-        <p class="text-muted">Control operativo y financiero exclusivo para tu sucursal.</p>
+<div class="container-fluid my-4 px-4">
+    <div class="p-4 bg-white border-0 shadow-sm rounded-4 mb-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-black text-dark mb-1"><i class="fas fa-chart-pie me-2 text-dark"></i>Panel de Administración</h2>
+            <p class="text-muted mb-0">Control operativo y financiero en tiempo real exclusivo para tu sucursal.</p>
+        </div>
+        <div class="badge bg-dark p-3 fs-6 rounded-3">
+            <i class="fas fa-calendar-alt me-2"></i>@DateTime.Now.ToString("dd MMMM yyyy")
+        </div>
     </div>
 
-    <div class="row g-4">
+    <h4 class="fw-bold text-secondary mb-3"><i class="fas fa-bolt text-warning me-2"></i>Actividad de Hoy</h4>
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+            <div class="card border-0 shadow-sm rounded-3 p-3 bg-white border-start border-primary border-4">
+                <p class="text-muted small text-uppercase fw-bold mb-1">Ventas Hoy</p>
+                <h3 class="fw-bold mb-0 text-dark">$@Model.IngresosHoy.ToString("N0")</h3>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card border-0 shadow-sm rounded-3 p-3 bg-white border-start border-success border-4">
+                <p class="text-muted small text-uppercase fw-bold mb-1">Atendidos</p>
+                <h3 class="fw-bold mb-0 text-success">@Model.ClientesAtendidosHoy <span class="fs-6 text-muted">unds</span></h3>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card border-0 shadow-sm rounded-3 p-3 bg-white border-start border-warning border-4">
+                <p class="text-muted small text-uppercase fw-bold mb-1">Citas Pendientes</p>
+                <h3 class="fw-bold mb-0 text-warning">@Model.CitasPendientesHoy</h3>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card border-0 shadow-sm rounded-3 p-3 bg-white border-start border-danger border-4">
+                <p class="text-muted small text-uppercase fw-bold mb-1">Citas Canceladas</p>
+                <h3 class="fw-bold mb-0 text-danger">@Model.CitasCanceladasHoy</h3>
+            </div>
+        </div>
+    </div>
+
+    <h4 class="fw-bold text-secondary mb-3"><i class="fas fa-calendar-check text-info me-2"></i>Rendimiento del Mes</h4>
+    <div class="row g-4 mb-4">
+        <div class="col-12 col-md-5">
+            <div class="card border-0 shadow-sm rounded-4 bg-dark text-white p-4 h-100">
+                <span class="text-muted text-uppercase small fw-bold">Ingresos Mensuales</span>
+                <h1 class="display-5 fw-bold my-2 text-white">$@Model.IngresosMes.ToString("N0")</h1>
+                <div class="d-flex align-items-center mt-2">
+                    <span class="badge p-2 @(Model.EsIngresoMayorMesAnterior ? "bg-success" : "bg-danger") me-2">
+                        <i class="fas @(Model.EsIngresoMayorMesAnterior ? "fa-arrow-up" : "fa-arrow-down") me-1"></i>
+                        @Math.Abs(Model.PorcentajeComparacionMesAnterior).ToString("N1")%
+                    </span>
+                    <span class="text-muted small">vs mes anterior</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-7">
+            <div class="card border-0 shadow-sm rounded-4 bg-white p-4 h-100">
+                <h5 class="fw-bold text-dark mb-3"><i class="fas fa-trophy text-warning me-2"></i>Líderes de Sede</h5>
+                <div class="row g-3 text-center">
+                    <div class="col-6 col-sm-4 border-end border-light">
+                        <p class="text-muted small mb-1">Servicio Más Vendido</p>
+                        <h6 class="fw-bold text-dark">@Model.ServicioMasVendido</h6>
+                        <span class="badge bg-info bg-opacity-10 text-info">@Model.CantidadServicioMasVendido cortes</span>
+                    </div>
+                    <div class="col-6 col-sm-4 border-end border-light">
+                        <p class="text-muted small mb-1">Barbero Estrella</p>
+                        <h6 class="fw-bold text-dark">@Model.BarberoEstrella</h6>
+                        <span class="badge bg-success bg-opacity-10 text-success">$@Model.GananciaBarberoEstrella.ToString("N0")</span>
+                    </div>
+                    <div class="col-12 col-sm-4">
+                        <p class="text-muted small mb-1">Eficiencia Operativa</p>
+                        <h6 class="fw-bold text-dark">Barberos Sede</h6>
+                        <span class="badge bg-dark">@Model.TotalBarberos Activos</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h4 class="fw-bold text-secondary mb-3"><i class="fas fa-directions text-primary me-2"></i>Accesos Directos</h4>
+    <div class="row g-3 mb-4">
         <div class="col-md-4">
-            <div class="card shadow-sm border-0 text-center py-4">
-                <h2 class="text-success mb-2">💵</h2>
-                <h5 class="fw-bold">Caja y Facturas</h5>
-                <p class="text-muted small px-3">Revisa las transacciones hechas y los métodos de pago usados en la sede.</p>
-                <div class="px-3"><a asp-controller="Facturas" asp-action="Index" class="btn btn-sm btn-dark w-100">Ver Movimientos</a></div>
+            <div class="card shadow-sm border-0 rounded-3 p-3 bg-white d-flex flex-row align-items-center justify-content-between">
+                <div>
+                    <h6 class="fw-bold mb-0">Caja y Facturas</h6>
+                    <small class="text-muted">Movimientos financieros</small>
+                </div>
+                <a asp-controller="Facturas" asp-action="Index" class="btn btn-sm btn-dark px-3 rounded-pill">Ver</a>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card shadow-sm border-0 text-center py-4">
-                <h2 class="text-primary mb-2">✂</h2>
-                <h5 class="fw-bold">Servicios Ofrecidos</h5>
-                <p class="text-muted small px-3">Actualiza los cortes, combos y tiempos de ejecución de tu catálogo.</p>
-                <div class="px-3"><a asp-controller="Servicios" asp-action="Index" class="btn btn-sm btn-dark w-100">Ajustar Precios</a></div>
+            <div class="card shadow-sm border-0 rounded-3 p-3 bg-white d-flex flex-row align-items-center justify-content-between">
+                <div>
+                    <h6 class="fw-bold mb-0">Servicios Ofrecidos</h6>
+                    <small class="text-muted">Gestión de catálogo</small>
+                </div>
+                <a asp-controller="Servicios" asp-action="Index" class="btn btn-sm btn-dark px-3 rounded-pill">Ajustar</a>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card shadow-sm border-0 text-center py-4">
-                <h2 class="text-info mb-2">📆</h2>
-                <h5 class="fw-bold">Citas de la Sede</h5>
-                <p class="text-muted small px-3">Monitorea los turnos agendados y reasigna barberos si es necesario.</p>
-                <div class="px-3"><a asp-controller="Citas" asp-action="Index" class="btn btn-sm btn-dark w-100">Ver Calendario</a></div>
+            <div class="card shadow-sm border-0 rounded-3 p-3 bg-white d-flex flex-row align-items-center justify-content-between">
+                <div>
+                    <h6 class="fw-bold mb-0">Citas de la Sede</h6>
+                    <small class="text-muted">Turnos y calendario</small>
+                </div>
+                <a asp-controller="Citas" asp-action="Index" class="btn btn-sm btn-dark px-3 rounded-pill">Monitorear</a>
             </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 bg-white p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+            <h4 class="fw-bold text-dark mb-0"><i class="fas fa-crown text-warning me-2"></i>Top 10 Clientes de la Sucursal</h4>
+            <span class="badge bg-primary rounded-pill">Por volumen de compra</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th style="width: 70px;">Pos</th>
+                        <th>Cliente</th>
+                        <th class="text-center">Citas Completadas</th>
+                        <th class="text-end">Total Invertido</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Top10Clientes.Any())
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center py-3 text-muted">No se registran facturas pagadas de clientes este mes, care verga.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        int puesto = 1;
+                        foreach (var cliente in Model.Top10Clientes)
+                        {
+                            <tr>
+                                <td>
+                                    <span class="badge rounded-circle p-2 d-inline-flex align-items-center justify-content-center @(puesto == 1 ? "bg-warning text-dark fw-bold" : puesto == 2 ? "bg-secondary" : puesto == 3 ? "bg-danger" : "bg-light text-dark border")" style="width:30px; height:30px;">
+                                        @puesto
+                                    </span>
+                                </td>
+                                <td><strong>@cliente.NombreCliente</strong></td>
+                                <td class="text-center"><span class="badge bg-light text-dark border">@cliente.TotalCitas servicios</span></td>
+                                <td class="text-end fw-bold text-success">$@cliente.TotalGastado.ToString("N0")</td>
+                            </tr>
+                            puesto++;
+                        }
+                    }
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
+
+<style>
+    .fw-black {
+        font-weight: 900;
+    }
+</style>
+
+@* 👇 AQUÍ ABAJO PUEDES COLOCAR TUS CANVAS E INICIALIZADORES DE CHART.JS EXISTENTES EN TU VISTA VIEJA *@

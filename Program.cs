@@ -24,6 +24,8 @@ builder.Services.AddScoped<ServicioService>();
 builder.Services.AddScoped<BarberoService>();
 builder.Services.AddScoped<FacturaService>();
 builder.Services.AddScoped<CajaService>();
+builder.Services.AddScoped<AgendaInteligenteService>();
+builder.Services.AddScoped<HorarioLaboralService>();
 builder.Services.AddScoped<IHerramientasService, HerramientasService>();
 builder.Services.AddScoped<IProductosService, ProductosService>();
 builder.Services.AddScoped<IAlquileresHerramientasService, AlquileresHerramientasService>();

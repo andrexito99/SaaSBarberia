@@ -54,6 +54,7 @@ public partial class BarberSaaSDbContext : DbContext
     public virtual DbSet<Tenant> Tenants { get; set; }
     public DbSet<Auditoria> Auditorias { get; set; }
     public virtual DbSet<Usuario> Usuarios { get; set; }
+    public DbSet<HorarioLaboral> HorariosLaborales { get; set; }
 
     // ========================================================
     // 🗄️ DBSETS DE CATÁLOGO Y GESTIÓN DE HERRAMIENTAS (¡Solo Plurales!)
@@ -83,6 +84,17 @@ public partial class BarberSaaSDbContext : DbContext
         modelBuilder.Entity<Factura>().HasQueryFilter(f => EsSuperAdmin || f.TenantId == TenantIdActual);
         modelBuilder.Entity<Usuario>().HasQueryFilter(u => EsSuperAdmin || u.TenantId == TenantIdActual);
         modelBuilder.Entity<MovimientoCaja>().HasQueryFilter(mc => EsSuperAdmin || mc.TenantId == TenantIdActual);
+        modelBuilder.Entity<HorarioLaboral>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(d => d.Tenant)
+                  .WithMany(p => p.HorariosLaborales)
+                  .HasForeignKey(d => d.TenantId);
+
+            // Filtro global para aislar los datos por barbería automáticamente
+            entity.HasQueryFilter(e => e.TenantId == TenantIdActual);
+        });
 
         // ========================================================
         // 📐 MAPEOS: PRODUCTOS, HERRAMIENTAS Y ALQUILERES

@@ -40,7 +40,7 @@
             </div>
 
             <hr class="my-4" />
-            <h5 class="fw-bold text-secondary mb-3">🎨 Cambiar Identidad Estética</h5>
+            <h5 class="fw-bold text-secondary mb-3">🎨 Cambiar Identity Estética</h5>
 
             <div class="row">
                 <div class="col-6 mb-3">
@@ -54,6 +54,7 @@
                     <span asp-validation-for="ColorSecundario" class="text-danger"></span>
                 </div>
             </div>
+
             <div class="form-check form-switch mb-3 card p-3 shadow-sm border-warning">
                 <input class="form-check-input ms-0 me-2" type="checkbox" asp-for="TieneModuloHerramientas" id="TieneModuloHerramientas">
                 <label class="form-check-label fw-bold text-dark" for="TieneModuloHerramientas">
@@ -71,6 +72,22 @@
                 </select>
                 <span asp-validation-for="EstiloSidebar" class="text-danger"></span>
             </div>
+
+            <hr class="my-4" />
+
+            <!-- ⏱️ SECCIÓN TIEMPO ENTRE CITAS AGREGADA -->
+            <h5 class="fw-bold text-secondary mb-3">⏱️ Optimización de Tiempos</h5>
+            <div class="mb-4 card p-3 bg-light border-0">
+                <label asp-for="TiempoEntreCitas" class="form-label fw-bold text-dark">Margen de limpieza/preparación entre citas:</label>
+                <select asp-for="TiempoEntreCitas" class="form-select fw-semibold text-success">
+                    <option value="0">0 minutos (Seguido)</option>
+                    <option value="5">5 minutos</option>
+                    <option value="10">10 minutos</option>
+                    <option value="15">15 minutos</option>
+                </select>
+                <span asp-validation-for="TiempoEntreCitas" class="text-danger"></span>
+            </div>
+
             <hr class="my-4" />
 
             <div class="mb-3 form-check form-switch pt-2">
@@ -81,7 +98,10 @@
 
             <div class="d-flex justify-content-between mt-4">
                 <a asp-action="Index" class="btn btn-light border">Cancelar</a>
-                <button type="submit" class="btn btn-warning px-4">Actualizar</button>
+                <div>
+                    <a asp-action="ConfigurarHorarios" asp-route-id="@Model.Id" class="btn btn-info text-white me-2">⚙️ Configurar Horarios</a>
+                    <button type="submit" class="btn btn-warning px-4">Actualizar</button>
+                </div>
             </div>
         </form>
     </div>

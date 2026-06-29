@@ -18,18 +18,18 @@ namespace SaaSBarberia.Controllers
     {
         private readonly CitaService _citaService;
         private readonly BarberSaaSDbContext _context;
+        private readonly HorarioLaboralService _horarioService;
 
-        public CitasController(CitaService citaService, BarberSaaSDbContext context)
+        public CitasController(CitaService citaService, BarberSaaSDbContext context, HorarioLaboralService horarioService)
         {
             _citaService = citaService;
             _context = context;
+            _horarioService = horarioService;
         }
 
-        // 🔍 PROPIEDADES DINÁMICAS PARA LOGS Y AUDITORÍA
         private int CurrentUsuarioId => int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out int userId) ? userId : 0;
         private string CurrentUserIp => HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
 
-        // GET: Citas
         public async Task<IActionResult> Index()
         {
             if (CurrentUsuarioId == 0) return RedirectToAction("Login", "Account");
@@ -65,66 +65,42 @@ namespace SaaSBarberia.Controllers
                 return BadRequest("Fecha inválida.");
             }
 
+            // Buscamos el barbero para jalar el TenantId al que pertenece
+            var barbero = await _context.Barberos.FindAsync(barberoId);
+            if (barbero == null) return NotFound("Barbero no encontrado.");
+
             var servicio = await _context.Servicios.FindAsync(servicioId);
             if (servicio == null) return NotFound("Servicio no encontrado.");
-            int duracionNuevaCita = servicio.DuracionMinutos;
-
-            DateTime ahora = DateTime.Now;
-            DateTime horaInicioJornada = fechaSeleccionada.Date.AddHours(8);
-
-            if (fechaSeleccionada.Date == ahora.Date)
-            {
-                if (ahora > horaInicioJornada)
-                {
-                    horaInicioJornada = ahora;
-                }
-            }
-
-            DateTime horaFinJornada = fechaSeleccionada.Date.AddHours(19).AddMinutes(0);
+            int duracionTotalRequerida = servicio.DuracionMinutos;
 
             var citasExistentes = await _context.Citas
                 .Where(c => c.BarberoId == barberoId
                          && c.FechaHora.Date == fechaSeleccionada.Date
                          && c.Estado != "Cancelada")
                 .Include(c => c.Servicio)
-                .OrderBy(c => c.FechaHora)
                 .ToListAsync();
 
-            List<string> horariosDisponibles = new List<string>();
-            int intervaloBloques = 20;
-            DateTime bloqueEvaluar = horaInicioJornada;
+            int nDiaSemana = (int)fechaSeleccionada.DayOfWeek;
 
-            while (bloqueEvaluar.AddMinutes(duracionNuevaCita) <= horaFinJornada)
+            // 🔥 CORREGIDO: Llamada con la instancia '_horarioService' y pasando el 'barbero.TenantId'
+            var horarioDelDia = await _horarioService.ObtenerHorarioDiaAsync(barbero.TenantId, nDiaSemana);
+
+            if (horarioDelDia == null || horarioDelDia.EstaCerrado)
             {
-                DateTime inicioNuevo = bloqueEvaluar;
-                DateTime finNuevo = bloqueEvaluar.AddMinutes(duracionNuevaCita);
-                bool cruza = false;
-
-                foreach (var cita in citasExistentes)
-                {
-                    int duracionExistente = cita.Servicio?.DuracionMinutos ?? 30;
-                    DateTime inicioExistente = cita.FechaHora;
-                    DateTime finExistente = cita.FechaHora.AddMinutes(duracionExistente);
-
-                    if (inicioNuevo < finExistente && finNuevo > inicioExistente)
-                    {
-                        cruza = true;
-                        break;
-                    }
-                }
-
-                if (!cruza)
-                {
-                    horariosDisponibles.Add(inicioNuevo.ToString("hh:mm tt"));
-                }
-
-                bloqueEvaluar = bloqueEvaluar.AddMinutes(intervaloBloques);
+                return Json(new List<string>());
             }
 
-            return Json(horariosDisponibles);
+            var agendaService = new AgendaInteligenteService();
+            List<DateTime> bloquesDisponibles = agendaService.ObtenerHorasDisponibles(citasExistentes,
+                                                                                      fechaSeleccionada,
+                                                                                      duracionTotalRequerida,
+                                                                                      horarioDelDia);
+
+            var horariosDisponiblesStrings = bloquesDisponibles.Select(h => h.ToString("hh:mm tt")).ToList();
+
+            return Json(horariosDisponiblesStrings);
         }
 
-        // POST: Citas/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,TenantId,ClienteId,BarberoId,ServicioId,FechaHora,Estado,Notas")] Cita cita)
@@ -158,6 +134,35 @@ namespace SaaSBarberia.Controllers
                 DateTime inicioNuevaCita = cita.FechaHora;
                 DateTime finNuevaCita = cita.FechaHora.AddMinutes(servicio.DuracionMinutos);
 
+                int diaCita = (int)cita.FechaHora.DayOfWeek;
+
+                // 🔥 CORREGIDO: Llamada con la instancia '_horarioService' y pasando el 'cita.TenantId'
+                var horarioCita = await _horarioService.ObtenerHorarioDiaAsync(cita.TenantId, diaCita);
+                TimeSpan horaCitaTime = cita.FechaHora.TimeOfDay;
+
+                bool estaDentroDeJornada = false;
+
+                if (horarioCita != null && !horarioCita.EstaCerrado)
+                {
+                    if (horarioCita.HoraInicio.HasValue && horarioCita.HoraFin.HasValue &&
+                        horaCitaTime >= horarioCita.HoraInicio.Value && horaCitaTime < horarioCita.HoraFin.Value)
+                    {
+                        estaDentroDeJornada = true;
+                    }
+                    else if (horarioCita.HoraInicio2.HasValue && horarioCita.HoraFin2.HasValue &&
+                             horaCitaTime >= horarioCita.HoraInicio2.Value && horaCitaTime < horarioCita.HoraFin2.Value)
+                    {
+                        estaDentroDeJornada = true;
+                    }
+                }
+
+                if (!estaDentroDeJornada)
+                {
+                    ModelState.AddModelError("", "¡Error! El horario seleccionado está por fuera de la jornada laboral de la barbería.");
+                    await RecargarCombosErrorAsync(cita);
+                    return View(cita);
+                }
+
                 var citasCruce = await _context.Citas
                     .Where(c => c.FechaHora.Date == cita.FechaHora.Date
                              && c.Estado != "Cancelada"
@@ -187,7 +192,6 @@ namespace SaaSBarberia.Controllers
                     }
                 }
 
-                // Envíamos usuario e IP al servicio
                 await _citaService.GuardarAsync(cita, CurrentUsuarioId, CurrentUserIp);
                 return RedirectToAction(nameof(Index));
             }
@@ -196,7 +200,6 @@ namespace SaaSBarberia.Controllers
             return View(cita);
         }
 
-        // POST: Citas/Cancelar
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Cancelar(int id)
@@ -210,13 +213,11 @@ namespace SaaSBarberia.Controllers
             }
 
             cita.Estado = "Cancelada";
-            // GuardarAsync detectará el cambio de estado y lo auditará automáticamente como "Cancelar"
             await _citaService.GuardarAsync(cita, CurrentUsuarioId, CurrentUserIp);
 
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: Citas/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
@@ -225,7 +226,6 @@ namespace SaaSBarberia.Controllers
             return View(cita);
         }
 
-        // GET: Citas/Create
         public async Task<IActionResult> Create()
         {
             if (CurrentUsuarioId == 0) return RedirectToAction("Login", "Account");
@@ -262,7 +262,6 @@ namespace SaaSBarberia.Controllers
             return View(nuevaCita);
         }
 
-        // GET: Citas/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -279,7 +278,6 @@ namespace SaaSBarberia.Controllers
             return View(cita);
         }
 
-        // POST: Citas/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,TenantId,ClienteId,BarberoId,ServicioId,FechaHora,Estado,Notas")] Cita cita)
@@ -307,7 +305,6 @@ namespace SaaSBarberia.Controllers
             return View(cita);
         }
 
-        // GET: Citas/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
@@ -316,7 +313,6 @@ namespace SaaSBarberia.Controllers
             return View(cita);
         }
 
-        // POST: Citas/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
@@ -363,7 +359,7 @@ namespace SaaSBarberia.Controllers
 
                 var serviciosSede = servicios.Where(s => s.TenantId == tenantId).ToList();
                 ViewBag.ServicioId = new SelectList(serviciosSede, "Id", "Nombre");
-                ViewBag.ListaBarberosCompleta = barberosSede;
+                ViewBag.StrawberryField = barberosSede;
             }
         }
     }

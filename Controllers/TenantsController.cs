@@ -6,9 +6,12 @@ using SaaSBarberia.Models;
 using SaaSBarberia.Services;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 
 namespace SaaSBarberia.Controllers
 {
@@ -16,11 +19,13 @@ namespace SaaSBarberia.Controllers
     {
         private readonly TenantService _tenantService;
         private readonly BarberSaaSDbContext _context;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public TenantsController(TenantService tenantService, BarberSaaSDbContext context)
+        public TenantsController(TenantService tenantService, BarberSaaSDbContext context, IWebHostEnvironment webHostEnvironment)
         {
             _tenantService = tenantService;
             _context = context;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         public async Task<IActionResult> Index()
@@ -39,7 +44,6 @@ namespace SaaSBarberia.Controllers
 
         public IActionResult Create()
         {
-            // Inicializamos la barbería con sus 7 horarios por defecto para la vista
             var tenant = new Tenant();
             var horarios = new List<HorarioLaboral>();
 
@@ -48,7 +52,7 @@ namespace SaaSBarberia.Controllers
                 horarios.Add(new HorarioLaboral
                 {
                     DiaSemana = i,
-                    EstaCerrado = (i == 0), // Domingo cerrado por defecto
+                    EstaCerrado = (i == 0),
                     HoraInicio = new TimeSpan(8, 0, 0),
                     HoraFin = new TimeSpan(12, 0, 0),
                     HoraInicio2 = new TimeSpan(14, 0, 0),
@@ -62,17 +66,30 @@ namespace SaaSBarberia.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        // 🔥 CORREGIDO: Se añade 'TiempoEntreCitas' al Bind para mapear el campo de la optimización de tiempos
-        public async Task<IActionResult> Create([Bind("Id,NombreNegocio,Subdominio,PlanSuscripcion,Activo,FechaRegistro,ColorPrimario,ColorSecundario,EstiloSidebar,TieneModuloHerramientas,TiempoEntreCitas")] Tenant tenant, List<HorarioLaboral> horarios)
+        // 🔥 CORREGIDO: Cambiado 'LogoUrl' por 'RutaLogo' en el Bind para enganchar con la base de datos
+        public async Task<IActionResult> Create([Bind("Id,NombreNegocio,Subdominio,PlanSuscripcion,Activo,FechaRegistro,ColorPrimario,ColorSecundario,EstiloSidebar,TieneModuloHerramientas,TiempoEntreCitas,RutaLogo")] Tenant tenant, List<HorarioLaboral> horarios, IFormFile? logoArchivo)
         {
             if (ModelState.IsValid)
             {
                 tenant.FechaRegistro ??= DateTime.Now;
 
-                // 1. Guardamos la barbería para generar el Id
+                if (logoArchivo != null && logoArchivo.Length > 0)
+                {
+                    string carpetaSubidas = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "tenants");
+                    if (!Directory.Exists(carpetaSubidas)) Directory.CreateDirectory(carpetaSubidas);
+
+                    string nombreUnico = Guid.NewGuid().ToString() + Path.GetExtension(logoArchivo.FileName);
+                    string rutaCompleta = Path.Combine(carpetaSubidas, nombreUnico);
+
+                    using (var stream = new FileStream(rutaCompleta, FileMode.Create))
+                    {
+                        await logoArchivo.CopyToAsync(stream);
+                    }
+                    tenant.RutaLogo = "/uploads/tenants/" + nombreUnico;
+                }
+
                 await _tenantService.GuardarAsync(tenant);
 
-                // 2. Le asignamos el TenantId a los horarios modificados en la vista y los agregamos
                 if (horarios != null && horarios.Any())
                 {
                     foreach (var horario in horarios)
@@ -100,8 +117,8 @@ namespace SaaSBarberia.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        // 🔥 CORREGIDO: También añadimos 'TiempoEntreCitas' al Bind del Edit por si cambian la configuración después
-        public async Task<IActionResult> Edit(int id, [Bind("Id,NombreNegocio,Subdominio,PlanSuscripcion,Activo,FechaRegistro,CerradoPorEmergencia,FechaUltimoCierre,ColorPrimario,ColorSecundario,EstiloSidebar,TieneModuloHerramientas,TiempoEntreCitas")] Tenant tenant)
+        // 🔥 CORREGIDO: Cambiado 'LogoUrl' por 'RutaLogo' en el Bind para capturar el input hidden de la vista
+        public async Task<IActionResult> Edit(int id, [Bind("Id,NombreNegocio,Subdominio,PlanSuscripcion,Activo,FechaRegistro,CerradoPorEmergencia,FechaUltimoCierre,ColorPrimario,ColorSecundario,EstiloSidebar,TieneModuloHerramientas,TiempoEntreCitas,RutaLogo")] Tenant tenant, IFormFile? logoArchivo)
         {
             if (id != tenant.Id) return NotFound();
 
@@ -109,7 +126,34 @@ namespace SaaSBarberia.Controllers
             {
                 try
                 {
-                    await _tenantService.GuardarAsync(tenant);
+                    if (logoArchivo != null && logoArchivo.Length > 0)
+                    {
+                        // 🗑️ Buscar ruta del logo viejo usando AsNoTracking de forma directa para romper el candado de memoria
+                        var tenantExistente = await _context.Tenants.AsNoTracking().FirstOrDefaultAsync(t => t.Id == id);
+                        if (tenantExistente != null && !string.IsNullOrEmpty(tenantExistente.RutaLogo))
+                        {
+                            string rutaVieja = Path.Combine(_webHostEnvironment.WebRootPath, tenantExistente.RutaLogo.TrimStart('/'));
+                            if (System.IO.File.Exists(rutaVieja)) System.IO.File.Delete(rutaVieja);
+                        }
+
+                        // 💾 Almacenar nuevo archivo físico
+                        string carpetaSubidas = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "tenants");
+                        if (!Directory.Exists(carpetaSubidas)) Directory.CreateDirectory(carpetaSubidas);
+
+                        string nombreUnico = Guid.NewGuid().ToString() + Path.GetExtension(logoArchivo.FileName);
+                        string rutaCompleta = Path.Combine(carpetaSubidas, nombreUnico);
+
+                        using (var stream = new FileStream(rutaCompleta, FileMode.Create))
+                        {
+                            await logoArchivo.CopyToAsync(stream);
+                        }
+                        tenant.RutaLogo = "/uploads/tenants/" + nombreUnico;
+                    }
+                    // Si 'logoArchivo' es nulo, 'tenant.RutaLogo' ya retiene el valor previo gracias al input hidden y al Bind corregido.
+
+                    // 🔥 Actualización directa usando el contexto para evitar fallas de tracking de servicios acoplados
+                    _context.Entry(tenant).State = EntityState.Modified;
+                    await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -133,6 +177,14 @@ namespace SaaSBarberia.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
+            // 🔥 CORREGIDO: Consulta limpia con AsNoTracking para evitar bloqueos antes del borrado
+            var tenant = await _context.Tenants.AsNoTracking().FirstOrDefaultAsync(t => t.Id == id);
+            if (tenant != null && !string.IsNullOrEmpty(tenant.RutaLogo))
+            {
+                string rutaArchivo = Path.Combine(_webHostEnvironment.WebRootPath, tenant.RutaLogo.TrimStart('/'));
+                if (System.IO.File.Exists(rutaArchivo)) System.IO.File.Delete(rutaArchivo);
+            }
+
             await _tenantService.EliminarAsync(id);
             return RedirectToAction(nameof(Index));
         }
@@ -159,9 +211,7 @@ namespace SaaSBarberia.Controllers
             }
 
             var citasAfectadasHoy = await _context.Citas
-                .Where(c => c.TenantId == miTenantId
-                         && c.FechaHora.Date == DateTime.Today
-                         && c.Estado != "Cancelada")
+                .Where(c => c.TenantId == miTenantId && c.FechaHora.Date == DateTime.Today && c.Estado != "Cancelada")
                 .Include(c => c.Cliente)
                 .Include(c => c.Barbero.Usuario)
                 .OrderBy(c => c.FechaHora)
@@ -182,9 +232,7 @@ namespace SaaSBarberia.Controllers
             tenant.CerradoPorEmergencia = estadoCierre;
             tenant.FechaUltimoCierre = estadoCierre ? DateTime.Now : null;
 
-            _context.Update(tenant);
             await _context.SaveChangesAsync();
-
             return RedirectToAction(nameof(DashboardSede));
         }
 

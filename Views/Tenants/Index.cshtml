@@ -19,9 +19,24 @@
                         @(item.Activo == true ? "Activo" : "Inactivo")
                     </span>
 
-                    <div class="card-body pt-5">
-                        <h4 class="card-title fw-bold text-truncate text-primary">@item.NombreNegocio</h4>
-                        <h6 class="text-muted mb-3">🔗 <code>@(item.Subdominio).barbersaas.com</code></h6>
+                    <div class="card-body pt-4">
+                        <!-- 📸 NUEVO: Header con Logo de la Barbería si existe -->
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            @if (!string.IsNullOrEmpty(item.RutaLogo))
+                            {
+                                <img src="@item.RutaLogo" class="rounded border p-1" style="width: 50px; height: 50px; object-fit: contain;" alt="Logo" />
+                            }
+                            else
+                            {
+                                <div class="bg-secondary-subtle border rounded d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; font-size: 1.3rem;">
+                                    🏬
+                                </div>
+                            }
+                            <div class="text-truncate" style="max-width: 70%;">
+                                <h4 class="card-title fw-bold mb-0 text-truncate text-primary">@item.NombreNegocio</h4>
+                                <h6 class="text-muted small mb-0">🔗 <code>@(item.Subdominio)</code></h6>
+                            </div>
+                        </div>
 
                         <hr />
 

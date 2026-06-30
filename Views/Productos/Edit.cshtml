@@ -4,46 +4,72 @@
     ViewData["Title"] = "Editar Producto";
 }
 
-<h1>Editar Datos de Producto</h1>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Id" />
+<div class="container mt-4" style="max-width: 600px;">
+    <div class="card shadow-sm border-0 p-4">
+        <h3 class="fw-bold mb-3 text-dark">✏️ Editar Datos de Producto</h3>
+        <hr />
 
-            <div class="form-group mb-3">
-                <label asp-for="Nombre" class="control-label"></label>
+        <form asp-action="Edit" enctype="multipart/form-data" autocomplete="off">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="RutaImagen" />
+
+            <div class="text-center mb-4">
+                @if (!string.IsNullOrEmpty(Model.RutaImagen))
+                {
+                    <img src="@Model.RutaImagen" class="img-thumbnail shadow-sm" style="max-width: 150px; max-height: 150px; object-fit: cover;" alt="Imagen actual" />
+                }
+                else
+                {
+                    <div class="mx-auto bg-light text-muted rounded p-3 border shadow-sm" style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+                        📦
+                    </div>
+                }
+                <small class="text-muted d-block mt-1">Imagen Actual</small>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Nombre" class="form-label fw-semibold"></label>
                 <input asp-for="Nombre" class="form-control" />
                 <span asp-validation-for="Nombre" class="text-danger"></span>
             </div>
 
-            <div class="form-group mb-3">
-                <label asp-for="Descripcion" class="control-label">Descripción</label>
+            <div class="mb-3">
+                <label asp-for="Descripcion" class="form-label fw-semibold">Descripción</label>
                 <input asp-for="Descripcion" class="form-control" />
                 <span asp-validation-for="Descripcion" class="text-danger"></span>
             </div>
 
-            <div class="form-group mb-3">
-                <label asp-for="PrecioVenta" class="control-label">Precio de Venta</label>
-                <input asp-for="PrecioVenta" class="form-control" type="number" step="0.01" />
-                <span asp-validation-for="PrecioVenta" class="text-danger"></span>
+            <div class="row">
+                <div class="col-6 mb-3">
+                    <label asp-for="PrecioVenta" class="form-label fw-semibold">Precio de Venta</label>
+                    <input asp-for="PrecioVenta" class="form-control" type="number" step="0.01" />
+                    <span asp-validation-for="PrecioVenta" class="text-danger"></span>
+                </div>
+
+                <div class="col-6 mb-3">
+                    <label asp-for="Stock" class="form-label fw-semibold">Inventario</label>
+                    <input asp-for="Stock" class="form-control" type="number" />
+                    <span asp-validation-for="Stock" class="text-danger"></span>
+                </div>
             </div>
 
-            <div class="form-group mb-3">
-                <label asp-for="Stock" class="control-label"></label>
-                <input asp-for="Stock" class="form-control" type="number" />
-                <span asp-validation-for="Stock" class="text-danger"></span>
+            <div class="mb-4">
+                <label class="form-label fw-semibold text-dark">Cambiar Imagen del Producto</label>
+                <input type="file" name="productoArchivo" id="productoArchivo" class="form-control" accept="image/*" />
+                <small class="text-muted">Deja este campo vacío si deseas mantener la foto actual.</small>
             </div>
 
-            <div class="form-group">
-                <input type="submit" value="Guardar Cambios" class="btn btn-success" />
-                <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+            <div class="d-flex justify-content-between mt-4">
+                <a asp-action="Index" class="btn btn-light border">Cancelar</a>
+                <button type="submit" class="btn btn-success px-4">Guardar Cambios</button>
             </div>
         </form>
     </div>
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}   

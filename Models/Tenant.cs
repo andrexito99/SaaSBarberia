@@ -25,8 +25,10 @@ public partial class Tenant
 
     public bool TieneModuloHerramientas { get; set; } = false;
 
-    // 🔥 La propiedad que conecta con la idea del analista
     public int TiempoEntreCitas { get; set; } = 0;
+
+    // 🔥 NUEVO: Se agrega la ruta para el logo de la barbería en formato texto
+    public string? RutaLogo { get; set; }
 
     public virtual ICollection<Barbero> Barberos { get; set; } = new List<Barbero>();
     public virtual ICollection<Cita> Cita { get; set; } = new List<Cita>();

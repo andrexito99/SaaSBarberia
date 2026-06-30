@@ -8,18 +8,18 @@
     <div class="card shadow-sm border-0 p-4">
         <h3 class="fw-bold mb-3 text-dark">Editar Condiciones del Barbero</h3>
 
-        @* 🚨 ENCTYPE CONFIGURADO CORRECTAMENTE *@
         <form asp-action="Edit" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
-            <input type="hidden" asp-for="Id" />
 
-            @* 📸 Renderizado de la foto actual antes de cambiarla *@
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="TenantId" />
+            <input type="hidden" asp-for="UsuarioId" />
+            <input type="hidden" asp-for="RutaFoto" />
+
             <div class="text-center mb-4">
-                @if (Model.Foto != null && Model.Foto.Length > 0)
+                @if (!string.IsNullOrEmpty(Model.RutaFoto))
                 {
-                    var base64 = Convert.ToBase64String(Model.Foto);
-                    var imgSrc = $"data:image/png;base64,{base64}";
-                    <img src="@imgSrc" class="rounded-circle border shadow" style="width: 100px; height: 100px; object-fit: cover;" alt="Foto Actual" />
+                    <img src="@Model.RutaFoto" class="rounded-circle border shadow" style="width: 100px; height: 100px; object-fit: cover;" alt="Foto Actual" />
                 }
                 else
                 {
@@ -31,28 +31,32 @@
             </div>
 
             <div class="mb-3">
-                <label asp-for="UsuarioId" class="form-label fw-semibold">Cuenta de Usuario Vinculada</label>
-                <select asp-for="UsuarioId" class="form-select" asp-items="ViewBag.UsuarioId"></select>
+                <label class="form-label fw-semibold text-muted mb-0">Cuenta de Usuario</label>
+                <input class="form-control bg-light" value="@(Model.Usuario?.Nombre ?? "Cargando...")" readonly disabled />
             </div>
 
             <div class="mb-3">
-                <label asp-for="TenantId" class="form-label fw-semibold">Lugar de Trabajo (Sede)</label>
-                <select asp-for="TenantId" class="form-select" asp-items="ViewBag.TenantId"></select>
+                <label class="form-label fw-semibold text-muted mb-0">Sede Asignada</label>
+                <input class="form-control bg-light" value="@(Model.Tenant?.NombreNegocio ?? "Cargando...")" readonly disabled />
             </div>
+
+            <hr class="text-muted my-4" />
 
             <div class="mb-3">
                 <label asp-for="Especialidad" class="form-label fw-semibold">Especialidad</label>
-                <input asp-for="Especialidad" class="form-control" />
+                <input asp-for="Especialidad" class="form-control" placeholder="Ej. Degradados, Barba Extrema..." />
                 <span asp-validation-for="Especialidad" class="text-danger"></span>
             </div>
 
             <div class="mb-3">
                 <label asp-for="ComisionPorcentaje" class="form-label fw-semibold">Porcentaje de Comisión</label>
-                <input asp-for="ComisionPorcentaje" type="number" step="0.01" class="form-control" />
+                <div class="input-group">
+                    <input asp-for="ComisionPorcentaje" type="number" step="0.01" class="form-control" />
+                    <span class="input-group-text">%</span>
+                </div>
                 <span asp-validation-for="ComisionPorcentaje" class="text-danger"></span>
             </div>
 
-            @* 📸 CAMPO DE ACTUALIZACIÓN DE FOTO: Conecta directo con el parámetro del controlador *@
             <div class="mb-3">
                 <label class="form-label fw-semibold text-dark">Cambiar Foto de Perfil</label>
                 <input type="file" name="fotoInput" id="fotoInput" class="form-control" accept="image/*" />

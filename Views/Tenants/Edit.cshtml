@@ -4,15 +4,31 @@
     ViewData["Title"] = "Editar Barbería";
 }
 
-<div class="container mt-4" style="max-width: 600px;">
+<div class="container mt-4" style="max-width: 650px;">
     <div class="card shadow-sm border-0 p-4">
-        <h3 class="fw-bold mb-3 text-dark">Modificar Datos</h3>
-        <form asp-action="Edit" autocomplete="off">
+        <h3 class="fw-bold mb-3 text-dark">Modificar Datos del Establecimiento</h3>
+
+        <form asp-action="Edit" enctype="multipart/form-data" autocomplete="off">
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
             <input type="hidden" asp-for="Id" />
             <input type="hidden" asp-for="FechaRegistro" />
             <input type="hidden" asp-for="CerradoPorEmergencia" />
             <input type="hidden" asp-for="FechaUltimoCierre" />
+            <input type="hidden" asp-for="RutaLogo" />
+
+            <div class="text-center mb-4">
+                @if (!string.IsNullOrEmpty(Model.RutaLogo))
+                {
+                    <img src="@Model.RutaLogo" class="img-thumbnail shadow-sm bg-dark p-2" style="max-width: 130px; max-height: 130px; object-fit: contain;" alt="Logo actual" />
+                }
+                else
+                {
+                    <div class="mx-auto bg-light text-muted rounded-circle p-3 border shadow-sm d-flex align-items-center justify-content-center" style="width: 100px; height: 100px; font-size: 2.5rem;">
+                        💈
+                    </div>
+                }
+                <small class="text-muted d-block mt-1">Logo Actual</small>
+            </div>
 
             <div class="mb-3">
                 <label asp-for="NombreNegocio" class="form-label fw-semibold">Nombre de la Barbería</label>
@@ -27,6 +43,12 @@
                     <span class="input-group-text">.barbersaas.com</span>
                 </div>
                 <span asp-validation-for="Subdominio" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold text-dark">Cambiar Logo Comercial</label>
+                <input type="file" name="logoArchivo" id="logoArchivo" class="form-control" accept="image/*" />
+                <small class="text-muted">Deja este campo vacío si vas a mantener el logo que ya tienes.</small>
             </div>
 
             <div class="mb-3">
@@ -55,12 +77,14 @@
                 </div>
             </div>
 
-            <div class="form-check form-switch mb-3 card p-3 shadow-sm border-warning">
-                <input class="form-check-input ms-0 me-2" type="checkbox" asp-for="TieneModuloHerramientas" id="TieneModuloHerramientas">
-                <label class="form-check-label fw-bold text-dark" for="TieneModuloHerramientas">
-                    🔌 Habilitar Módulo de Alquiler de Máquinas / Herramientas
-                </label>
-                <small class="text-muted d-block mt-1">Si activas esto, esta barbería tendrá acceso prioritario al inventario y préstamo interno de maquinaria.</small>
+            <div class="form-check form-switch mb-3 card p-3 shadow-sm border-warning ms-0">
+                <div class="ms-2">
+                    <input class="form-check-input me-2" type="checkbox" asp-for="TieneModuloHerramientas" id="TieneModuloHerramientas">
+                    <label class="form-check-label fw-bold text-dark" for="TieneModuloHerramientas">
+                        🔌 Habilitar Módulo de Alquiler de Máquinas / Herramientas
+                    </label>
+                </div>
+                <small class="text-muted d-block mt-1 ms-2">Si activas esto, esta barbería tendrá acceso prioritario al inventario y préstamo interno de maquinaria.</small>
             </div>
 
             <div class="mb-3">
@@ -75,7 +99,6 @@
 
             <hr class="my-4" />
 
-            <!-- ⏱️ SECCIÓN TIEMPO ENTRE CITAS AGREGADA -->
             <h5 class="fw-bold text-secondary mb-3">⏱️ Optimización de Tiempos</h5>
             <div class="mb-4 card p-3 bg-light border-0">
                 <label asp-for="TiempoEntreCitas" class="form-label fw-bold text-dark">Margen de limpieza/preparación entre citas:</label>
@@ -106,3 +129,9 @@
         </form>
     </div>
 </div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

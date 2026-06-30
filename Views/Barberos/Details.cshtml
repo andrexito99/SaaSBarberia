@@ -7,13 +7,11 @@
 <div class="container mt-4" style="max-width: 500px;">
     <div class="card shadow-sm border-0 p-4 text-center">
 
-        @* 📸 Renderizado dinámico de la foto en la tarjeta de detalles *@
+        @* 📸 Renderizado dinámico de la foto *@
         <div class="mx-auto mb-3">
-            @if (Model.Foto != null && Model.Foto.Length > 0)
+            @if (!string.IsNullOrEmpty(Model.RutaFoto))
             {
-                var base64 = Convert.ToBase64String(Model.Foto);
-                var imgSrc = $"data:image/png;base64,{base64}";
-                <img src="@imgSrc" class="rounded-circle border shadow" style="width: 110px; height: 110px; object-fit: cover;" alt="@Model.Usuario?.Nombre" />
+                <img src="@Model.RutaFoto" class="rounded-circle border shadow" style="width: 110px; height: 110px; object-fit: cover;" alt="@Model.Usuario?.Nombre" />
             }
             else
             {

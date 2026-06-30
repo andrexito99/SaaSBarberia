@@ -62,27 +62,44 @@ namespace SaaSBarberia.Services
 
         public async Task UpdateAsync(Producto producto, int tenantId, int usuarioId, string ip)
         {
-            // Traemos el original sin traqueo para poder comparar qué cambió exactamente
+            // 🛠️ BLINDAJE: Buscamos con seguimiento usando las llaves compuestas lógicas (Id y TenantId)
             var original = await _context.Productos
-                .AsNoTracking()
                 .FirstOrDefaultAsync(p => p.Id == producto.Id && p.TenantId == tenantId);
 
-            if (original == null) throw new UnauthorizedAccessException("No tienes permiso para modificar este producto o no existe.");
+            if (original == null)
+                throw new UnauthorizedAccessException("No tienes permiso para modificar este producto o no existe.");
 
-            producto.TenantId = tenantId;
-            _context.Entry(producto).State = EntityState.Modified;
-            _context.Entry(producto).Property(x => x.TenantId).IsModified = false;
+            // 📝 Guardamos el estado anterior para la auditoría antes de mutar las propiedades
+            string cambios = $"Se modificó el producto ID {producto.Id}. ";
+            bool huboCambios = false;
 
+            if (original.Nombre != producto.Nombre) { cambios += $"Nombre: '{original.Nombre}' -> '{producto.Nombre}'. "; huboCambios = true; }
+            if (original.Descripcion != producto.Descripcion) { cambios += $"Descripción: '{original.Descripcion}' -> '{producto.Descripcion}'. "; huboCambios = true; }
+            if (original.PrecioVenta != producto.PrecioVenta) { cambios += $"Precio: ${original.PrecioVenta.ToString("N2")} -> ${producto.PrecioVenta.ToString("N2")}. "; huboCambios = true; }
+            if (original.Stock != producto.Stock) { cambios += $"Stock: {original.Stock} -> {producto.Stock}. "; huboCambios = true; }
+
+            // 📸 FOTO PRODUCTO: Controlamos la actualización de la propiedad real 'RutaImagen'
+            if (!string.IsNullOrEmpty(producto.RutaImagen))
+            {
+                original.RutaImagen = producto.RutaImagen;
+                cambios += "Se actualizó la imagen del producto. ";
+                huboCambios = true;
+            }
+
+            // Asignamos los nuevos valores al objeto traqueado por EF
+            original.Nombre = producto.Nombre;
+            original.Descripcion = producto.Descripcion;
+            original.PrecioVenta = producto.PrecioVenta;
+            original.Stock = producto.Stock;
+
+            // Guardamos cambios (El TenantId no se toca para evitar fugas de información entre barberías)
             await _context.SaveChangesAsync();
 
-            // 🔥 AUDITORÍA: Detectamos qué cambió para guardar un reporte limpio
-            string cambios = $"Se modificó el producto ID {producto.Id}. ";
-            if (original.Nombre != producto.Nombre) cambios += $"Nombre: '{original.Nombre}' -> '{producto.Nombre}'. ";
-            if (original.Descripcion != producto.Descripcion) cambios += $"Descripción: '{original.Descripcion}' -> '{producto.Descripcion}'. ";
-            if (original.PrecioVenta != producto.PrecioVenta) cambios += $"Precio: ${original.PrecioVenta.ToString("N2")} -> ${producto.PrecioVenta.ToString("N2")}. ";
-            if (original.Stock != producto.Stock) cambios += $"Stock: {original.Stock} -> {producto.Stock}. ";
-
-            await _auditoriaService.RegistrarAsync(tenantId, usuarioId, "Producto", producto.Id.ToString(), "Editar", cambios, ip);
+            // 🔥 AUDITORÍA: Solo registra si de verdad el marica alteró algo
+            if (huboCambios)
+            {
+                await _auditoriaService.RegistrarAsync(tenantId, usuarioId, "Producto", producto.Id.ToString(), "Editar", cambios, ip);
+            }
         }
 
         public async Task DeleteAsync(int id, int tenantId, int usuarioId, string ip)

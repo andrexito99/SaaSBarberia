@@ -77,14 +77,10 @@
                         {
                             var barberoId = barbero.Id;
                             var nombreBarbero = barbero.Usuario?.Nombre ?? "Sin Nombre";
-                            var especialidadBarbero = barbero.Especialidad ?? "Estilo Libre"; // 🌟 ¡Arreglado aquí, marica!
+                            var especialidadBarbero = barbero.Especialidad ?? "Estilo Libre";
 
-                            string imgSrc = "/images/avatar-default.png";
-                            if (barbero.Foto != null && barbero.Foto.Length > 0)
-                            {
-                                var base64 = Convert.ToBase64String(barbero.Foto);
-                                imgSrc = $"data:image/png;base64,{base64}";
-                            }
+                            // 📸 CORREGIDO: Carga directa de la URL física desde disco duro sin Base64 pendejos
+                            string imgSrc = !string.IsNullOrEmpty(barbero.RutaFoto) ? barbero.RutaFoto : "/images/avatar-default.png";
 
                             <div class="col">
                                 <input type="radio" name="BarberoId" id="barbero_@barberoId" value="@barberoId" class="btn-check radio-barbero" @(Model?.BarberoId == barberoId ? "checked" : "") required />
@@ -94,7 +90,7 @@
                                     </div>
                                     <div>
                                         <h6 class="fw-bold text-dark mb-1">@nombreBarbero</h6>
-                                        <small class="text-primary fw-semibold d-block">🎯 @especialidadBarbero</small> @* 🌟 Y arreglado aquí también *@
+                                        <small class="text-primary fw-semibold d-block">🎯 @especialidadBarbero</small>
                                     </div>
                                     <div class="position-absolute top-0 end-0 m-2 check-indicator" style="display: none;">
                                         <span class="badge bg-primary rounded-circle p-1">✓</span>
@@ -235,7 +231,7 @@
             }
 
             selectServicio.addEventListener("change", evaluarDespliegueCalendario);
-            radiosBarbero.forEach(r => r.addEventListener("change", evaluarDespliegueCalendario));
+            radiasBarbero = radiosBarbero.forEach(r => r.addEventListener("change", evaluarDespliegueCalendario));
 
             function cargarHorarios() {
                 let servicioId = selectServicio.value;

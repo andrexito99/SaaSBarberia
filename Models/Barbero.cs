@@ -8,7 +8,9 @@ public partial class Barbero
     public int Id { get; set; }
 
     public int TenantId { get; set; }
-    public byte[]? Foto { get; set; }
+
+    // 🔥 CORREGIDO: Ya no es byte[], ahora guarda la ruta física de la foto en texto
+    public string? RutaFoto { get; set; }
 
     public int UsuarioId { get; set; }
 

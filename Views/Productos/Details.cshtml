@@ -4,24 +4,49 @@
     ViewData["Title"] = "Detalles del Producto";
 }
 
-<h1>Detalles de Producto</h1>
-<div>
-    <hr />
-    <dl class="row">
-        <dt class="col-sm-3">Nombre</dt>
-        <dd class="col-sm-9">@Html.DisplayFor(model => model.Nombre)</dd>
+<div class="container mt-4" style="max-width: 700px;">
+    <div class="card shadow-sm border-0 p-4">
+        <h2 class="fw-bold mb-3 text-dark">📋 Detalles del Producto</h2>
+        <hr />
 
-        <dt class="col-sm-3">Descripción</dt>
-        <dd class="col-sm-9">@Html.DisplayFor(model => model.Descripcion)</dd>
+        <div class="row align-items-center">
+            <div class="col-md-4 text-center mb-3 mb-md-0">
+                @if (!string.IsNullOrEmpty(Model.RutaImagen))
+                {
+                    <img src="@Model.RutaImagen" class="img-fluid rounded shadow border" style="max-height: 200px; object-fit: cover;" alt="@Model.Nombre" />
+                }
+                else
+                {
+                    <div class="bg-light text-muted rounded border d-flex align-items-center justify-content-center mx-auto shadow-sm" style="width: 150px; height: 150px; font-size: 3.5rem;">
+                        📦
+                    </div>
+                }
+            </div>
 
-        <dt class="col-sm-3">Precio Establecido</dt>
-        <dd class="col-sm-9">$@Model.PrecioVenta.ToString("N2")</dd>
+            <div class="col-md-8">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4 text-muted">Nombre:</dt>
+                    <dd class="col-sm-8 fw-bold text-dark">@Model.Nombre</dd>
 
-        <dt class="col-sm-3">Unidades en Almacén</dt>
-        <dd class="col-sm-9">@Html.DisplayFor(model => model.Stock) unidades</dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-warning">Editar Datos</a> |
-    <a asp-action="Index" class="btn btn-secondary">Volver al Inventario</a>
+                    <dt class="col-sm-4 text-muted">Descripción:</dt>
+                    <dd class="col-sm-8">@(Model.Descripcion ?? "Sin descripción registrada.")</dd>
+
+                    <dt class="col-sm-4 text-muted">Precio:</dt>
+                    <dd class="col-sm-8 text-success fw-semibold">$@Model.PrecioVenta.ToString("N2")</dd>
+
+                    <dt class="col-sm-4 text-muted">Stock Disponible:</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge @(Model.Stock > 5 ? "bg-success" : "bg-danger")">
+                            @Model.Stock unidades
+                        </span>
+                    </dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+            <a asp-action="Index" class="btn btn-secondary">Volver al Inventario</a>
+            <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-warning fw-semibold px-4">Editar Datos</a>
+        </div>
+    </div>
 </div>

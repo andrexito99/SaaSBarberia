@@ -9,7 +9,8 @@
 <div class="container mt-4" style="max-width: 800px;">
     <div class="card shadow-sm border-0 p-4">
         <h3 class="fw-bold mb-3 text-dark">💈 Registrar Negocio</h3>
-        <form asp-action="Create" autocomplete="off">
+
+        <form asp-action="Create" enctype="multipart/form-data" autocomplete="off">
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
             <div class="mb-3">
@@ -25,6 +26,12 @@
                     <span class="input-group-text">.barbersaas.com</span>
                 </div>
                 <span asp-validation-for="Subdominio" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold text-dark">Logo del Establecimiento</label>
+                <input type="file" name="logoArchivo" id="logoArchivo" class="form-control" accept="image/*" />
+                <small class="text-muted">Se guardará de forma optimizada en el almacenamiento del servidor.</small>
             </div>
 
             <div class="mb-3">
@@ -199,7 +206,7 @@
 
             document.querySelectorAll(".fila-horario").forEach(fila => {
                 const diaId = fila.getAttribute("data-dia");
-                if (diaId !== "1" && diaId !== "0") { // Excluimos Lunes y Domingo
+                if (diaId !== "1" && diaId !== "0") {
                     fila.querySelector(".check-cerrado").checked = cerradoLunes;
                     fila.querySelector(".input-hora-inicio").value = ini1;
                     fila.querySelector(".input-hora-fin").value = fin1;
@@ -250,7 +257,7 @@
 
         document.querySelectorAll(".fila-horario").forEach(fila => {
             const diaId = fila.getAttribute("data-dia");
-            if (diaId !== "0") { // Respeta el domingo cerrado
+            if (diaId !== "0") {
                 fila.querySelector(".check-cerrado").checked = false;
                 fila.querySelector(".input-hora-inicio").value = i1;
                 fila.querySelector(".input-hora-fin").value = f1;

@@ -21,13 +21,12 @@
                 <div class="card h-100 shadow-sm border-0 position-relative">
                     <div class="card-body pt-4">
                         <div class="d-flex align-items-center mb-3">
-                            @* 📸 Renderizado dinámico de la foto en el Index *@
+
+                            @* 📸 RENDERIZADO DESDE RUTA EN DISCO DURO *@
                             <div class="me-3">
-                                @if (item.Foto != null && item.Foto.Length > 0)
+                                @if (!string.IsNullOrEmpty(item.RutaFoto))
                                 {
-                                    var base64 = Convert.ToBase64String(item.Foto);
-                                    var imgSrc = $"data:image/png;base64,{base64}";
-                                    <img src="@imgSrc" class="rounded-circle border shadow-sm shadow-sm" style="width: 55px; height: 55px; object-fit: cover;" alt="@item.Usuario?.Nombre" />
+                                    <img src="@item.RutaFoto" class="rounded-circle border shadow-sm" style="width: 55px; height: 55px; object-fit: cover;" alt="@item.Usuario?.Nombre" />
                                 }
                                 else
                                 {

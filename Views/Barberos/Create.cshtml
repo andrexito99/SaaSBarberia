@@ -8,7 +8,6 @@
     <div class="card shadow-sm border-0 p-4">
         <h3 class="fw-bold mb-3 text-dark">Asignar Perfil de Barbero</h3>
 
-        @* 🚨 ENCTYPE AGREGADO: Necesario para procesar la foto en binario *@
         <form asp-action="Create" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
@@ -36,11 +35,10 @@
                 <span asp-validation-for="ComisionPorcentaje" class="text-danger"></span>
             </div>
 
-            @* 📸 CAMPO PREMIUM: Subida de la foto del Barbero *@
             <div class="mb-3">
-                <label class="form-label fw-semibold text-dark">Foto del Barbero</label>
-                <input type="file" name="fotoInput" id="fotoInput" class="form-control" accept="image/*" />
-                <small class="text-muted">Se almacenará de forma segura en la base de datos.</small>
+                <label class="form-label fw-semibold text-dark">Foto de Perfil del Barbero</label>
+                <input type="file" name="fotoArchivo" id="fotoArchivo" class="form-control" accept="image/*" />
+                <small class="text-muted">Se almacenará físicamente de forma rápida en el servidor.</small>
             </div>
 
             <div class="d-flex justify-content-between mt-4">

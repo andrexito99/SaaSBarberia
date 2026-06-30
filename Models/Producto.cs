@@ -22,6 +22,9 @@ namespace SaaSBarberia.Models
         [Range(0, 9999, ErrorMessage = "El stock no puede ser negativo.")]
         public int Stock { get; set; }
 
+        // 🔥 NUEVO: Se agrega la ruta para la foto del producto
+        public string? RutaImagen { get; set; }
+
         // Propiedad de navegación
         public virtual Tenant? Tenant { get; set; }
     }

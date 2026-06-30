@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using SaaSBarberia.Data;
@@ -25,18 +27,48 @@ namespace SaaSBarberia.Services
             return await _context.Tenants.FindAsync(id);
         }
 
+        // 💾 GUARDAR / ACTUALIZAR TENANT (SEDE DE BARBERÍA)
         public async Task GuardarAsync(Tenant tenant)
         {
             if (tenant.Id == 0)
             {
-                tenant.FechaRegistro ??= System.DateTime.Now;
+                tenant.FechaRegistro ??= DateTime.Now;
                 tenant.Activo ??= true;
                 _context.Add(tenant);
             }
             else
             {
-                _context.Update(tenant);
+                // 🛠️ BLINDAJE ANTI-TRACKING: Buscamos el original traqueado para modificarlo directamente
+                var original = await _context.Tenants.FindAsync(tenant.Id);
+                if (original != null)
+                {
+                    // Mapeamos los campos reales de tu modelo Tenant
+                    original.NombreNegocio = tenant.NombreNegocio;
+                    original.Subdominio = tenant.Subdominio;
+                    original.PlanSuscripcion = tenant.PlanSuscripcion;
+                    original.CerradoPorEmergencia = tenant.CerradoPorEmergencia;
+                    original.FechaUltimoCierre = tenant.FechaUltimoCierre;
+
+                    // Colores y personalización visual
+                    original.ColorPrimario = tenant.ColorPrimario;
+                    original.ColorSecundario = tenant.ColorSecundario;
+                    original.EstiloSidebar = tenant.EstiloSidebar;
+
+                    // Módulos y tiempos
+                    original.TieneModuloHerramientas = tenant.TieneModuloHerramientas;
+                    original.TiempoEntreCitas = tenant.TiempoEntreCitas;
+
+                    if (tenant.Activo.HasValue)
+                        original.Activo = tenant.Activo;
+
+                    // 📸 LOGO: Reemplaza solo si mandaron un archivo nuevo
+                    if (!string.IsNullOrEmpty(tenant.RutaLogo))
+                    {
+                        original.RutaLogo = tenant.RutaLogo;
+                    }
+                }
             }
+
             await _context.SaveChangesAsync();
         }
 

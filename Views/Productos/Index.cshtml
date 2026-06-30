@@ -36,10 +36,26 @@
             {
                 <div class="col">
                     <div class="card h-100 border-0 shadow-sm rounded-3 hover-shadow transition-all">
+
+                        <!-- 📸 NUEVO: Renderizado de Imagen desde Disco Duro -->
+                        <div class="position-relative bg-light rounded-top-3 text-center d-flex align-items-center justify-content-center" style="height: 200px; overflow: hidden;">
+                            @if (!string.IsNullOrEmpty(item.RutaImagen))
+                            {
+                                <img src="@item.RutaImagen" class="w-100 h-100" style="object-fit: cover;" alt="@item.Nombre" />
+                            }
+                            else
+                            {
+                                <div class="text-muted">
+                                    <i class="fas fa-box-open fa-3x mb-2 d-block"></i>
+                                    <span class="small">Sin Imagen</span>
+                                </div>
+                            }
+                        </div>
+
                         <!-- Cuerpo de la tarjeta -->
                         <div class="card-body d-flex flex-column p-4">
                             <div class="d-flex justify-content-between align-items-start mb-2">
-                                <h4 class="card-title fw-bold text-truncate mb-0" style="max-width: 80%;">
+                                <h4 class="card-title fw-bold text-truncate mb-0" style="max-width: 60%;">
                                     @item.Nombre
                                 </h4>
                                 <!-- Badge de Stock Inteligente -->
@@ -87,16 +103,20 @@
     .transition-all {
         transition: all 0.3s ease-in-out;
     }
+
     .hover-shadow:hover {
         transform: translateY(-5px);
         box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.15) !important;
     }
+
     .fw-extrabold {
         font-weight: 800;
     }
+
     .bg-success-subtle {
         background-color: #d1e7dd !important;
     }
+
     .bg-danger-subtle {
         background-color: #f8d7da !important;
     }

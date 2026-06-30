@@ -59,26 +59,51 @@ namespace SaaSBarberia.Services
             }
             else
             {
-                // Consultamos el registro anterior sin traqueo para comparar variaciones críticas
+                // 🛠️ CORREGIDO: Buscamos el registro de la BD CON traqueo para modificarlo directamente
                 var original = await _context.Barberos
-                    .AsNoTracking()
                     .Include(b => b.Usuario)
                     .FirstOrDefaultAsync(b => b.Id == barbero.Id);
-
-                _context.Update(barbero);
-                await _context.SaveChangesAsync();
 
                 if (original != null)
                 {
                     string nombreEmpleado = original.Usuario?.Nombre ?? "Desconocido";
                     string cambios = $"Se modificó el perfil del barbero {nombreEmpleado} (ID: {barbero.Id}). ";
+                    bool huboCambios = false;
 
+                    // Evaluamos variaciones críticas para la auditoría antes de sobreescribir
                     if (original.ComisionPorcentaje != barbero.ComisionPorcentaje)
+                    {
                         cambios += $"¡PILAS! Comisión Alterada: {original.ComisionPorcentaje}% -> {barbero.ComisionPorcentaje}%. ";
+                        huboCambios = true;
+                    }
                     if (original.Especialidad != barbero.Especialidad)
+                    {
                         cambios += $"Especialidad cambiada: '{original.Especialidad}' -> '{barbero.Especialidad}'. ";
+                        huboCambios = true;
+                    }
 
-                    await _auditoriaService.RegistrarAsync(barbero.TenantId, usuarioId, "Barbero", barbero.Id.ToString(), "Editar", cambios, ip);
+                    // Actualizamos las propiedades del objeto traqueado con lo que viene del formulario
+                    original.TenantId = barbero.TenantId;
+                    original.UsuarioId = barbero.UsuarioId;
+                    original.Especialidad = barbero.Especialidad;
+                    original.ComisionPorcentaje = barbero.ComisionPorcentaje;
+
+                    // 📸 Solo actualizamos la ruta de la foto si mandaron una nueva desde la vista
+                    if (!string.IsNullOrEmpty(barbero.RutaFoto))
+                    {
+                        original.RutaFoto = barbero.RutaFoto;
+                        cambios += "Se actualizó la foto de perfil. ";
+                        huboCambios = true;
+                    }
+
+                    // Guardamos de una, EF sabe qué objeto modificar sin romper el contexto
+                    await _context.SaveChangesAsync();
+
+                    // Si detectamos variaciones o cambio de foto, disparamos el log
+                    if (huboCambios)
+                    {
+                        await _auditoriaService.RegistrarAsync(barbero.TenantId, usuarioId, "Barbero", barbero.Id.ToString(), "Editar", cambios, ip);
+                    }
                 }
             }
         }

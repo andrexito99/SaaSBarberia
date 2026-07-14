@@ -23,10 +23,12 @@ namespace SaaSBarberia.Services
     public class AlquileresHerramientasService : IAlquileresHerramientasService
     {
         private readonly BarberSaaSDbContext _context;
+        private readonly IEventosSistemaService _eventos;
 
-        public AlquileresHerramientasService(BarberSaaSDbContext context)
+        public AlquileresHerramientasService(BarberSaaSDbContext context, IEventosSistemaService eventos)
         {
             _context = context;
+            _eventos = eventos;
         }
 
         public async Task<IEnumerable<AlquilerHerramienta>> GetAllAsync(int tenantId)
@@ -63,13 +65,14 @@ namespace SaaSBarberia.Services
 
             _context.Add(alquiler);
             await _context.SaveChangesAsync();
+            await _eventos.PublicarAsync(new EventoSistema(TipoEventoSistema.HerramientaAlquilada, tenantId, "Herramienta alquilada", "Se registró el alquiler de una herramienta.", "/AlquileresHerramientas/Details/" + alquiler.Id));
         }
 
         public async Task UpdateAsync(AlquilerHerramienta alquiler, int tenantId)
         {
             // 🔥 Corregido a Plural: AlquileresHerramientas
-            var existe = await _context.AlquileresHerramientas.AnyAsync(a => a.Id == alquiler.Id && a.TenantId == tenantId);
-            if (!existe) throw new UnauthorizedAccessException("No tienes permiso.");
+            var existente = await _context.AlquileresHerramientas.AsNoTracking().FirstOrDefaultAsync(a => a.Id == alquiler.Id && a.TenantId == tenantId);
+            if (existente == null) throw new UnauthorizedAccessException("No tienes permiso.");
 
             alquiler.TenantId = tenantId;
             // 🔥 Corregido a Plural: Herramientas
@@ -90,6 +93,8 @@ namespace SaaSBarberia.Services
             _context.Entry(alquiler).Property(x => x.TenantId).IsModified = false;
 
             await _context.SaveChangesAsync();
+            if (!existente.FechaDevolucion.HasValue && alquiler.FechaDevolucion.HasValue)
+                await _eventos.PublicarAsync(new EventoSistema(TipoEventoSistema.HerramientaDevuelta, tenantId, "Herramienta devuelta", "Se registró la devolución de una herramienta.", "/AlquileresHerramientas/Details/" + alquiler.Id));
         }
 
         public async Task DeleteAsync(int id, int tenantId)

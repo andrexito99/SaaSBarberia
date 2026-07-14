@@ -32,8 +32,7 @@ public class CajaController : Controller
     {
         if (CurrentUsuarioId == 0) return RedirectToAction("Login", "Account");
 
-        // Se puede sacar de los claims si lo guardaste en el login, sino por defecto se asocia al tenant del admin
-        var tenantId = int.Parse(User.FindFirst("TenantId")?.Value ?? "1");
+        if (!int.TryParse(User.FindFirst("TenantId")?.Value, out var tenantId) || tenantId <= 0) return Forbid();
 
         await _cajaService.AbrirCajaAsync(montoInicial, CurrentUsuarioId, tenantId, CurrentUserIp);
         return RedirectToAction(nameof(Index));

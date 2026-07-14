@@ -1,0 +1,71 @@
+@model SaaSBarberia.Models.BarberoAusencia
+
+@{
+    ViewData["Title"] = "Editar Ausencia";
+}
+
+<div class="container mt-4" style="max-width: 600px;">
+    <div class="card shadow border-0 p-4">
+        <h3 class="fw-bold mb-1 text-dark text-center">✏️ Editar Ausencia</h3>
+        <p class="text-muted text-center small mb-4">Modifica los detalles del bloqueo</p>
+
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger text-sm mb-3"></div>
+            <input type="hidden" asp-for="Id" />
+
+            <div class="mb-3">
+                <label asp-for="BarberoId" class="form-label fw-semibold">💇‍♂️ Barbero Asignado</label>
+                <select asp-for="BarberoId" class="form-select" asp-items="ViewBag.BarberoId"></select>
+                <span asp-validation-for="BarberoId" class="text-danger small"></span>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="FechaInicio" class="form-label fw-semibold">📅 Fecha Inicio</label>
+                    <input asp-for="FechaInicio" class="form-control" type="datetime-local" />
+                    <span asp-validation-for="FechaInicio" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="FechaFin" class="form-label fw-semibold">📅 Fecha Fin</label>
+                    <input asp-for="FechaFin" class="form-control" type="datetime-local" />
+                    <span asp-validation-for="FechaFin" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Tipo" class="form-label fw-semibold">💡 Tipo de Ausencia</label>
+                <select asp-for="Tipo" class="form-select" asp-items="Html.GetEnumSelectList<TipoAusencia>()"></select>
+                <span asp-validation-for="Tipo" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Motivo" class="form-label fw-semibold">📌 Motivo</label>
+                <input asp-for="Motivo" class="form-control" />
+                <span asp-validation-for="Motivo" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Observaciones" class="form-label fw-semibold">📝 Observaciones</label>
+                <textarea asp-for="Observaciones" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="Observaciones" class="text-danger small"></span>
+            </div>
+
+            <div class="form-check form-switch mb-4 p-3 bg-light rounded border">
+                <input asp-for="Activo" class="form-check-input ms-0 me-2" type="checkbox" role="switch" />
+                <label asp-for="Activo" class="form-check-label fw-bold text-dark">¿La ausencia está Activa?</label>
+                <span class="d-block text-muted small">Si desactivas esta opción, el barbero volverá a figurar disponible para citas de inmediato en el calendario de los clientes.</span>
+            </div>
+
+            <div class="d-flex justify-content-between mt-4">
+                <a asp-action="Index" class="btn btn-light border px-4">Cancelar</a>
+                <button type="submit" class="btn btn-primary px-4 fw-bold">Actualizar Cambios</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

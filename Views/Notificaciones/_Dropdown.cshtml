@@ -1,0 +1,15 @@
+@model IReadOnlyList<SaaSBarberia.Models.Notificacion>
+@foreach (var item in Model)
+{
+    <div class="notification-item px-3 py-2 border-bottom @(item.Leida ? "" : "bg-light")" data-id="@item.Id">
+        <a class="text-decoration-none text-dark d-block" href="@(item.UrlDestino ?? "#")" data-notification-link="@item.Id">
+            <div class="fw-semibold small"><i class="bi @(item.Icono ?? "bi-bell") text-@(item.Color ?? "primary") me-1"></i>@item.Titulo</div>
+            <div class="small text-muted text-truncate">@item.Mensaje</div>
+            <div class="small text-secondary">@item.FechaCreacion.ToString("dd/MM HH:mm")</div>
+        </a>
+    </div>
+}
+@if (!Model.Any())
+{
+    <div class="text-center text-muted small py-4">No tienes notificaciones.</div>
+}

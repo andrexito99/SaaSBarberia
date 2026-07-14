@@ -19,12 +19,14 @@ namespace SaaSBarberia.Controllers
         private readonly CitaService _citaService;
         private readonly BarberSaaSDbContext _context;
         private readonly HorarioLaboralService _horarioService;
+        private readonly AgendaInteligenteService _agendaService;
 
-        public CitasController(CitaService citaService, BarberSaaSDbContext context, HorarioLaboralService horarioService)
+        public CitasController(CitaService citaService, BarberSaaSDbContext context, HorarioLaboralService horarioService, AgendaInteligenteService agendaService)
         {
             _citaService = citaService;
             _context = context;
             _horarioService = horarioService;
+            _agendaService = agendaService;
         }
 
         private int CurrentUsuarioId => int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out int userId) ? userId : 0;
@@ -66,12 +68,17 @@ namespace SaaSBarberia.Controllers
             }
 
             // Buscamos el barbero para jalar el TenantId al que pertenece
-            var barbero = await _context.Barberos.FindAsync(barberoId);
+            var barbero = await _context.Barberos
+                .Include(b => b.Usuario)
+                .FirstOrDefaultAsync(b => b.Id == barberoId && b.Usuario.Activo == true);
             if (barbero == null) return NotFound("Barbero no encontrado.");
 
-            var servicio = await _context.Servicios.FindAsync(servicioId);
+            var servicio = await _context.Servicios.FirstOrDefaultAsync(s => s.Id == servicioId && s.TenantId == barbero.TenantId);
             if (servicio == null) return NotFound("Servicio no encontrado.");
             int duracionTotalRequerida = servicio.DuracionMinutos;
+
+            var tenant = await _context.Tenants.FindAsync(barbero.TenantId);
+            if (tenant == null || tenant.Activo != true) return Json(new List<string>());
 
             var citasExistentes = await _context.Citas
                 .Where(c => c.BarberoId == barberoId
@@ -80,9 +87,18 @@ namespace SaaSBarberia.Controllers
                 .Include(c => c.Servicio)
                 .ToListAsync();
 
+            // 🔥 NUEVO: Traemos las ausencias del barbero para ese día específico
+            var ausenciasActivas = await _context.BarberoAusencias
+                .Where(a => a.TenantId == barbero.TenantId
+                         && a.BarberoId == barberoId
+                         && a.Activo
+                         && a.FechaInicio.Date <= fechaSeleccionada.Date
+                         && a.FechaFin.Date >= fechaSeleccionada.Date)
+                .ToListAsync();
+
             int nDiaSemana = (int)fechaSeleccionada.DayOfWeek;
 
-            // 🔥 CORREGIDO: Llamada con la instancia '_horarioService' y pasando el 'barbero.TenantId'
+            // Llamada con la instancia '_horarioService' y pasando el 'barbero.TenantId'
             var horarioDelDia = await _horarioService.ObtenerHorarioDiaAsync(barbero.TenantId, nDiaSemana);
 
             if (horarioDelDia == null || horarioDelDia.EstaCerrado)
@@ -90,15 +106,59 @@ namespace SaaSBarberia.Controllers
                 return Json(new List<string>());
             }
 
-            var agendaService = new AgendaInteligenteService();
-            List<DateTime> bloquesDisponibles = agendaService.ObtenerHorasDisponibles(citasExistentes,
-                                                                                      fechaSeleccionada,
-                                                                                      duracionTotalRequerida,
-                                                                                      horarioDelDia);
+            // 🔥 CORREGIDO: Ahora sí le pasamos 'ausenciasActivas' en el segundo parámetro como lo espera el servicio
+            List<DateTime> bloquesDisponibles = _agendaService.ObtenerHorasDisponibles(
+                citasExistentes,
+                ausenciasActivas, // <-- El parámetro que te faltaba cruzar
+                fechaSeleccionada,
+                duracionTotalRequerida,
+                horarioDelDia,
+                tenant.TiempoEntreCitas
+            );
 
             var horariosDisponiblesStrings = bloquesDisponibles.Select(h => h.ToString("hh:mm tt")).ToList();
 
             return Json(horariosDisponiblesStrings);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ObtenerOpcionesPorTenant(int tenantId)
+        {
+            if (tenantId <= 0) return BadRequest("Tenant inválido.");
+
+            if (User.IsInRole("AdminBarberia") || User.IsInRole("Barbero"))
+            {
+                var usuarioDb = await _citaService.ObtenerClientePorIdAsync(CurrentUsuarioId);
+                if (usuarioDb?.TenantId != tenantId) return Forbid();
+            }
+
+            var tenantExiste = await _context.Tenants.AnyAsync(t => t.Id == tenantId && t.Activo == true);
+            if (!tenantExiste) return NotFound("Barbería no encontrada o inactiva.");
+
+            var barberos = await _context.Barberos
+                .Include(b => b.Usuario)
+                .Where(b => b.TenantId == tenantId && b.Usuario.Activo == true)
+                .OrderBy(b => b.Usuario.Nombre)
+                .Select(b => new
+                {
+                    id = b.Id,
+                    nombre = b.Usuario.Nombre,
+                    especialidad = b.Especialidad ?? "Estilo libre",
+                    rutaFoto = string.IsNullOrEmpty(b.RutaFoto) ? "/images/avatar-default.png" : b.RutaFoto
+                })
+                .ToListAsync();
+
+            var servicios = await _context.Servicios
+                .Where(s => s.TenantId == tenantId)
+                .OrderBy(s => s.Nombre)
+                .Select(s => new
+                {
+                    id = s.Id,
+                    nombre = s.Nombre
+                })
+                .ToListAsync();
+
+            return Json(new { barberos, servicios });
         }
 
         [HttpPost]
@@ -107,8 +167,22 @@ namespace SaaSBarberia.Controllers
         {
             if (CurrentUsuarioId == 0) return RedirectToAction("Login", "Account");
 
-            if (!User.IsInRole("SuperAdmin"))
+            // 🔥 SOLUCIÓN 1: Si es Cliente, recuperamos el TenantId desde el Barbero que seleccionó
+            if (User.IsInRole("Cliente"))
             {
+                cita.ClienteId = CurrentUsuarioId; // Aseguramos que se guarde con su ID
+
+                var barberoSeleccionado = await _context.Barberos.AsNoTracking()
+                    .FirstOrDefaultAsync(b => b.Id == cita.BarberoId);
+
+                if (barberoSeleccionado != null)
+                {
+                    cita.TenantId = barberoSeleccionado.TenantId;
+                }
+            }
+            else if (!User.IsInRole("SuperAdmin"))
+            {
+                // Administradores de sede o barberos
                 var usuarioDb = await _citaService.ObtenerClientePorIdAsync(CurrentUsuarioId);
                 if (usuarioDb != null && usuarioDb.TenantId != null)
                 {
@@ -116,27 +190,57 @@ namespace SaaSBarberia.Controllers
                 }
             }
 
+            // Limpiamos los errores del ModelState para datos autogenerados o de navegación
             if (!User.IsInRole("SuperAdmin"))
             {
                 ModelState.Remove(nameof(cita.TenantId));
             }
 
+            cita.Estado = "Pendiente"; // Forzar estado inicial seguro
+            ModelState.Remove(nameof(cita.Estado));
             ModelState.Remove(nameof(cita.Tenant));
             ModelState.Remove(nameof(cita.Cliente));
             ModelState.Remove(nameof(cita.Barbero));
             ModelState.Remove(nameof(cita.Servicio));
 
+            // 🕵️‍♂️ MODO DEBUG: Si sigue fallando por otra cosa, esto te lo cantará en la consola de Visual Studio
+            if (!ModelState.IsValid)
+            {
+                var errores = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                foreach (var err in errores)
+                {
+                    System.Diagnostics.Debug.WriteLine($"🔴 ERROR DE VALIDACIÓN EN CITA: {err}");
+                }
+            }
+
             if (ModelState.IsValid)
             {
-                var servicio = await _context.Servicios.FindAsync(cita.ServicioId);
+                var tenant = await _context.Tenants.FindAsync(cita.TenantId);
+                if (tenant == null || tenant.Activo != true)
+                {
+                    ModelState.AddModelError(nameof(cita.TenantId), "La barbería seleccionada no está disponible.");
+                    await RecargarCombosErrorAsync(cita);
+                    return View(cita);
+                }
+
+                var barbero = await _context.Barberos
+                    .Include(b => b.Usuario)
+                    .FirstOrDefaultAsync(b => b.Id == cita.BarberoId && b.TenantId == cita.TenantId && b.Usuario.Activo == true);
+                if (barbero == null)
+                {
+                    ModelState.AddModelError(nameof(cita.BarberoId), "El barbero seleccionado no pertenece a esta barbería o no está activo.");
+                    await RecargarCombosErrorAsync(cita);
+                    return View(cita);
+                }
+
+                var servicio = await _context.Servicios.FirstOrDefaultAsync(s => s.Id == cita.ServicioId && s.TenantId == cita.TenantId);
                 if (servicio == null) return NotFound("El servicio seleccionado no existe.");
 
                 DateTime inicioNuevaCita = cita.FechaHora;
-                DateTime finNuevaCita = cita.FechaHora.AddMinutes(servicio.DuracionMinutos);
+                DateTime finNuevaCita = cita.FechaHora.AddMinutes(servicio.DuracionMinutos + Math.Max(0, tenant.TiempoEntreCitas));
 
                 int diaCita = (int)cita.FechaHora.DayOfWeek;
 
-                // 🔥 CORREGIDO: Llamada con la instancia '_horarioService' y pasando el 'cita.TenantId'
                 var horarioCita = await _horarioService.ObtenerHorarioDiaAsync(cita.TenantId, diaCita);
                 TimeSpan horaCitaTime = cita.FechaHora.TimeOfDay;
 
@@ -145,12 +249,12 @@ namespace SaaSBarberia.Controllers
                 if (horarioCita != null && !horarioCita.EstaCerrado)
                 {
                     if (horarioCita.HoraInicio.HasValue && horarioCita.HoraFin.HasValue &&
-                        horaCitaTime >= horarioCita.HoraInicio.Value && horaCitaTime < horarioCita.HoraFin.Value)
+                        horaCitaTime >= horarioCita.HoraInicio.Value && cita.FechaHora.AddMinutes(servicio.DuracionMinutos).TimeOfDay <= horarioCita.HoraFin.Value)
                     {
                         estaDentroDeJornada = true;
                     }
                     else if (horarioCita.HoraInicio2.HasValue && horarioCita.HoraFin2.HasValue &&
-                             horaCitaTime >= horarioCita.HoraInicio2.Value && horaCitaTime < horarioCita.HoraFin2.Value)
+                             horaCitaTime >= horarioCita.HoraInicio2.Value && cita.FechaHora.AddMinutes(servicio.DuracionMinutos).TimeOfDay <= horarioCita.HoraFin2.Value)
                     {
                         estaDentroDeJornada = true;
                     }
@@ -163,10 +267,18 @@ namespace SaaSBarberia.Controllers
                     return View(cita);
                 }
 
+                if (await _agendaService.TieneAusenciaEnRangoAsync(cita.TenantId, cita.BarberoId, inicioNuevaCita, finNuevaCita))
+                {
+                    ModelState.AddModelError("", "El barbero tiene una ausencia activa que bloquea el horario seleccionado.");
+                    await RecargarCombosErrorAsync(cita);
+                    return View(cita);
+                }
+
                 var citasCruce = await _context.Citas
                     .Where(c => c.FechaHora.Date == cita.FechaHora.Date
                              && c.Estado != "Cancelada"
                              && c.Id != cita.Id
+                             && c.TenantId == cita.TenantId
                              && (c.BarberoId == cita.BarberoId || c.ClienteId == cita.ClienteId))
                     .Include(c => c.Servicio)
                     .ToListAsync();
@@ -175,7 +287,7 @@ namespace SaaSBarberia.Controllers
                 {
                     int duracionExistente = c.Servicio?.DuracionMinutos ?? 30;
                     DateTime inicioExistente = c.FechaHora;
-                    DateTime finExistente = c.FechaHora.AddMinutes(duracionExistente);
+                    DateTime finExistente = c.FechaHora.AddMinutes(duracionExistente + Math.Max(0, tenant.TiempoEntreCitas));
 
                     if (inicioNuevaCita < finExistente && finNuevaCita > inicioExistente)
                     {
@@ -232,11 +344,19 @@ namespace SaaSBarberia.Controllers
 
             var nuevaCita = new Cita { FechaHora = DateTime.Now, Estado = "Pendiente" };
 
-            if (User.IsInRole("SuperAdmin"))
+            if (User.IsInRole("SuperAdmin") || User.IsInRole("Cliente"))
             {
                 ViewBag.TenantId = new SelectList(await _citaService.ObtenerTenantsAsync(), "Id", "NombreNegocio");
-                ViewBag.ClienteId = new SelectList(await _citaService.ObtenerClientesAsync(), "Id", "Nombre");
-                await CargarCombosPorRolYTenantAsync(isSuperAdmin: true);
+                if (User.IsInRole("Cliente"))
+                {
+                    nuevaCita.ClienteId = CurrentUsuarioId;
+                }
+                else
+                {
+                    ViewBag.ClienteId = new SelectList(await _citaService.ObtenerClientesAsync(), "Id", "Nombre");
+                }
+
+                await CargarCombosPorRolYTenantAsync(isSuperAdmin: true, tenantId: 0);
             }
             else
             {
@@ -331,6 +451,11 @@ namespace SaaSBarberia.Controllers
             }
             else
             {
+                if (User.IsInRole("Cliente"))
+                {
+                    ViewBag.TenantId = new SelectList(await _citaService.ObtenerTenantsAsync(), "Id", "NombreNegocio", cita.TenantId);
+                }
+
                 if (!User.IsInRole("Cliente"))
                 {
                     var clientesSede = (await _citaService.ObtenerClientesAsync()).Where(u => u.TenantId == cita.TenantId);
@@ -347,19 +472,26 @@ namespace SaaSBarberia.Controllers
 
             if (isSuperAdmin)
             {
-                var barberosValidos = barberos.Where(b => b.Usuario != null).ToList();
+                var barberosValidos = barberos
+                    .Where(b => b.Usuario != null && b.Usuario.Activo == true && (tenantId == 0 || b.TenantId == tenantId))
+                    .ToList();
+
+                var serviciosValidos = servicios
+                    .Where(s => tenantId == 0 || s.TenantId == tenantId)
+                    .ToList();
+
                 ViewBag.BarberoId = new SelectList(barberosValidos, "Id", "Usuario.Nombre");
-                ViewBag.ServicioId = new SelectList(servicios, "Id", "Nombre");
-                ViewBag.StrawberryField = barberosValidos;
+                ViewBag.ServicioId = new SelectList(serviciosValidos, "Id", "Nombre");
+                ViewBag.ListaBarberosCompleta = barberosValidos;
             }
             else
             {
-                var barberosSede = barberos.Where(b => b.TenantId == tenantId && b.Usuario != null).ToList();
+                var barberosSede = barberos.Where(b => b.TenantId == tenantId && b.Usuario != null && b.Usuario.Activo == true).ToList();
                 ViewBag.BarberoId = new SelectList(barberosSede, "Id", "Usuario.Nombre");
 
                 var serviciosSede = servicios.Where(s => s.TenantId == tenantId).ToList();
                 ViewBag.ServicioId = new SelectList(serviciosSede, "Id", "Nombre");
-                ViewBag.StrawberryField = barberosSede;
+                ViewBag.ListaBarberosCompleta = barberosSede;
             }
         }
     }

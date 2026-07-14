@@ -43,9 +43,6 @@ public partial class BarberSaaSDbContext : DbContext
     // 👑 PROPIEDAD INTELIGENTE: Evalúa si el usuario en sesión es SuperAdmin
     public bool EsSuperAdmin => _httpContextAccessor?.HttpContext?.User?.IsInRole("SuperAdmin") ?? false;
 
-    // ========================================================
-    // 🗄️ DBSETS DEL NÚCLEO DEL NEGOCIO
-    // ========================================================
     public virtual DbSet<Barbero> Barberos { get; set; }
     public virtual DbSet<Cita> Citas { get; set; }
     public virtual DbSet<Factura> Facturas { get; set; }
@@ -56,18 +53,14 @@ public partial class BarberSaaSDbContext : DbContext
     public virtual DbSet<Usuario> Usuarios { get; set; }
     public DbSet<HorarioLaboral> HorariosLaborales { get; set; }
 
-    // ========================================================
-    // 🗄️ DBSETS DE CATÁLOGO Y GESTIÓN DE HERRAMIENTAS (¡Solo Plurales!)
-    // ========================================================
     public DbSet<Producto> Productos { get; set; }
     public DbSet<Herramienta> Herramientas { get; set; }
     public DbSet<AlquilerHerramienta> AlquileresHerramientas { get; set; }
 
-    // ========================================================
-    // 🗄️ DBSETS MÓDULO DE CAJA
-    // ========================================================
     public virtual DbSet<MovimientoCaja> MovimientosCaja { get; set; }
     public virtual DbSet<DetalleCaja> DetallesCaja { get; set; }
+    public DbSet<BarberoAusencia> BarberoAusencias { get; set; }
+    public DbSet<Notificacion> Notificaciones { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) { }
 
@@ -75,15 +68,15 @@ public partial class BarberSaaSDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // ========================================================
-        // 🔒 GLOBAL QUERY FILTERS PARA MULTI-TENANT
-        // ========================================================
         modelBuilder.Entity<Servicio>().HasQueryFilter(s => EsSuperAdmin || s.TenantId == TenantIdActual);
         modelBuilder.Entity<Cita>().HasQueryFilter(c => EsSuperAdmin || c.TenantId == TenantIdActual);
         modelBuilder.Entity<Barbero>().HasQueryFilter(b => EsSuperAdmin || b.TenantId == TenantIdActual);
         modelBuilder.Entity<Factura>().HasQueryFilter(f => EsSuperAdmin || f.TenantId == TenantIdActual);
         modelBuilder.Entity<Usuario>().HasQueryFilter(u => EsSuperAdmin || u.TenantId == TenantIdActual);
         modelBuilder.Entity<MovimientoCaja>().HasQueryFilter(mc => EsSuperAdmin || mc.TenantId == TenantIdActual);
+        modelBuilder.Entity<BarberoAusencia>().HasQueryFilter(a => EsSuperAdmin || a.TenantId == TenantIdActual);
+        modelBuilder.Entity<Notificacion>().HasQueryFilter(n => EsSuperAdmin || n.TenantId == TenantIdActual);
+
         modelBuilder.Entity<HorarioLaboral>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -93,12 +86,9 @@ public partial class BarberSaaSDbContext : DbContext
                   .HasForeignKey(d => d.TenantId);
 
             // Filtro global para aislar los datos por barbería automáticamente
-            entity.HasQueryFilter(e => e.TenantId == TenantIdActual);
+            entity.HasQueryFilter(e => EsSuperAdmin || e.TenantId == TenantIdActual);
         });
 
-        // ========================================================
-        // 📐 MAPEOS: PRODUCTOS, HERRAMIENTAS Y ALQUILERES
-        // ========================================================
         modelBuilder.Entity<Producto>(entity =>
         {
             entity.ToTable("Productos");
@@ -114,11 +104,10 @@ public partial class BarberSaaSDbContext : DbContext
 
         modelBuilder.Entity<AlquilerHerramienta>(entity =>
         {
-            entity.ToTable("AlquileresHerramientas"); // Forzamos el nombre exacto de la BD
+            entity.ToTable("AlquileresHerramientas");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.CostoAlquiler).HasColumnType("decimal(18, 2)");
 
-            // Mapeo manual de llaves foráneas
             entity.HasOne(a => a.Herramienta)
                   .WithMany()
                   .HasForeignKey(a => a.HerramientaId);
@@ -128,9 +117,6 @@ public partial class BarberSaaSDbContext : DbContext
                   .HasForeignKey(a => a.BarberoId);
         });
 
-        // ========================================================
-        // 📐 MAPEOS Y CONFIGURACIONES DE TABLAS (Módulo de Caja)
-        // ========================================================
         modelBuilder.Entity<MovimientoCaja>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK_MovimientosCaja");
@@ -170,9 +156,6 @@ public partial class BarberSaaSDbContext : DbContext
                 .HasConstraintName("FK_DetallesCaja_MovimientosCaja");
         });
 
-        // ========================================================
-        // 📐 MAPEOS ORIGINALES DE LA BASE DE DATOS
-        // ========================================================
         modelBuilder.Entity<Barbero>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__Barberos__3214EC07C28CA89D");
@@ -188,6 +171,38 @@ public partial class BarberSaaSDbContext : DbContext
                 .HasForeignKey(d => d.UsuarioId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Barberos_Usuarios");
+        });
+
+        modelBuilder.Entity<BarberoAusencia>(entity =>
+        {
+            entity.ToTable("BarberoAusencias");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.FechaInicio).HasColumnType("datetime2");
+            entity.Property(e => e.FechaFin).HasColumnType("datetime2");
+            entity.Property(e => e.FechaRegistro).HasColumnType("datetime2").HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.Tipo).HasConversion<int>();
+            entity.Property(e => e.Motivo).HasMaxLength(250);
+            entity.Property(e => e.Observaciones).HasMaxLength(1000);
+            entity.Property(e => e.CreadoPorUsuarioId).HasMaxLength(450);
+            entity.HasIndex(e => new { e.TenantId, e.BarberoId, e.FechaInicio, e.FechaFin }).HasDatabaseName("IX_BarberoAusencias_Agenda");
+            entity.HasOne(e => e.Barbero).WithMany().HasForeignKey(e => e.BarberoId).OnDelete(DeleteBehavior.Restrict).HasConstraintName("FK_BarberoAusencias_Barberos");
+        });
+
+        modelBuilder.Entity<Notificacion>(entity =>
+        {
+            entity.ToTable("Notificaciones");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Titulo).HasMaxLength(150);
+            entity.Property(e => e.Mensaje).HasMaxLength(1000);
+            entity.Property(e => e.Tipo).HasMaxLength(50);
+            entity.Property(e => e.Icono).HasMaxLength(80);
+            entity.Property(e => e.Color).HasMaxLength(30);
+            entity.Property(e => e.UrlDestino).HasMaxLength(500);
+            entity.Property(e => e.FechaCreacion).HasColumnType("datetime2").HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.FechaLectura).HasColumnType("datetime2");
+            entity.HasIndex(e => new { e.TenantId, e.UsuarioDestinoId, e.Leida, e.FechaCreacion }).HasDatabaseName("IX_Notificaciones_Usuario_Bandeja");
+            entity.HasOne(e => e.Tenant).WithMany().HasForeignKey(e => e.TenantId).OnDelete(DeleteBehavior.Cascade).HasConstraintName("FK_Notificaciones_Tenants");
+            entity.HasOne(e => e.UsuarioDestino).WithMany().HasForeignKey(e => e.UsuarioDestinoId).OnDelete(DeleteBehavior.Restrict).HasConstraintName("FK_Notificaciones_Usuarios");
         });
 
         modelBuilder.Entity<Cita>(entity =>

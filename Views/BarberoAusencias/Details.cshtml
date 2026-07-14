@@ -1,0 +1,62 @@
+@model SaaSBarberia.Models.BarberoAusencia
+
+@{
+    ViewData["Title"] = "Detalles de Ausencia";
+}
+
+<div class="container mt-4" style="max-width: 600px;">
+    <div class="card shadow border-0 p-4">
+        <h3 class="fw-bold mb-3 text-dark text-center">ℹ️ Detalles de la Ausencia</h3>
+
+        <div class="bg-light rounded p-4 mb-4 border">
+            <div class="row mb-3">
+                <div class="col-sm-4 fw-bold text-muted text-uppercase small">Barbero:</div>
+                <div class="col-sm-8 text-dark fw-bold">@(Model.Barbero?.Usuario?.Nombre ?? "Sin Asignar")</div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-sm-4 fw-bold text-muted text-uppercase small">Tipo:</div>
+                <div class="col-sm-8">
+                    <span class="badge bg-primary px-3 py-1 rounded">@Model.Tipo</span>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-sm-4 fw-bold text-muted text-uppercase small">Inicio:</div>
+                <div class="col-sm-8 text-dark">@Model.FechaInicio.ToString("f")</div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-sm-4 fw-bold text-muted text-uppercase small">Fin:</div>
+                <div class="col-sm-8 text-dark">@Model.FechaFin.ToString("f")</div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-sm-4 fw-bold text-muted text-uppercase small">Razón:</div>
+                <div class="col-sm-8 text-dark">@Model.Motivo</div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-sm-4 fw-bold text-muted text-uppercase small">Observaciones:</div>
+                <div class="col-sm-8 text-dark">@(string.IsNullOrEmpty(Model.Observaciones) ? "Ninguna anotación." : Model.Observaciones)</div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-sm-4 fw-bold text-muted text-uppercase small">Estado Administrativo:</div>
+                <div class="col-sm-8">
+                    @if (Model.Activo)
+                    {
+                        <span class="badge bg-success-subtle text-success border border-success">Activa y Bloqueando Agenda</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger-subtle text-danger border border-danger">Inactiva (Disponible)</span>
+                    }
+                </div>
+            </div>
+            <div class="row mb-0">
+                <div class="col-sm-4 fw-bold text-muted text-uppercase small">Registrado El:</div>
+                <div class="col-sm-8 text-muted">@Model.FechaRegistro.ToString("g")</div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a asp-action="Index" class="btn btn-light border flex-fill">Volver</a>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary flex-fill fw-bold">Editar Registro</a>
+        </div>
+    </div>
+</div>

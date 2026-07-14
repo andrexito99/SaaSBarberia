@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 namespace SaaSBarberia.Models
 {
@@ -21,6 +22,7 @@ namespace SaaSBarberia.Models
 
         public bool EstaCerrado { get; set; }
 
+        [ValidateNever]
         public virtual Tenant Tenant { get; set; } = null!;
     }
 }

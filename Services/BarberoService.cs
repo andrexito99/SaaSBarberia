@@ -12,11 +12,13 @@ namespace SaaSBarberia.Services
     {
         private readonly BarberSaaSDbContext _context;
         private readonly IAuditoriaService _auditoriaService; // 🚨 El vigilante inyectado
+        private readonly IEventosSistemaService _eventos;
 
-        public BarberoService(BarberSaaSDbContext context, IAuditoriaService auditoriaService)
+        public BarberoService(BarberSaaSDbContext context, IAuditoriaService auditoriaService, IEventosSistemaService eventos)
         {
             _context = context;
             _auditoriaService = auditoriaService;
+            _eventos = eventos;
         }
 
         public async Task<List<Barbero>> ObtenerTodosConRelacionesAsync()
@@ -56,6 +58,7 @@ namespace SaaSBarberia.Services
                     $"Se vinculó un nuevo barbero: {nombreEmpleado} (ID Perfil: {barbero.Id}). Especialidad: {barbero.Especialidad}. Comisión asignada: {barbero.ComisionPorcentaje}%.",
                     ip
                 );
+                await _eventos.PublicarAsync(new EventoSistema(TipoEventoSistema.NuevoBarbero, barbero.TenantId, "Nuevo barbero", $"Se vinculó a {nombreEmpleado} como barbero.", "/Barberos/Details/" + barbero.Id));
             }
             else
             {

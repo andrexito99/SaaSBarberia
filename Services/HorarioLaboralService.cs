@@ -17,7 +17,6 @@ namespace SaaSBarberia.Services
             _context = context;
         }
 
-        // Se le agrega tenantId para no listar cosas de otras barberías
         public async Task<List<HorarioLaboral>> ObtenerHorarioSemanaAsync(int tenantId)
         {
             var horarios = await _context.HorariosLaborales
@@ -25,45 +24,47 @@ namespace SaaSBarberia.Services
                 .OrderBy(h => h.DiaSemana)
                 .ToListAsync();
 
-            // Si es una barbería vieja y no tiene nada configurado aún, le armamos la semana en memoria
-            if (horarios.Count == 0)
+            for (int i = 0; i <= 6; i++)
             {
-                for (int i = 0; i <= 6; i++)
+                if (!horarios.Any(h => h.DiaSemana == i))
                 {
-                    horarios.Add(GenerarHorarioDefectoPorDia(tenantId, i));
+                    var horarioNuevo = GenerarHorarioDefectoPorDia(tenantId, i);
+                    _context.HorariosLaborales.Add(horarioNuevo);
+                    horarios.Add(horarioNuevo);
                 }
             }
 
-            return horarios;
+            await _context.SaveChangesAsync();
+
+            return horarios.OrderBy(h => h.DiaSemana).ToList();
         }
 
-        // Recibe el tenantId para saber de qué barbería es el cliente o barbero evaluado
         public async Task<HorarioLaboral> ObtenerHorarioDiaAsync(int tenantId, int diaSemana)
         {
             var horario = await _context.HorariosLaborales
                 .FirstOrDefaultAsync(h => h.TenantId == tenantId && h.DiaSemana == diaSemana);
 
-            // 🔥 EL SALVAVIDAS PARA LAS BARBERÍAS VIEJAS: Si retorna null, creamos el horario en memoria
             if (horario == null)
             {
-                return GenerarHorarioDefectoPorDia(tenantId, diaSemana);
+                horario = GenerarHorarioDefectoPorDia(tenantId, diaSemana);
+                _context.HorariosLaborales.Add(horario);
+                await _context.SaveChangesAsync();
             }
 
             return horario;
         }
 
-        // Método auxiliar para no duplicar código del horario por defecto
         private HorarioLaboral GenerarHorarioDefectoPorDia(int tenantId, int diaSemana)
         {
             return new HorarioLaboral
             {
                 TenantId = tenantId,
                 DiaSemana = diaSemana,
-                EstaCerrado = (diaSemana == 0), // Ejemplo: Domingo cerrado por defecto, lunes a sábado abierto
-                HoraInicio = new TimeSpan(8, 0, 0),   // 08:00 AM
-                HoraFin = new TimeSpan(12, 0, 0),    // 12:00 PM (Almuerzo)
-                HoraInicio2 = new TimeSpan(14, 0, 0), // 02:00 PM (Regreso)
-                HoraFin2 = new TimeSpan(19, 0, 0)     // 07:00 PM (Cierre)
+                EstaCerrado = (diaSemana == 0),
+                HoraInicio = new TimeSpan(8, 0, 0),
+                HoraFin = new TimeSpan(12, 0, 0),
+                HoraInicio2 = new TimeSpan(14, 0, 0),
+                HoraFin2 = new TimeSpan(19, 0, 0)
             };
         }
 
@@ -71,12 +72,14 @@ namespace SaaSBarberia.Services
         {
             if (horario.EstaCerrado) return true;
 
+            if (!horario.HoraInicio.HasValue || !horario.HoraFin.HasValue) return false;
             if (horario.HoraInicio >= horario.HoraFin) return false;
 
-            if (horario.HoraInicio2.HasValue && horario.HoraFin2.HasValue)
+            if (horario.HoraInicio2.HasValue || horario.HoraFin2.HasValue)
             {
+                if (!horario.HoraInicio2.HasValue || !horario.HoraFin2.HasValue) return false;
                 if (horario.HoraInicio2 >= horario.HoraFin2) return false;
-                if (horario.HoraInicio2 < horario.HoraFin) return false;
+                if (horario.HoraInicio2 <= horario.HoraFin) return false;
             }
 
             return true;
@@ -93,6 +96,74 @@ namespace SaaSBarberia.Services
                 else _context.HorariosLaborales.Add(h);
             }
             await _context.SaveChangesAsync();
+        }
+
+        public void PrepararHorariosParaGuardar(int tenantId, List<HorarioLaboral> horarios, string selectorJornada)
+        {
+            foreach (var horario in horarios)
+            {
+                horario.TenantId = tenantId;
+
+                if (horario.EstaCerrado)
+                {
+                    horario.HoraInicio = null;
+                    horario.HoraFin = null;
+                    horario.HoraInicio2 = null;
+                    horario.HoraFin2 = null;
+                    continue;
+                }
+
+                if (selectorJornada != "2")
+                {
+                    horario.HoraInicio2 = null;
+                    horario.HoraFin2 = null;
+                }
+            }
+        }
+
+        public async Task GuardarHorariosSemanaActualizandoAsync(int tenantId, List<HorarioLaboral> horarios, string selectorJornada)
+        {
+            PrepararHorariosParaGuardar(tenantId, horarios, selectorJornada);
+
+            var existentes = await _context.HorariosLaborales
+                .Where(x => x.TenantId == tenantId)
+                .ToListAsync();
+
+            for (int dia = 0; dia <= 6; dia++)
+            {
+                var recibido = horarios.FirstOrDefault(h => h.DiaSemana == dia);
+                if (recibido == null)
+                {
+                    throw new Exception($"No se recibió horario para el día {dia}");
+                }
+
+                if (!ValidarHorario(recibido))
+                {
+                    throw new Exception($"Horario inválido para el día {dia}");
+                }
+
+                var existente = existentes.FirstOrDefault(h => h.DiaSemana == dia);
+                if (existente == null)
+                {
+                    recibido.Id = 0;
+                    recibido.TenantId = tenantId;
+                    _context.HorariosLaborales.Add(recibido);
+                    continue;
+                }
+
+                existente.EstaCerrado = recibido.EstaCerrado;
+                existente.HoraInicio = recibido.HoraInicio;
+                existente.HoraFin = recibido.HoraFin;
+                existente.HoraInicio2 = recibido.HoraInicio2;
+                existente.HoraFin2 = recibido.HoraFin2;
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task GuardarHorariosSemanaMasivoAsync(int tenantId, List<HorarioLaboral> horarios)
+        {
+            await GuardarHorariosSemanaActualizandoAsync(tenantId, horarios, "2");
         }
     }
 }

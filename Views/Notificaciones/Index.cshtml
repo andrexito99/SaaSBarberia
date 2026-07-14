@@ -1,0 +1,11 @@
+@model IReadOnlyList<SaaSBarberia.Models.Notificacion>
+@{ ViewData["Title"] = "Notificaciones"; }
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Notificaciones</h2>
+    <button id="marcarTodas" class="btn btn-outline-primary btn-sm">Marcar todas como leídas</button>
+</div>
+<div class="card shadow-sm"><div class="list-group list-group-flush" id="listaNotificaciones">
+@foreach (var item in Model) {
+    <div class="list-group-item @(item.Leida ? "" : "bg-light")" data-id="@item.Id"><div class="d-flex justify-content-between gap-3"><a href="@(item.UrlDestino ?? "#")" class="text-decoration-none text-dark flex-grow-1" data-notification-link="@item.Id"><strong><i class="bi @(item.Icono ?? "bi-bell") text-@(item.Color ?? "primary") me-1"></i>@item.Titulo</strong><div>@item.Mensaje</div><small class="text-muted">@item.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</small></a><button class="btn-close eliminar-notificacion" data-id="@item.Id" aria-label="Eliminar"></button></div></div>
+}
+</div></div>

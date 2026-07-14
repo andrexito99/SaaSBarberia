@@ -18,12 +18,14 @@ namespace SaaSBarberia.Controllers
     public class TenantsController : Controller
     {
         private readonly TenantService _tenantService;
+        private readonly HorarioLaboralService _horarioService; // 🔥 Inyectado
         private readonly BarberSaaSDbContext _context;
         private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public TenantsController(TenantService tenantService, BarberSaaSDbContext context, IWebHostEnvironment webHostEnvironment)
+        public TenantsController(TenantService tenantService, HorarioLaboralService horarioService, BarberSaaSDbContext context, IWebHostEnvironment webHostEnvironment)
         {
             _tenantService = tenantService;
+            _horarioService = horarioService;
             _context = context;
             _webHostEnvironment = webHostEnvironment;
         }
@@ -42,33 +44,21 @@ namespace SaaSBarberia.Controllers
             return View(tenant);
         }
 
+        // GET: Tenants/Create
         public IActionResult Create()
         {
             var tenant = new Tenant();
-            var horarios = new List<HorarioLaboral>();
-
-            for (int i = 0; i <= 6; i++)
-            {
-                horarios.Add(new HorarioLaboral
-                {
-                    DiaSemana = i,
-                    EstaCerrado = (i == 0),
-                    HoraInicio = new TimeSpan(8, 0, 0),
-                    HoraFin = new TimeSpan(12, 0, 0),
-                    HoraInicio2 = new TimeSpan(14, 0, 0),
-                    HoraFin2 = new TimeSpan(19, 0, 0)
-                });
-            }
-
-            ViewBag.HorariosIniciales = horarios;
             return View(tenant);
         }
 
+        // POST: Tenants/Create (Paso 1: Guarda solo Tenant)
         [HttpPost]
         [ValidateAntiForgeryToken]
-        // 🔥 CORREGIDO: Cambiado 'LogoUrl' por 'RutaLogo' en el Bind para enganchar con la base de datos
-        public async Task<IActionResult> Create([Bind("Id,NombreNegocio,Subdominio,PlanSuscripcion,Activo,FechaRegistro,ColorPrimario,ColorSecundario,EstiloSidebar,TieneModuloHerramientas,TiempoEntreCitas,RutaLogo")] Tenant tenant, List<HorarioLaboral> horarios, IFormFile? logoArchivo)
+        public async Task<IActionResult> Create([Bind("Id,NombreNegocio,Subdominio,PlanSuscripcion,Activo,FechaRegistro,ColorPrimario,ColorSecundario,EstiloSidebar,TieneModuloHerramientas,TiempoEntreCitas,RutaLogo")] Tenant tenant, IFormFile? logoArchivo)
         {
+            // Forzamos la limpieza de la navegación si viene jodiendo el modelo
+            ModelState.Remove("HorariosLaborales");
+
             if (ModelState.IsValid)
             {
                 tenant.FechaRegistro ??= DateTime.Now;
@@ -88,23 +78,198 @@ namespace SaaSBarberia.Controllers
                     tenant.RutaLogo = "/uploads/tenants/" + nombreUnico;
                 }
 
+                // Guardamos el Tenant base
                 await _tenantService.GuardarAsync(tenant);
 
-                if (horarios != null && horarios.Any())
-                {
-                    foreach (var horario in horarios)
-                    {
-                        horario.TenantId = tenant.Id;
-                        _context.HorariosLaborales.Add(horario);
-                    }
-                    await _context.SaveChangesAsync();
-                }
-
+                // 🔥 Redireccionamos al Paso 2 pasando el ID recién creado de la DB
+                await _horarioService.ObtenerHorarioSemanaAsync(tenant.Id);
                 return RedirectToAction(nameof(Index));
             }
 
-            ViewBag.HorariosIniciales = horarios;
             return View(tenant);
+        }
+
+        // GET: Tenants/ConfigurarHorarios?tenantId=5 (Paso 2)
+        public IActionResult ConfigurarHorarios(int tenantId)
+        {
+            if (tenantId <= 0) return NotFound("ID de barbería inválido.");
+
+            ViewBag.TenantId = tenantId;
+
+            // Inicializamos la lista de 7 días con los valores por defecto
+            var horarios = new List<HorarioLaboral>();
+            for (int i = 0; i <= 6; i++)
+            {
+                horarios.Add(new HorarioLaboral
+                {
+                    TenantId = tenantId,
+                    DiaSemana = i,
+                    EstaCerrado = (i == 0),
+                    HoraInicio = new TimeSpan(8, 0, 0),
+                    HoraFin = new TimeSpan(12, 0, 0),
+                    HoraInicio2 = new TimeSpan(14, 0, 0),
+                    HoraFin2 = new TimeSpan(19, 0, 0)
+                });
+            }
+
+            return View(horarios);
+        }
+
+        [Authorize(Roles = "SuperAdmin")]
+        public async Task<IActionResult> EditarHorarios(int tenantId)
+        {
+            if (tenantId <= 0) return NotFound("ID de barbería inválido.");
+
+            var tenant = await _context.Tenants
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Id == tenantId);
+
+            if (tenant == null) return NotFound("Barbería no encontrada.");
+
+            var horarios = await _horarioService.ObtenerHorarioSemanaAsync(tenantId);
+
+            ViewBag.TenantId = tenantId;
+            ViewBag.NombreNegocio = tenant.NombreNegocio;
+            ViewBag.SelectorJornada = horarios.Any(h => h.HoraInicio2.HasValue && h.HoraFin2.HasValue) ? "2" : "1";
+
+            return View(horarios);
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "SuperAdmin")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditarHorarios(int tenantId, List<HorarioLaboral> horarios, string selectorJornada)
+        {
+            if (tenantId <= 0) return NotFound("ID de barbería inválido.");
+
+            var tenant = await _context.Tenants
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Id == tenantId);
+
+            if (tenant == null) return NotFound("Barbería no encontrada.");
+
+            LimpiarModelStateHorarios(horarios);
+
+            if (ModelState.IsValid && horarios != null)
+            {
+                try
+                {
+                    await _horarioService.GuardarHorariosSemanaActualizandoAsync(tenantId, horarios, selectorJornada);
+                    TempData["Mensaje"] = "Horarios actualizados correctamente.";
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError("", ex.Message);
+                }
+            }
+
+            ViewBag.TenantId = tenantId;
+            ViewBag.NombreNegocio = tenant.NombreNegocio;
+            ViewBag.SelectorJornada = selectorJornada;
+            return View(horarios ?? new List<HorarioLaboral>());
+        }
+
+        // POST: Tenants/ConfigurarHorarios
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ConfigurarHorarios(int tenantId, List<HorarioLaboral> horarios, string selectorJornada)
+        {
+            LimpiarModelStateHorarios(horarios);
+
+            if (ModelState.IsValid && horarios != null)
+            {
+                await _horarioService.GuardarHorariosSemanaActualizandoAsync(tenantId, horarios, selectorJornada);
+                return RedirectToAction(nameof(Index));
+            }
+
+            ViewBag.TenantId = tenantId;
+            return View(horarios);
+
+            ModelState.Remove("Tenant");
+
+            if (horarios != null)
+            {
+                for (int i = 0; i < horarios.Count; i++)
+                {
+                    horarios[i].TenantId = tenantId;
+
+                    if (horarios[i].EstaCerrado)
+                    {
+                        horarios[i].HoraInicio = null;
+                        horarios[i].HoraFin = null;
+                        horarios[i].HoraInicio2 = null;
+                        horarios[i].HoraFin2 = null;
+                    }
+                    else
+                    {
+                        // 🔥 INTELIGENCIA COGNITIVA ANTI-BRUTOS:
+                        // Recolectamos todas las horas enviadas en la fila, las ordenamos cronológicamente
+                        var horasEnviadas = new List<TimeSpan>();
+                        if (horarios[i].HoraInicio.HasValue) horasEnviadas.Add(horarios[i].HoraInicio.Value);
+                        if (horarios[i].HoraFin.HasValue) horasEnviadas.Add(horarios[i].HoraFin.Value);
+
+                        if (selectorJornada == "2")
+                        {
+                            if (horarios[i].HoraInicio2.HasValue) horasEnviadas.Add(horarios[i].HoraInicio2.Value);
+                            if (horarios[i].HoraFin2.HasValue) horasEnviadas.Add(horarios[i].HoraFin2.Value);
+                        }
+
+                        var horasOrdenadas = horasEnviadas.OrderBy(h => h).ToList();
+
+                        // Re-asignamos de forma coherente de menor a mayor
+                        if (horasOrdenadas.Count >= 2)
+                        {
+                            horarios[i].HoraInicio = horasOrdenadas[0];
+                            horarios[i].HoraFin = horasOrdenadas[1];
+                        }
+
+                        if (selectorJornada == "2" && horasOrdenadas.Count == 4)
+                        {
+                            horarios[i].HoraInicio2 = horasOrdenadas[2];
+                            horarios[i].HoraFin2 = horasOrdenadas[3];
+                        }
+                        else
+                        {
+                            horarios[i].HoraInicio2 = null;
+                            horarios[i].HoraFin2 = null;
+                        }
+                    }
+
+                    // Removemos validaciones nativas viejas para que no joda el ModelState
+                    ModelState.Remove($"horarios[{i}].HoraInicio");
+                    ModelState.Remove($"horarios[{i}].HoraFin");
+                    ModelState.Remove($"horarios[{i}].HoraInicio2");
+                    ModelState.Remove($"horarios[{i}].HoraFin2");
+                }
+            }
+
+            if (ModelState.IsValid && horarios != null)
+            {
+                await _horarioService.GuardarHorariosSemanaMasivoAsync(tenantId, horarios);
+                return RedirectToAction(nameof(Index));
+            }
+
+            ViewBag.TenantId = tenantId;
+            return View(horarios);
+        }
+
+        private void LimpiarModelStateHorarios(List<HorarioLaboral>? horarios)
+        {
+            ModelState.Remove("Tenant");
+
+            if (horarios == null) return;
+
+            for (int i = 0; i < horarios.Count; i++)
+            {
+                ModelState.Remove($"horarios[{i}].Tenant");
+                ModelState.Remove($"horarios[{i}].HoraInicio");
+                ModelState.Remove($"horarios[{i}].HoraFin");
+                ModelState.Remove($"horarios[{i}].HoraInicio2");
+                ModelState.Remove($"horarios[{i}].HoraFin2");
+            }
         }
 
         public async Task<IActionResult> Edit(int? id)
@@ -117,7 +282,6 @@ namespace SaaSBarberia.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        // 🔥 CORREGIDO: Cambiado 'LogoUrl' por 'RutaLogo' en el Bind para capturar el input hidden de la vista
         public async Task<IActionResult> Edit(int id, [Bind("Id,NombreNegocio,Subdominio,PlanSuscripcion,Activo,FechaRegistro,CerradoPorEmergencia,FechaUltimoCierre,ColorPrimario,ColorSecundario,EstiloSidebar,TieneModuloHerramientas,TiempoEntreCitas,RutaLogo")] Tenant tenant, IFormFile? logoArchivo)
         {
             if (id != tenant.Id) return NotFound();
@@ -128,7 +292,6 @@ namespace SaaSBarberia.Controllers
                 {
                     if (logoArchivo != null && logoArchivo.Length > 0)
                     {
-                        // 🗑️ Buscar ruta del logo viejo usando AsNoTracking de forma directa para romper el candado de memoria
                         var tenantExistente = await _context.Tenants.AsNoTracking().FirstOrDefaultAsync(t => t.Id == id);
                         if (tenantExistente != null && !string.IsNullOrEmpty(tenantExistente.RutaLogo))
                         {
@@ -136,7 +299,6 @@ namespace SaaSBarberia.Controllers
                             if (System.IO.File.Exists(rutaVieja)) System.IO.File.Delete(rutaVieja);
                         }
 
-                        // 💾 Almacenar nuevo archivo físico
                         string carpetaSubidas = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "tenants");
                         if (!Directory.Exists(carpetaSubidas)) Directory.CreateDirectory(carpetaSubidas);
 
@@ -149,9 +311,7 @@ namespace SaaSBarberia.Controllers
                         }
                         tenant.RutaLogo = "/uploads/tenants/" + nombreUnico;
                     }
-                    // Si 'logoArchivo' es nulo, 'tenant.RutaLogo' ya retiene el valor previo gracias al input hidden y al Bind corregido.
 
-                    // 🔥 Actualización directa usando el contexto para evitar fallas de tracking de servicios acoplados
                     _context.Entry(tenant).State = EntityState.Modified;
                     await _context.SaveChangesAsync();
                 }
@@ -165,19 +325,10 @@ namespace SaaSBarberia.Controllers
             return View(tenant);
         }
 
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null) return NotFound();
-            var tenant = await _tenantService.ObtenerPorIdAsync(id.Value);
-            if (tenant == null) return NotFound();
-            return View(tenant);
-        }
-
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            // 🔥 CORREGIDO: Consulta limpia con AsNoTracking para evitar bloqueos antes del borrado
             var tenant = await _context.Tenants.AsNoTracking().FirstOrDefaultAsync(t => t.Id == id);
             if (tenant != null && !string.IsNullOrEmpty(tenant.RutaLogo))
             {
@@ -213,7 +364,7 @@ namespace SaaSBarberia.Controllers
             var citasAfectadasHoy = await _context.Citas
                 .Where(c => c.TenantId == miTenantId && c.FechaHora.Date == DateTime.Today && c.Estado != "Cancelada")
                 .Include(c => c.Cliente)
-                .Include(c => c.Barbero.Usuario)
+                .Include(c => c.Barbero)
                 .OrderBy(c => c.FechaHora)
                 .ToListAsync();
 

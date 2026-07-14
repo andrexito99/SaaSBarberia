@@ -1,0 +1,75 @@
+@model SaaSBarberia.Models.BarberoAusencia
+
+@{
+    ViewData["Title"] = "Programar Ausencia";
+}
+
+<div class="container mt-4" style="max-width: 600px;">
+    <div class="card shadow border-0 p-4">
+        <h3 class="fw-bold mb-1 text-dark text-center">🏖️ Registrar Ausencia</h3>
+        <p class="text-muted text-center small mb-4">Bloquea temporalmente el calendario de tus barberos</p>
+
+        <form asp-action="Create" method="post">
+            @* 🔥 Este bloque pintará los mensajes del ModelState.AddModelError que tire el Backend *@
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <div asp-validation-summary="ModelOnly" class="small fw-bold"></div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            <div class="mb-3">
+                <label asp-for="BarberoId" class="form-label fw-semibold">💇‍♂️ Selecciona el Barbero</label>
+                <select asp-for="BarberoId" class="form-select" asp-items="ViewBag.BarberoId">
+                    <option value="">-- Elige un Barbero --</option>
+                </select>
+                <span asp-validation-for="BarberoId" class="text-danger small"></span>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="FechaInicio" class="form-label fw-semibold">📅 Inicio de Ausencia</label>
+                    <input asp-for="FechaInicio" class="form-control" type="datetime-local" />
+                    <span asp-validation-for="FechaInicio" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="FechaFin" class="form-label fw-semibold">📅 Fin de Ausencia</label>
+                    <input asp-for="FechaFin" class="form-control" type="datetime-local" />
+                    <span asp-validation-for="FechaFin" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Tipo" class="form-label fw-semibold">💡 Tipo de Evento / Ausencia</label>
+                <select asp-for="Tipo" class="form-select" asp-items="Html.GetEnumSelectList<TipoAusencia>()">
+                    <option value="">-- Elige un Motivo --</option>
+                </select>
+                <span asp-validation-for="Tipo" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Motivo" class="form-label fw-semibold">📌 Título / Razón Corta</label>
+                <input asp-for="Motivo" class="form-control" placeholder="Ej: Vacaciones Familiares o Cita Médica" />
+                <span asp-validation-for="Motivo" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Observaciones" class="form-label fw-semibold">📝 Notas Internas (Opcional)</label>
+                <textarea asp-for="Observaciones" class="form-control" rows="3" placeholder="Detalles adicionales sobre el permiso..."></textarea>
+                <span asp-validation-for="Observaciones" class="text-danger small"></span>
+            </div>
+
+            <div class="d-flex justify-content-between mt-4">
+                <a asp-action="Index" class="btn btn-light border px-4">Volver</a>
+                <button type="submit" class="btn btn-primary px-4 fw-bold">Guardar Ausencia</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

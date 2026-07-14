@@ -1,0 +1,230 @@
+@model List<SaaSBarberia.Models.HorarioLaboral>
+
+@{
+    ViewData["Title"] = "Editar Horarios";
+    string[] dias = { "Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado" };
+    string selectorJornada = ViewBag.SelectorJornada as string ?? "2";
+}
+
+<div class="container mt-4" style="max-width: 800px;">
+    <div class="card shadow-sm border-0 p-4">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h3 class="fw-bold mb-0 text-dark">Editar Horarios</h3>
+            <span class="badge bg-primary fs-6 px-3 py-2">@ViewBag.NombreNegocio</span>
+        </div>
+        <p class="text-muted small">Administra los horarios laborales de esta barberia.</p>
+
+        <form asp-action="EditarHorarios" method="post" autocomplete="off" id="formHorarios">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <input type="hidden" name="tenantId" value="@ViewBag.TenantId" />
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold text-muted small d-block">Ajustes Rapidos (Presets):</label>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-outline-secondary" onclick="aplicarPreset('08:00', '18:00', null, null, '1')">8 AM - 6 PM (Corrido)</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="aplicarPreset('08:00', '12:00', '14:00', '19:00', '2')">Comercial (2 Jornadas)</button>
+                </div>
+            </div>
+
+            <div class="mb-3 card p-3 bg-light border-0 d-flex flex-sm-row align-items-center justify-content-between gap-3">
+                <div class="flex-grow-1 w-100">
+                    <label class="form-label fw-bold text-dark mb-0">Modalidad de Jornada:</label>
+                    <select id="selectorJornada" name="selectorJornada" class="form-select form-select-sm mt-1 fw-semibold text-primary">
+                        @if (selectorJornada == "2")
+                        {
+                            <option value="2" selected>2 Jornadas (Manana y Tarde con descanso)</option>
+                            <option value="1">1 Jornada Continua (Todo el dia de corrido)</option>
+                        }
+                        else
+                        {
+                            <option value="2">2 Jornadas (Manana y Tarde con descanso)</option>
+                            <option value="1" selected>1 Jornada Continua (Todo el dia de corrido)</option>
+                        }
+                    </select>
+                </div>
+                <div class="text-nowrap">
+                    <button type="button" id="btnCopiarLunes" class="btn btn-dark btn-sm mt-sm-4">Replicar Lunes</button>
+                </div>
+            </div>
+
+            <div class="table-responsive mb-3">
+                <table class="table table-sm align-middle" style="font-size: 0.9rem;">
+                    <thead>
+                        <tr>
+                            <th>Dia</th>
+                            <th>Cerrado</th>
+                            <th id="thJornada1">Jornada 1</th>
+                            <th id="thJornada2" class="columna-tarde">Jornada 2</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < Model.Count; i++)
+                        {
+                            <tr data-dia="@Model[i].DiaSemana" class="fila-horario">
+                                <td>
+                                    <input type="hidden" name="horarios[@i].Id" value="@Model[i].Id" />
+                                    <input type="hidden" name="horarios[@i].DiaSemana" value="@Model[i].DiaSemana" />
+                                    <span class="fw-bold">@dias[Model[i].DiaSemana]</span>
+                                </td>
+                                <td>
+                                    <input type="checkbox" class="form-check-input check-cerrado" name="horarios[@i].EstaCerrado" value="true" @(Model[i].EstaCerrado ? "checked" : "") onchange="validarFila(this.closest('tr'))" />
+                                    <input type="hidden" name="horarios[@i].EstaCerrado" value="false" />
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-1">
+                                        <input type="time" name="horarios[@i].HoraInicio" value="@(Model[i].HoraInicio?.ToString(@"hh\:mm") ?? "08:00")" class="form-control form-control-sm input-hora-inicio" onchange="validarFila(this.closest('tr'))" />
+                                        <input type="time" name="horarios[@i].HoraFin" value="@(Model[i].HoraFin?.ToString(@"hh\:mm") ?? "12:00")" class="form-control form-control-sm input-hora-fin" onchange="validarFila(this.closest('tr'))" />
+                                    </div>
+                                </td>
+                                <td class="columna-tarde">
+                                    <div class="d-flex gap-1">
+                                        <input type="time" name="horarios[@i].HoraInicio2" value="@(Model[i].HoraInicio2?.ToString(@"hh\:mm") ?? "14:00")" class="form-control form-control-sm input-hora-inicio2" onchange="validarFila(this.closest('tr'))" />
+                                        <input type="time" name="horarios[@i].HoraFin2" value="@(Model[i].HoraFin2?.ToString(@"hh\:mm") ?? "19:00")" class="form-control form-control-sm input-hora-fin2" onchange="validarFila(this.closest('tr'))" />
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-flex justify-content-between mt-4">
+                <a asp-action="Index" class="btn btn-light border">Regresar</a>
+                <button type="submit" class="btn btn-success px-5 fw-bold">Guardar Horarios</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const selector = document.getElementById("selectorJornada");
+        const thJornada1 = document.getElementById("thJornada1");
+        const btnCopiarLunes = document.getElementById("btnCopiarLunes");
+        const form = document.getElementById("formHorarios");
+
+        function ajustarJornadas() {
+            const esJornadaUnica = selector.value === "1";
+
+            document.querySelectorAll(".columna-tarde").forEach(col => {
+                col.style.display = esJornadaUnica ? "none" : "";
+            });
+
+            document.querySelectorAll(".fila-horario").forEach(fila => {
+                if (esJornadaUnica) {
+                    thJornada1.textContent = "Horario Completo (Apertura / Cierre)";
+                    fila.querySelector(".input-hora-inicio2").value = "";
+                    fila.querySelector(".input-hora-fin2").value = "";
+                } else {
+                    thJornada1.textContent = "Jornada Manana";
+                }
+                validarFila(fila);
+            });
+        }
+
+        btnCopiarLunes.addEventListener("click", function () {
+            const filaLunes = document.querySelector('tr[data-dia="1"]');
+            if (!filaLunes) return;
+
+            const cerrado = filaLunes.querySelector(".check-cerrado").checked;
+            const ini1 = filaLunes.querySelector(".input-hora-inicio").value;
+            const fin1 = filaLunes.querySelector(".input-hora-fin").value;
+            const ini2 = filaLunes.querySelector(".input-hora-inicio2").value;
+            const fin2 = filaLunes.querySelector(".input-hora-fin2").value;
+
+            document.querySelectorAll(".fila-horario").forEach(fila => {
+                if (fila.dataset.dia === "0" || fila.dataset.dia === "1") return;
+
+                fila.querySelector(".check-cerrado").checked = cerrado;
+                fila.querySelector(".input-hora-inicio").value = ini1;
+                fila.querySelector(".input-hora-fin").value = fin1;
+
+                if (selector.value === "2") {
+                    fila.querySelector(".input-hora-inicio2").value = ini2;
+                    fila.querySelector(".input-hora-fin2").value = fin2;
+                } else {
+                    fila.querySelector(".input-hora-inicio2").value = "";
+                    fila.querySelector(".input-hora-fin2").value = "";
+                }
+                validarFila(fila);
+            });
+        });
+
+        selector.addEventListener("change", ajustarJornadas);
+        form.addEventListener("submit", function (event) {
+            let esValido = true;
+            document.querySelectorAll(".fila-horario").forEach(fila => {
+                if (!validarFila(fila)) esValido = false;
+            });
+
+            if (!esValido) {
+                event.preventDefault();
+            }
+        });
+
+        ajustarJornadas();
+    });
+
+    function validarFila(fila) {
+        const cerrado = fila.querySelector(".check-cerrado").checked;
+        const ini1 = fila.querySelector(".input-hora-inicio");
+        const fin1 = fila.querySelector(".input-hora-fin");
+        const ini2 = fila.querySelector(".input-hora-inicio2");
+        const fin2 = fila.querySelector(".input-hora-fin2");
+        const esJornadaDoble = document.getElementById("selectorJornada").value === "2";
+        let esValido = true;
+
+        [ini1, fin1, ini2, fin2].forEach(x => {
+            x.style.borderColor = "";
+        });
+
+        if (cerrado) return true;
+
+        if (!ini1.value || !fin1.value || ini1.value >= fin1.value) {
+            ini1.style.borderColor = "red";
+            fin1.style.borderColor = "red";
+            esValido = false;
+        }
+
+        if (esJornadaDoble) {
+            if (!ini2.value || !fin2.value || ini2.value >= fin2.value) {
+                ini2.style.borderColor = "red";
+                fin2.style.borderColor = "red";
+                esValido = false;
+            }
+            if (fin1.value && ini2.value && fin1.value >= ini2.value) {
+                fin1.style.borderColor = "red";
+                ini2.style.borderColor = "red";
+                esValido = false;
+            }
+        } else {
+            ini2.value = "";
+            fin2.value = "";
+        }
+
+        return esValido;
+    }
+
+    function aplicarPreset(i1, f1, i2, f2, jornadaTipo) {
+        const selector = document.getElementById("selectorJornada");
+        selector.value = jornadaTipo;
+        selector.dispatchEvent(new Event("change"));
+
+        document.querySelectorAll(".fila-horario").forEach(fila => {
+            if (fila.dataset.dia === "0") return;
+
+            fila.querySelector(".check-cerrado").checked = false;
+            fila.querySelector(".input-hora-inicio").value = i1;
+            fila.querySelector(".input-hora-fin").value = f1;
+
+            if (jornadaTipo === "2") {
+                fila.querySelector(".input-hora-inicio2").value = i2 ?? "14:00";
+                fila.querySelector(".input-hora-fin2").value = f2 ?? "19:00";
+            } else {
+                fila.querySelector(".input-hora-inicio2").value = "";
+                fila.querySelector(".input-hora-fin2").value = "";
+            }
+            validarFila(fila);
+        });
+    }
+</script>

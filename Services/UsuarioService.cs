@@ -12,11 +12,13 @@ namespace SaaSBarberia.Services
     {
         private readonly BarberSaaSDbContext _context;
         private readonly IAuditoriaService _auditoriaService; // 🚨 El ojo de la ley
+        private readonly IEventosSistemaService _eventos;
 
-        public UsuarioService(BarberSaaSDbContext context, IAuditoriaService auditoriaService)
+        public UsuarioService(BarberSaaSDbContext context, IAuditoriaService auditoriaService, IEventosSistemaService eventos)
         {
             _context = context;
             _auditoriaService = auditoriaService;
+            _eventos = eventos;
         }
 
         public async Task<List<Usuario>> ObtenerTodosConRelacionesAsync()
@@ -57,6 +59,8 @@ namespace SaaSBarberia.Services
                     $"Se registró un nuevo usuario: '{usuario.Nombre}' (Email: {usuario.Email}, Rol ID: {usuario.RoleId}).",
                     ip
                 );
+                if (usuario.TenantId.HasValue)
+                    await _eventos.PublicarAsync(new EventoSistema(TipoEventoSistema.NuevoUsuario, usuario.TenantId.Value, "Nuevo usuario", $"Se creó el usuario {usuario.Nombre}.", "/Usuarios/Details/" + usuario.Id));
             }
             else
             {

@@ -36,7 +36,7 @@
                 {
                     colorPrimario = "#0f172a";
                     colorSecundario = "#258cfb";
-                    estiloSidebar = "SuperiorClasico";
+                    estiloSidebar = "LateralOscuro"; // 🔥 Cambiado de SuperiorClasico a LateralOscuro para el SuperAdmin
                     nombreNegocio = "Panel SuperAdmin";
                     tieneHerramientas = true;
                 }
@@ -44,7 +44,8 @@
         }
     }
 
-    bool usaLayoutLateral = (estiloSidebar == "LateralOscuro" || estiloSidebar == "LateralClaro") && !esSuperAdmin;
+    // 🔥 Ahora el Layout Lateral se activa si es un tenant con sidebar lateral O si es el mismísimo SuperAdmin
+    bool usaLayoutLateral = ((estiloSidebar == "LateralOscuro" || estiloSidebar == "LateralClaro") && !esSuperAdmin) || esSuperAdmin;
 }
 
 <!DOCTYPE html>
@@ -94,7 +95,7 @@
                  style="@(estiloSidebar == "LateralOscuro" ? $"background-color: {colorPrimario} !important;" : "")">
 
                 <a class="navbar-brand fw-bold text-uppercase tracking-wider text-center py-2" asp-controller="Home" asp-action="Index">
-                    放置 <span class="text-tenant-brand">@nombreNegocio</span>
+                    💈 <span class="text-tenant-brand">@nombreNegocio</span>
                 </a>
                 <hr>
                 <ul class="nav nav-pills flex-column mb-auto gap-1">
@@ -108,7 +109,7 @@
 
                         if (!User.IsInRole("Cliente"))
                         {
-                            <li><a class="nav-link @(estiloSidebar == "LateralClaro" ? "text-dark" : "text-white-50") fw-semibold" asp-controller="Barberoes" asp-action="Index">💈 Barberos</a></li>
+                            <li><a class="nav-link @(estiloSidebar == "LateralClaro" ? "text-dark" : "text-white-50") fw-semibold" asp-controller="Barberos" asp-action="Index">💈 Barberos</a></li>
 
                             @if (tieneHerramientas)
                             {
@@ -120,8 +121,24 @@
                         {
                             <li><a class="nav-link text-danger fw-bold" asp-controller="Tenants" asp-action="DashboardSede">🚨 CONTROL</a></li>
                             <li><a class="nav-link @(estiloSidebar == "LateralClaro" ? "text-dark" : "text-white-50") fw-semibold" asp-controller="Caja" asp-action="Index">💵 Caja Chica</a></li>
+                            @* 📅 AUSENCIAS EN MENÚ LATERAL (SÓLO ADMIN) *@
+                            <li><a class="nav-link @(estiloSidebar == "LateralClaro" ? "text-dark" : "text-white-50") fw-semibold" asp-controller="BarberoAusencias" asp-action="Index">📅 Ausencias Barberos</a></li>
                         }
                         <li><a class="nav-link @(estiloSidebar == "LateralClaro" ? "text-dark" : "text-white-50") fw-semibold" asp-controller="Citas" asp-action="Index">📆 Citas</a></li>
+                        
+                        @* 🔥 Secciones exclusivas de SuperAdmin añadidas al menú lateral *@
+                        if (esSuperAdmin)
+                        {
+                            <hr class="my-2 border-secondary">
+                            <li class="nav-item"><a class="nav-link text-info fw-bold" asp-controller="Tenants" asp-action="SuperDashboard">📈 Global</a></li>
+                            <li class="nav-item"><a class="nav-link text-warning fw-semibold" asp-controller="Tenants" asp-action="Index">🏢 Tenants</a></li>
+                            <li class="nav-item"><a class="nav-link text-warning fw-semibold" asp-controller="Usuarios" asp-action="Index">👥 Usuarios</a></li>
+                            <li class="nav-item">
+                                <a class="nav-link text-white fw-bold" asp-controller="Auditoria" asp-action="Index">
+                                    <i class="bi bi-shield-lock-fill text-danger"></i> Auditoría Global
+                                </a>
+                            </li>
+                        }
                     }
                 </ul>
                 <hr>
@@ -143,7 +160,7 @@
 
         <div class="saas-content @(usaLayoutLateral ? "has-sidebar" : "")">
 
-            @* 🍔 MENÚ SUPERIOR *@
+            @* 🍔 MENÚ SUPERIOR (Sólo para no-SuperAdmins que usen Layout Superior) *@
             @if (!usaLayoutLateral)
             {
                 <header>
@@ -182,25 +199,13 @@
                                         if (User.IsInRole("AdminBarberia"))
                                         {
                                             <li class="nav-item"><a class="nav-link text-white-50 fw-semibold" asp-controller="Caja" asp-action="Index">💰 Caja Chica</a></li>
+                                            @* 📅 AUSENCIAS EN MENÚ SUPERIOR (SÓLO ADMIN) *@
+                                            <li class="nav-item"><a class="nav-link text-white-50 fw-semibold" asp-controller="BarberoAusencias" asp-action="Index">📅 Ausencias Barberos</a></li>
                                         }
                                         <li class="nav-item"><a class="nav-link text-white-50 fw-semibold" asp-controller="Citas" asp-action="Index">📆 Citas</a></li>
                                         if (User.IsInRole("AdminBarberia"))
                                         {
                                             <li class="nav-item"><a class="nav-link text-danger fw-bold" asp-controller="Tenants" asp-action="DashboardSede">🚨 CONTROL</a></li>
-                                        }
-                                        if (esSuperAdmin)
-                                        {
-                                            <li class="nav-item border-start border-secondary ps-md-2"><a class="nav-link text-info fw-bold" asp-controller="Tenants" asp-action="SuperDashboard">📈 Global</a></li>
-                                            <li class="nav-item"><a class="nav-link text-warning fw-semibold" asp-controller="Tenants" asp-action="Index">🏢 Tenants</a></li>
-                                            <li class="nav-item"><a class="nav-link text-warning fw-semibold" asp-controller="Usuarios" asp-action="Index">👥 Usuarios</a></li>
-                                        }
-                                        @if (User.Identity != null && User.Identity.IsAuthenticated && User.IsInRole("SuperAdmin"))
-                                        {
-                                            <li class="nav-item">
-                                                <a class="nav-link text-dark fw-bold" asp-controller="Auditoria" asp-action="Index">
-                                                    <i class="bi bi-shield-lock-fill text-danger"></i> Auditoría Global
-                                                </a>
-                                            </li>
                                         }
                                     }
                                 </ul>
@@ -230,9 +235,43 @@
         </div>
     </div>
 
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <div class="dropdown position-fixed top-0 end-0 m-3 z-3" id="notificacionesWidget">
+            @Html.AntiForgeryToken()
+            <button class="btn btn-light shadow-sm position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notificaciones">
+                <i class="bi bi-bell-fill"></i><span id="contadorNotificaciones" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">0</span>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end shadow p-0" style="width: 360px; max-width: calc(100vw - 24px);">
+                <div class="d-flex justify-content-between align-items-center p-3 border-bottom"><strong>Notificaciones</strong><button id="marcarTodasNotificaciones" class="btn btn-link btn-sm p-0">Marcar todas</button></div>
+                <div id="notificacionesDropdown"></div>
+                <div class="p-2 text-center border-top"><a asp-controller="Notificaciones" asp-action="Index" class="small">Ver todas</a></div>
+            </div>
+        </div>
+    }
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <script>
+            (() => {
+                const token = document.querySelector('#notificacionesWidget input[name="__RequestVerificationToken"]')?.value;
+                const headers = token ? { 'RequestVerificationToken': token } : {};
+                async function actualizar() {
+                    const [dropdown, conteo] = await Promise.all([fetch('/Notificaciones/Dropdown'), fetch('/Notificaciones/ObtenerNoLeidas')]);
+                    if (dropdown.ok) document.getElementById('notificacionesDropdown').innerHTML = await dropdown.text();
+                    if (conteo.ok) { const data = await conteo.json(); const badge = document.getElementById('contadorNotificaciones'); badge.textContent = data.cantidad; badge.classList.toggle('d-none', data.cantidad === 0); }
+                }
+                async function post(url) { await fetch(url, { method: 'POST', headers }); await actualizar(); }
+                document.getElementById('marcarTodasNotificaciones')?.addEventListener('click', () => post('/Notificaciones/MarcarTodas'));
+                document.addEventListener('click', event => { const enlace = event.target.closest('[data-notification-link]'); if (enlace) post('/Notificaciones/MarcarLeida?id=' + enlace.dataset.notificationLink); const borrar = event.target.closest('.eliminar-notificacion'); if (borrar) { event.preventDefault(); post('/Notificaciones/Eliminar?id=' + borrar.dataset.id); borrar.closest('[data-id]')?.remove(); } });
+                document.getElementById('marcarTodas')?.addEventListener('click', () => post('/Notificaciones/MarcarTodas'));
+                actualizar(); setInterval(actualizar, 60000);
+            })();
+        </script>
+    }
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

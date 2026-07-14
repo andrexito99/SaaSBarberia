@@ -10,11 +10,13 @@ public class CajaService
 {
     private readonly BarberSaaSDbContext _context;
     private readonly IAuditoriaService _auditoriaService; // 🚨 El vigilante inyectado
+    private readonly IEventosSistemaService _eventos;
 
-    public CajaService(BarberSaaSDbContext context, IAuditoriaService auditoriaService)
+    public CajaService(BarberSaaSDbContext context, IAuditoriaService auditoriaService, IEventosSistemaService eventos)
     {
         _context = context;
         _auditoriaService = auditoriaService;
+        _eventos = eventos;
     }
 
     public async Task<MovimientoCaja?> ObtenerCajaActivaAsync()
@@ -50,6 +52,7 @@ public class CajaService
             $"Se realizó la apertura de caja chica ID {nuevaCaja.Id}. Monto inicial reportado: ${montoInicial.ToString("N2")}.",
             ip
         );
+        await _eventos.PublicarAsync(new EventoSistema(TipoEventoSistema.CajaAbierta, tenantId, "Caja abierta", $"Se abrió la caja con monto inicial ${montoInicial:N2}.", "/Caja/Index"));
     }
 
     // 💸 MOVIMIENTOS MANUALES (INGRESOS / EGRESOS)
@@ -83,6 +86,7 @@ public class CajaService
             $"Registro manual de {tipo}. Monto: ${monto.ToString("N2")}. Descripción: {descripcion}. Nuevo saldo calculado: ${caja.MontoFinalCalculado.ToString("N2")}.",
             ip
         );
+        await _eventos.PublicarAsync(new EventoSistema(TipoEventoSistema.CajaCerrada, caja.TenantId, "Caja cerrada", $"Se cerró la caja ID {cajaId}.", "/Caja/Index"));
     }
 
     // 🔒 CIERRE DE CAJA (CÁLCULO DE DESCUADRES)

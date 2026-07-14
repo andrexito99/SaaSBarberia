@@ -11,10 +11,12 @@ namespace SaaSBarberia.Services
     public class TenantService
     {
         private readonly BarberSaaSDbContext _context;
+        private readonly IEventosSistemaService _eventos;
 
-        public TenantService(BarberSaaSDbContext context)
+        public TenantService(BarberSaaSDbContext context, IEventosSistemaService eventos)
         {
             _context = context;
+            _eventos = eventos;
         }
 
         public async Task<List<Tenant>> ObtenerTodosAsync()
@@ -30,7 +32,8 @@ namespace SaaSBarberia.Services
         // 💾 GUARDAR / ACTUALIZAR TENANT (SEDE DE BARBERÍA)
         public async Task GuardarAsync(Tenant tenant)
         {
-            if (tenant.Id == 0)
+            var esNuevo = tenant.Id == 0;
+            if (esNuevo)
             {
                 tenant.FechaRegistro ??= DateTime.Now;
                 tenant.Activo ??= true;
@@ -70,6 +73,8 @@ namespace SaaSBarberia.Services
             }
 
             await _context.SaveChangesAsync();
+            if (esNuevo)
+                await _eventos.PublicarAsync(new EventoSistema(TipoEventoSistema.NuevaBarberia, tenant.Id, "Nueva barbería", $"Se creó la barbería {tenant.NombreNegocio}.", "/Tenants/Details/" + tenant.Id));
         }
 
         public async Task EliminarAsync(int id)

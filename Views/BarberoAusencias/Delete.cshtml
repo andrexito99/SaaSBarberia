@@ -1,0 +1,30 @@
+@model SaaSBarberia.Models.BarberoAusencia
+
+@{
+    ViewData["Title"] = "Eliminar Registro";
+}
+
+<div class="container mt-4" style="max-width: 550px;">
+    <div class="card shadow-sm border-0 p-4 text-center">
+        <div class="text-danger mb-3">
+            <span class="fs-1">⚠️</span>
+        </div>
+        <h4 class="fw-bold text-dark">¿Confirmas la eliminación?</h4>
+        <p class="text-muted">Estás a punto de remover de manera permanente el registro de indisponibilidad del barbero.</p>
+
+        <div class="bg-light p-3 rounded mb-4 text-start border">
+            <div class="mb-2"><strong>Barbero:</strong> @(Model.Barbero?.Usuario?.Nombre ?? "Sin Asignar")</div>
+            <div class="mb-2"><strong>Tipo:</strong> <span class="badge bg-secondary">@Model.Tipo</span></div>
+            <div class="mb-2"><strong>Periodo:</strong> @Model.FechaInicio.ToString("g") hasta @Model.FechaFin.ToString("g")</div>
+            <div><strong>Causa:</strong> @Model.Motivo</div>
+        </div>
+
+        <form asp-action="Delete">
+            <input type="hidden" asp-for="Id" />
+            <div class="d-flex gap-2">
+                <a asp-action="Index" class="btn btn-light border flex-fill">Cancelar</a>
+                <input type="submit" value="Eliminar de verdad" class="btn btn-danger flex-fill fw-bold" />
+            </div>
+        </form>
+    </div>
+</div>

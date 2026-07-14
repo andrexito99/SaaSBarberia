@@ -12,11 +12,13 @@ namespace SaaSBarberia.Services
     {
         private readonly BarberSaaSDbContext _context;
         private readonly IAuditoriaService _auditoriaService; // 🚨 El vigilante inyectado
+        private readonly IEventosSistemaService _eventos;
 
-        public CitaService(BarberSaaSDbContext context, IAuditoriaService auditoriaService)
+        public CitaService(BarberSaaSDbContext context, IAuditoriaService auditoriaService, IEventosSistemaService eventos)
         {
             _context = context;
             _auditoriaService = auditoriaService;
+            _eventos = eventos;
         }
 
         public async Task<List<Cita>> ObtenerTodasConRelacionesAsync()
@@ -65,6 +67,7 @@ namespace SaaSBarberia.Services
                     $"Se agendó una nueva cita ID {cita.Id}. Cliente: {clienteNom}. Barbero: {barberoNom}. Servicio: {servicioNom}. Fecha/Hora: {cita.FechaHora:dd/MM/yyyy hh:mm tt}.",
                     ip
                 );
+                await _eventos.PublicarAsync(new EventoSistema(TipoEventoSistema.NuevaCita, cita.TenantId, "Nueva cita", $"Se agendó una cita para el {cita.FechaHora:dd/MM/yyyy HH:mm}.", "/Citas/Details/" + cita.Id, new[] { cita.ClienteId, detalles?.Barbero?.UsuarioId ?? 0 }.Where(id => id > 0).ToArray()));
             }
             else
             {
@@ -96,6 +99,10 @@ namespace SaaSBarberia.Services
                 }
 
                 await _auditoriaService.RegistrarAsync(cita.TenantId, usuarioId, "Cita", cita.Id.ToString(), accionAuditoria, descripcion, ip);
+                if (original != null && original.Estado != cita.Estado && cita.Estado == "Cancelada")
+                    await _eventos.PublicarAsync(new EventoSistema(TipoEventoSistema.CitaCancelada, cita.TenantId, "Cita cancelada", $"La cita del {cita.FechaHora:dd/MM/yyyy HH:mm} fue cancelada.", "/Citas/Details/" + cita.Id, new[] { cita.ClienteId }));
+                else if (original != null && (original.FechaHora != cita.FechaHora || original.BarberoId != cita.BarberoId || original.ServicioId != cita.ServicioId))
+                    await _eventos.PublicarAsync(new EventoSistema(TipoEventoSistema.CitaReprogramada, cita.TenantId, "Cita reprogramada", $"La cita ID {cita.Id} fue modificada.", "/Citas/Details/" + cita.Id, new[] { cita.ClienteId }));
             }
         }
 

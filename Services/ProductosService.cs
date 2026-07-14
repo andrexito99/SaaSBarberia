@@ -22,11 +22,13 @@ namespace SaaSBarberia.Services
     {
         private readonly BarberSaaSDbContext _context;
         private readonly IAuditoriaService _auditoriaService; // 🚨 El vigilante inyectado
+        private readonly IEventosSistemaService _eventos;
 
-        public ProductosService(BarberSaaSDbContext context, IAuditoriaService auditoriaService)
+        public ProductosService(BarberSaaSDbContext context, IAuditoriaService auditoriaService, IEventosSistemaService eventos)
         {
             _context = context;
             _auditoriaService = auditoriaService;
+            _eventos = eventos;
         }
 
         public async Task<IEnumerable<Producto>> GetAllAsync(int tenantId)
@@ -100,6 +102,8 @@ namespace SaaSBarberia.Services
             {
                 await _auditoriaService.RegistrarAsync(tenantId, usuarioId, "Producto", producto.Id.ToString(), "Editar", cambios, ip);
             }
+            if (original.Stock <= 5)
+                await _eventos.PublicarAsync(new EventoSistema(TipoEventoSistema.ProductoConPocoInventario, tenantId, "Inventario bajo", $"El producto {original.Nombre} tiene {original.Stock} unidades disponibles.", "/Productos/Details/" + original.Id));
         }
 
         public async Task DeleteAsync(int id, int tenantId, int usuarioId, string ip)

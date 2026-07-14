@@ -9,7 +9,7 @@
         <h3 class="fw-bold mb-1 text-dark text-center">📆 Reservar Cita</h3>
         <p class="text-muted text-center small mb-4">Completa los datos del turno</p>
 
-        <form asp-action="Create" autocomplete="off" id="formCita">
+        <form asp-action="Create" method="post" autocomplete="off" id="formCita">
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
             @* 🌟 SI ES CLIENTE O ADMIN DE BARBERÍA, EL TENANT VA OCULTO *@
@@ -79,7 +79,6 @@
                             var nombreBarbero = barbero.Usuario?.Nombre ?? "Sin Nombre";
                             var especialidadBarbero = barbero.Especialidad ?? "Estilo Libre";
 
-                            // 📸 CORREGIDO: Carga directa de la URL física desde disco duro sin Base64 pendejos
                             string imgSrc = !string.IsNullOrEmpty(barbero.RutaFoto) ? barbero.RutaFoto : "/images/avatar-default.png";
 
                             <div class="col">
@@ -142,30 +141,30 @@
         box-shadow: 0 4px 12px rgba(13, 110, 253, 0.15);
     }
 
-        .btn-check:checked + .card .check-indicator {
-            display: block !important;
-        }
+    .btn-check:checked + .card .check-indicator {
+        display: block !important;
+    }
 
     .btn-fecha {
         min-width: 65px;
         transition: all 0.2s;
     }
 
-        .btn-fecha.active {
-            background-color: #0d6efd !important;
-            color: white !important;
-            border-color: #0d6efd !important;
-        }
+    .btn-fecha.active {
+        background-color: #0d6efd !important;
+        color: white !important;
+        border-color: #0d6efd !important;
+    }
 
     .btn-hora {
         transition: all 0.2s;
     }
 
-        .btn-hora.active {
-            background-color: #198754 !important;
-            color: white !important;
-            border-color: #198754 !important;
-        }
+    .btn-hora.active {
+        background-color: #198754 !important;
+        color: white !important;
+        border-color: #198754 !important;
+    }
 </style>
 
 @section Scripts {
@@ -230,8 +229,9 @@
                 }
             }
 
+            // ✅ CORREGIDO: Removido la asignación rota pendeja de 'radiasBarbero ='
             selectServicio.addEventListener("change", evaluarDespliegueCalendario);
-            radiasBarbero = radiosBarbero.forEach(r => r.addEventListener("change", evaluarDespliegueCalendario));
+            radiosBarbero.forEach(r => r.addEventListener("change", evaluarDespliegueCalendario));
 
             function cargarHorarios() {
                 let servicioId = selectServicio.value;
@@ -276,7 +276,6 @@
                         contenedorHoras.innerHTML = `<div class="col-12 text-center text-danger small p-2">Error al procesar los horarios.</div>`;
                     });
             }
-
             function convertAmPmTo24h(timeStr) {
                 const [time, modifier] = timeStr.split(' ');
                 let [hours, minutes] = time.split(':');
@@ -284,6 +283,8 @@
                 if (modifier === 'PM') hours = parseInt(hours, 10) + 12;
                 return `${String(hours).padStart(2, '0')}:${minutes}`;
             }
+            // 🔥 TRUCO EXCELENTE: Si la página recargó por error, forzamos reevaluar para que no se quede todo oculto
+            evaluarDespliegueCalendario();
         });
     </script>
 }

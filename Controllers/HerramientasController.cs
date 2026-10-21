@@ -9,7 +9,7 @@ using SaaSBarberia.Services;
 
 namespace SaaSBarberia.Controllers
 {
-    [Authorize(Roles = "AdminBarberia,SuperAdmin")] // 🚨 Seguridad activada full
+    [Authorize(Roles = "Administrador,SuperAdmin")] // 🚨 Seguridad activada full
     public class HerramientasController : Controller
     {
         private readonly IHerramientasService _herramientasService;

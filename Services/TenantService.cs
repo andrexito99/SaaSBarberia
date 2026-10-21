@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -12,11 +12,15 @@ namespace SaaSBarberia.Services
     {
         private readonly BarberSaaSDbContext _context;
         private readonly IEventosSistemaService _eventos;
+        private readonly TenantModuloService _modulos;
+        private readonly WhatsAppPlantillaService _whatsAppPlantillas;
 
-        public TenantService(BarberSaaSDbContext context, IEventosSistemaService eventos)
+        public TenantService(BarberSaaSDbContext context, IEventosSistemaService eventos, TenantModuloService modulos, WhatsAppPlantillaService whatsAppPlantillas)
         {
             _context = context;
             _eventos = eventos;
+            _modulos = modulos;
+            _whatsAppPlantillas = whatsAppPlantillas;
         }
 
         public async Task<List<Tenant>> ObtenerTodosAsync()
@@ -37,6 +41,13 @@ namespace SaaSBarberia.Services
             {
                 tenant.FechaRegistro ??= DateTime.Now;
                 tenant.Activo ??= true;
+                tenant.PlanSuscripcion = string.IsNullOrWhiteSpace(tenant.PlanSuscripcion) ? "Bronce" : tenant.PlanSuscripcion.Trim();
+                tenant.ColorPrimario = string.IsNullOrWhiteSpace(tenant.ColorPrimario) ? "#1a1a1a" : tenant.ColorPrimario.Trim();
+                tenant.ColorSecundario = string.IsNullOrWhiteSpace(tenant.ColorSecundario) ? "#d4af37" : tenant.ColorSecundario.Trim();
+                tenant.EstiloSidebar = string.IsNullOrWhiteSpace(tenant.EstiloSidebar) ? "DarkStyle" : tenant.EstiloSidebar.Trim();
+                tenant.TiempoEntreCitas = Math.Max(0, tenant.TiempoEntreCitas);
+                tenant.CerradoPorEmergencia = false;
+
                 _context.Add(tenant);
             }
             else
@@ -59,6 +70,7 @@ namespace SaaSBarberia.Services
 
                     // Módulos y tiempos
                     original.TieneModuloHerramientas = tenant.TieneModuloHerramientas;
+                    original.TieneModuloWhatsApp = tenant.TieneModuloWhatsApp;
                     original.TiempoEntreCitas = tenant.TiempoEntreCitas;
 
                     if (tenant.Activo.HasValue)
@@ -73,6 +85,46 @@ namespace SaaSBarberia.Services
             }
 
             await _context.SaveChangesAsync();
+
+            // 1. Alta e inicialización de módulos por defecto (TenantModulos)
+            await _modulos.SincronizarAsync(tenant.Id, ModulosTenant.Todos.Where(c =>
+                c == ModulosTenant.Herramientas ? tenant.TieneModuloHerramientas :
+                c == ModulosTenant.WhatsApp ? tenant.TieneModuloWhatsApp : true));
+
+            // 2. Inicialización completa de la jornada semanal (HorariosLaborales) para nueva barbería
+            if (esNuevo)
+            {
+                var tieneHorarios = await _context.HorariosLaborales
+                    .IgnoreQueryFilters()
+                    .AnyAsync(h => h.TenantId == tenant.Id);
+
+                if (!tieneHorarios)
+                {
+                    var horariosIniciales = new List<HorarioLaboral>();
+                    for (int dia = 0; dia <= 6; dia++)
+                    {
+                        horariosIniciales.Add(new HorarioLaboral
+                        {
+                            TenantId = tenant.Id,
+                            DiaSemana = dia,
+                            EstaCerrado = (dia == 0), // Domingo cerrado por defecto
+                            HoraInicio = new TimeSpan(8, 0, 0),
+                            HoraFin = new TimeSpan(12, 0, 0),
+                            HoraInicio2 = new TimeSpan(14, 0, 0),
+                            HoraFin2 = new TimeSpan(19, 0, 0)
+                        });
+                    }
+
+                    _context.HorariosLaborales.AddRange(horariosIniciales);
+                    await _context.SaveChangesAsync();
+                }
+            }
+
+            // 3. Plantillas de WhatsApp si el módulo está habilitado
+            if (tenant.TieneModuloWhatsApp)
+                await _whatsAppPlantillas.CrearPlantillasInicialesSiFaltanAsync(tenant.Id);
+
+            // 4. Evento del sistema para trazabilidad
             if (esNuevo)
                 await _eventos.PublicarAsync(new EventoSistema(TipoEventoSistema.NuevaBarberia, tenant.Id, "Nueva barbería", $"Se creó la barbería {tenant.NombreNegocio}.", "/Tenants/Details/" + tenant.Id));
         }

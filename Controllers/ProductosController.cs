@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Hosting;
 
 namespace SaaSBarberia.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Administrador,SuperAdmin")]
     [TenantAuthorize]
     public class ProductosController : Controller
     {
@@ -56,12 +56,12 @@ namespace SaaSBarberia.Controllers
             return View(producto);
         }
 
-        [Authorize(Roles = "AdminBarberia,SuperAdmin")]
+        [Authorize(Roles = "Administrador,SuperAdmin")]
         public IActionResult Create() => View();
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "AdminBarberia,SuperAdmin")]
+        [Authorize(Roles = "Administrador,SuperAdmin")]
         // 🔥 CORREGIDO: Cambiado 'ImagenUrl' por 'RutaImagen' en el Bind
         public async Task<IActionResult> Create([Bind("Id,Nombre,Descripcion,PrecioVenta,Stock,RutaImagen")] Producto producto, IFormFile? productoArchivo)
         {
@@ -88,7 +88,7 @@ namespace SaaSBarberia.Controllers
             return View(producto);
         }
 
-        [Authorize(Roles = "AdminBarberia,SuperAdmin")]
+        [Authorize(Roles = "Administrador,SuperAdmin")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -99,7 +99,7 @@ namespace SaaSBarberia.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "AdminBarberia,SuperAdmin")]
+        [Authorize(Roles = "Administrador,SuperAdmin")]
         // 🔥 CORREGIDO: Mapeo correcto de 'RutaImagen' en el Bind para no perder el hidden
         public async Task<IActionResult> Edit(int id, [Bind("Id,Nombre,Descripcion,PrecioVenta,Stock,RutaImagen")] Producto producto, IFormFile? productoArchivo)
         {
@@ -150,7 +150,7 @@ namespace SaaSBarberia.Controllers
             return View(producto);
         }
 
-        [Authorize(Roles = "AdminBarberia,SuperAdmin")]
+        [Authorize(Roles = "Administrador,SuperAdmin")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
@@ -161,7 +161,7 @@ namespace SaaSBarberia.Controllers
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "AdminBarberia,SuperAdmin")]
+        [Authorize(Roles = "Administrador,SuperAdmin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var producto = await _productosService.GetByIdAsync(id, CurrentTenantId);

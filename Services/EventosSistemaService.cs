@@ -17,7 +17,7 @@ public sealed class EventosSistemaService : IEventosSistemaService
         if (eventoSistema.TenantId <= 0) return;
         var destinos = eventoSistema.UsuariosDestinoIds?.Distinct().ToArray();
         if (destinos == null || destinos.Length == 0)
-            destinos = await _context.Usuarios.IgnoreQueryFilters().Where(u => u.TenantId == eventoSistema.TenantId && u.Activo == true && (u.Role.NombreRole == "AdminBarberia" || u.Role.NombreRole == "SuperAdmin")).Select(u => u.Id).ToArrayAsync();
+            destinos = await _context.Usuarios.IgnoreQueryFilters().Where(u => u.TenantId == eventoSistema.TenantId && u.Activo == true && (u.Role.NombreRole == "Administrador" || u.Role.NombreRole == "SuperAdmin")).Select(u => u.Id).ToArrayAsync();
 
         var presentacion = ObtenerPresentacion(eventoSistema.Tipo);
         foreach (var usuarioId in destinos)

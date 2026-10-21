@@ -4,17 +4,17 @@
     ViewData["Title"] = "Servicios Ofrecidos";
 }
 
-<div class="container mt-4">
+<div class="container mt-4" data-listing>
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="text-dark fw-bold">✂ Catálogo de Servicios</h2>
 
-        @if (User.IsInRole("SuperAdmin") || User.IsInRole("AdminBarberia"))
+        @if (User.IsInRole("SuperAdmin") || User.IsInRole("Administrador"))
         {
             <a asp-action="Create" class="btn btn-primary px-4 shadow-sm">+ Agregar Servicio</a>
         }
     </div>
 
-    <div class="row row-cols-1 row-cols-md-3 g-4">
+    <div class="row row-cols-1 row-cols-md-3 g-4" data-listing-grid>
         @foreach (var item in Model)
         {
             <div class="col">
@@ -41,7 +41,7 @@
                         {
                             <a asp-controller="Citas" asp-action="Create" class="btn btn-primary w-100 fw-bold shadow-sm">⚡ Reservar Cita</a>
                         }
-                        else if (User.IsInRole("SuperAdmin") || User.IsInRole("AdminBarberia"))
+                        else if (User.IsInRole("SuperAdmin") || User.IsInRole("Administrador"))
                         {
                             <div class="d-flex justify-content-around">
                                 <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-warning w-25">Editar</a>

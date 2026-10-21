@@ -11,7 +11,7 @@ using SaaSBarberia.Services;
 
 namespace SaaSBarberia.Controllers
 {
-    [Authorize(Roles = "AdminBarberia,SuperAdmin")]
+    [Authorize(Roles = "Administrador,SuperAdmin")]
     public class AlquileresHerramientasController : Controller
     {
         private readonly IAlquileresHerramientasService _alquileresService;

@@ -87,6 +87,14 @@
                 <small class="text-muted d-block mt-1 ms-2">Si activas esto, esta barbería tendrá acceso prioritario al inventario y préstamo interno de maquinaria.</small>
             </div>
 
+            <div class="form-check form-switch mb-3 card p-3 shadow-sm border-success ms-0">
+                <div class="ms-2">
+                    <input class="form-check-input me-2" type="checkbox" asp-for="TieneModuloWhatsApp" id="TieneModuloWhatsApp">
+                    <label class="form-check-label fw-bold text-dark" for="TieneModuloWhatsApp">💬 Habilitar módulo de WhatsApp Business</label>
+                </div>
+                <small class="text-muted d-block mt-1 ms-2">Permite configurar el número de la barbería y los mensajes automáticos.</small>
+            </div>
+
             <div class="mb-3">
                 <label asp-for="EstiloSidebar" class="form-label fw-semibold">Diseño y Posición del Menú</label>
                 <select asp-for="EstiloSidebar" class="form-select">

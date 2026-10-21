@@ -1,13 +1,15 @@
-﻿@using System.Security.Claims
+@using System.Security.Claims
 @using Microsoft.EntityFrameworkCore
-@inject SaaSBarberia.Data.BarberSaaSDbContext Context
+@inject SaaSBarberia.Data.BarberSaaSDbContext DbContext
 
 @{
-    string colorPrimario = "#212529";
-    string colorSecundario = "#0d6efd";
+    string colorPrimario = "#0f172a";
+    string colorSecundario = "#258cfb";
     string estiloSidebar = "SuperiorClasico";
     string nombreNegocio = "SaaS Barbería";
     bool tieneHerramientas = false;
+    bool tieneWhatsApp = false;
+    var modulosHabilitados = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
     bool esSuperAdmin = User.IsInRole("SuperAdmin");
 
@@ -16,7 +18,7 @@
         var usuarioIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!string.IsNullOrEmpty(usuarioIdStr) && int.TryParse(usuarioIdStr, out int usuarioId))
         {
-            var usuarioDb = Context.Usuarios
+            var usuarioDb = DbContext.Usuarios
                 .IgnoreQueryFilters()
                 .Include(u => u.Tenant)
                 .FirstOrDefault(u => u.Id == usuarioId);
@@ -24,143 +26,249 @@
             if (usuarioDb != null && usuarioDb.Tenant != null)
             {
                 tieneHerramientas = usuarioDb.Tenant.TieneModuloHerramientas;
+                tieneWhatsApp = usuarioDb.Tenant.TieneModuloWhatsApp;
+                modulosHabilitados = DbContext.TenantModulos
+                    .IgnoreQueryFilters()
+                    .Where(m => m.TenantId == usuarioDb.TenantId && m.Habilitado)
+                    .Select(m => m.Codigo)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                if (modulosHabilitados.Count > 0)
+                {
+                    tieneHerramientas = modulosHabilitados.Contains("Herramientas");
+                    tieneWhatsApp = modulosHabilitados.Contains("WhatsApp");
+                }
 
                 if (!esSuperAdmin)
                 {
-                    colorPrimario = usuarioDb.Tenant.ColorPrimario ?? colorPrimario;
-                    colorSecundario = usuarioDb.Tenant.ColorSecundario ?? colorSecundario;
+                    colorPrimario = usuarioDb.Tenant.ColorPrimario ?? "#212529";
+                    colorSecundario = usuarioDb.Tenant.ColorSecundario ?? "#0d6efd";
                     estiloSidebar = usuarioDb.Tenant.EstiloSidebar ?? estiloSidebar;
                     nombreNegocio = usuarioDb.Tenant.NombreNegocio ?? nombreNegocio;
-                }
-                else
-                {
-                    colorPrimario = "#0f172a";
-                    colorSecundario = "#258cfb";
-                    estiloSidebar = "LateralOscuro"; // 🔥 Cambiado de SuperiorClasico a LateralOscuro para el SuperAdmin
-                    nombreNegocio = "Panel SuperAdmin";
-                    tieneHerramientas = true;
                 }
             }
         }
     }
 
-    // 🔥 Ahora el Layout Lateral se activa si es un tenant con sidebar lateral O si es el mismísimo SuperAdmin
+    if (esSuperAdmin)
+    {
+        colorPrimario = "#0b0f19";
+        colorSecundario = "#3b82f6";
+        estiloSidebar = "LateralOscuro";
+        nombreNegocio = "SUPERADMIN CONTROL";
+        tieneHerramientas = true;
+        tieneWhatsApp = true;
+    }
+
     bool usaLayoutLateral = ((estiloSidebar == "LateralOscuro" || estiloSidebar == "LateralClaro") && !esSuperAdmin) || esSuperAdmin;
 }
 
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="@(esSuperAdmin ? "theme-superadmin" : "")">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - @nombreNegocio</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/SaaSBarberia.styles.css" asp-append-version="true" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <style>
             :root {
                 --tenant-primary: @colorPrimario;
                 --tenant-secondary: @colorSecundario;
             }
-
-            .bg-tenant-custom {
-                background-color: var(--tenant-primary) !important;
-            }
-
-            .text-tenant-brand {
-                color: var(--tenant-secondary) !important;
-            }
-
-            .btn-tenant-action {
-                background-color: var(--tenant-secondary) !important;
-                border-color: var(--tenant-secondary) !important;
-                color: #fff !important;
-            }
-
-                .btn-tenant-action:hover {
-                    filter: brightness(90%);
-                }
     </style>
 </head>
-<body class="bg-light">
+<body class="@(esSuperAdmin ? "bg-superadmin" : "bg-light")">
 
     <div class="@(usaLayoutLateral ? "saas-wrapper" : "")">
 
         @* 📊 MENÚ LATERAL *@
         @if (usaLayoutLateral)
         {
-            <nav class="saas-sidebar d-flex flex-column flex-shrink-0 p-3 shadow @(estiloSidebar == "LateralClaro" ? "bg-white text-dark border-end" : "text-white")"
-                 style="@(estiloSidebar == "LateralOscuro" ? $"background-color: {colorPrimario} !important;" : "")">
+            <nav class="saas-sidebar d-flex flex-column flex-shrink-0 p-3 shadow-lg @(estiloSidebar == "LateralClaro" ? "bg-white text-dark border-end" : "sidebar-dark")">
 
-                <a class="navbar-brand fw-bold text-uppercase tracking-wider text-center py-2" asp-controller="Home" asp-action="Index">
-                    💈 <span class="text-tenant-brand">@nombreNegocio</span>
-                </a>
-                <hr>
-                <ul class="nav nav-pills flex-column mb-auto gap-1">
-                    <li class="nav-item">
-                        <a class="nav-link @(estiloSidebar == "LateralClaro" ? "text-dark" : "text-white") fw-semibold" asp-controller="Home" asp-action="Index">🏠 Inicio</a>
-                    </li>
-                    @if (User.Identity.IsAuthenticated)
+                <!-- LOGO / BRANDING -->
+                <a class="navbar-brand d-flex align-items-center justify-content-center gap-2 py-3 px-2 rounded-3 brand-card text-decoration-none" asp-controller="Home" asp-action="Index">
+                    @if (esSuperAdmin)
                     {
-                        <li><a class="nav-link @(estiloSidebar == "LateralClaro" ? "text-dark" : "text-white-50") fw-semibold" asp-controller="Servicios" asp-action="Index">✂️ Servicios</a></li>
-                        <li><a class="nav-link @(estiloSidebar == "LateralClaro" ? "text-dark" : "text-white-50") fw-semibold" asp-controller="Productos" asp-action="Index">🛒 Productos</a></li>
+                        <div class="brand-icon-wrapper bg-primary bg-gradient text-white shadow-sm">
+                            <i class="bi bi-shield-lock-fill"></i>
+                        </div>
+                        <div class="d-flex flex-column text-start">
+                            <span class="fw-extrabold text-white lh-1 tracking-wider">SUPER<span class="text-primary-glow">ADMIN</span></span>
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle mt-1 px-2 py-0 align-self-start" style="font-size: 0.65rem;">CORE ENGINE</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <span class="fs-4">💈</span>
+                        <span class="fw-bold text-tenant-brand text-truncate">@nombreNegocio</span>
+                    }
+                </a>
 
-                        if (!User.IsInRole("Cliente"))
+                <div class="sidebar-divider my-3"></div>
+
+                <!-- LISTA DE NAVEGACIÓN -->
+                <ul class="nav nav-pills flex-column mb-auto gap-1 custom-nav-list">
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center gap-3" asp-controller="Home" asp-action="Index">
+                            <i class="bi bi-grid-1x2-fill"></i> <span>Inicio</span>
+                        </a>
+                    </li>
+                
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <li class="nav-header text-uppercase mt-3 mb-1 px-3">Gestión Comercial</li>
+                        <li>
+                            <a class="nav-link d-flex align-items-center gap-3" asp-controller="Servicios" asp-action="Index">
+                                <i class="bi bi-scissors"></i> <span>Servicios</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="nav-link d-flex align-items-center gap-3" asp-controller="Productos" asp-action="Index">
+                                <i class="bi bi-bag-check-fill"></i> <span>Productos</span>
+                            </a>
+                        </li>
+
+                        @if (!User.IsInRole("Cliente"))
                         {
-                            <li><a class="nav-link @(estiloSidebar == "LateralClaro" ? "text-dark" : "text-white-50") fw-semibold" asp-controller="Barberos" asp-action="Index">💈 Barberos</a></li>
+                            <li>
+                                <a class="nav-link d-flex align-items-center gap-3" asp-controller="Barberos" asp-action="Index">
+                                    <i class="bi bi-person-badge-fill"></i> <span>Barberos</span>
+                                </a>
+                            </li>
 
-                            @if (tieneHerramientas)
+                            @if (tieneHerramientas || User.IsInRole("Administrador") || User.IsInRole("SuperAdmin")) 
                             {
-                                <li><a class="nav-link @(estiloSidebar == "LateralClaro" ? "text-dark" : "text-white-50") fw-semibold" asp-controller="AlquileresHerramientas" asp-action="Index">🔧 Alquiler Máquinas</a></li>
-                                <li><a class="nav-link @(estiloSidebar == "LateralClaro" ? "text-dark" : "text-white-50") fw-semibold text-warning" asp-controller="Herramientas" asp-action="Create">⚙️ + Herramienta</a></li>
+                                <li>
+                                    <a class="nav-link d-flex align-items-center gap-3" asp-controller="AlquileresHerramientas" asp-action="Index">
+                                        <i class="bi bi-tools"></i> <span>Alquiler Máquinas</span>
+                                    </a>
+                                </li>
                             }
                         }
-                        if (User.IsInRole("AdminBarberia"))
+
+                        @if (User.IsInRole("Administrador"))
                         {
-                            <li><a class="nav-link text-danger fw-bold" asp-controller="Tenants" asp-action="DashboardSede">🚨 CONTROL</a></li>
-                            <li><a class="nav-link @(estiloSidebar == "LateralClaro" ? "text-dark" : "text-white-50") fw-semibold" asp-controller="Caja" asp-action="Index">💵 Caja Chica</a></li>
-                            @* 📅 AUSENCIAS EN MENÚ LATERAL (SÓLO ADMIN) *@
-                            <li><a class="nav-link @(estiloSidebar == "LateralClaro" ? "text-dark" : "text-white-50") fw-semibold" asp-controller="BarberoAusencias" asp-action="Index">📅 Ausencias Barberos</a></li>
+                            <li class="nav-header text-uppercase mt-3 mb-1 px-3">Administración</li>
+                            <li>
+                                <a class="nav-link d-flex align-items-center gap-3 text-warning" asp-controller="Tenants" asp-action="DashboardSede">
+                                    <i class="bi bi-speedometer2"></i> <span>Panel Control</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="nav-link d-flex align-items-center gap-3" asp-controller="Caja" asp-action="Index">
+                                    <i class="bi bi-cash-stack"></i> <span>Caja Chica</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="nav-link d-flex align-items-center gap-3" asp-controller="BarberoAusencias" asp-action="Index">
+                                    <i class="bi bi-calendar2-x-fill"></i> <span>Ausencias</span>
+                                </a>
+                            </li>
+
+                            @if (tieneWhatsApp)
+                            {
+                                <li class="nav-header text-uppercase mt-3 mb-1 px-3">Módulo WhatsApp</li>
+                                <li>
+                                    <a class="nav-link d-flex align-items-center gap-3" asp-controller="WhatsAppDashboard" asp-action="Index">
+                                    <i class="bi bi-whatsapp text-success"></i> <span>Dashboard WA</span>
+                                </a>
+                                </li>
+                                <li>
+                                    <a class="nav-link d-flex align-items-center gap-3" asp-controller="WhatsAppConfiguracion" asp-action="Index">
+                                        <i class="bi bi-gear-fill"></i> <span>Configuración WA</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="nav-link d-flex align-items-center gap-3" asp-controller="WhatsAppPlantillas" asp-action="Index">
+                                        <i class="bi bi-chat-square-text"></i> <span>Plantillas WA</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="nav-link d-flex align-items-center gap-3" asp-controller="WhatsAppHistorial" asp-action="Index">
+                                        <i class="bi bi-clock-history"></i> <span>Historial WA</span>
+                                    </a>
+                                </li>
+                            }
                         }
-                        <li><a class="nav-link @(estiloSidebar == "LateralClaro" ? "text-dark" : "text-white-50") fw-semibold" asp-controller="Citas" asp-action="Index">📆 Citas</a></li>
-                        
-                        @* 🔥 Secciones exclusivas de SuperAdmin añadidas al menú lateral *@
-                        if (esSuperAdmin)
+
+                        <li>
+                            <a class="nav-link d-flex align-items-center gap-3" asp-controller="Citas" asp-action="Index">
+                                <i class="bi bi-calendar-event-fill"></i> <span>Citas</span>
+                            </a>
+                        </li>
+
+                        @if (esSuperAdmin)
                         {
-                            <hr class="my-2 border-secondary">
-                            <li class="nav-item"><a class="nav-link text-info fw-bold" asp-controller="Tenants" asp-action="SuperDashboard">📈 Global</a></li>
-                            <li class="nav-item"><a class="nav-link text-warning fw-semibold" asp-controller="Tenants" asp-action="Index">🏢 Tenants</a></li>
-                            <li class="nav-item"><a class="nav-link text-warning fw-semibold" asp-controller="Usuarios" asp-action="Index">👥 Usuarios</a></li>
-                            <li class="nav-item">
-                                <a class="nav-link text-white fw-bold" asp-controller="Auditoria" asp-action="Index">
-                                    <i class="bi bi-shield-lock-fill text-danger"></i> Auditoría Global
+                            <li class="nav-header text-uppercase mt-4 mb-1 px-3 text-cyan">
+                                <i class="bi bi-cpu-fill me-1"></i> Control Global SaaS
+                            </li>
+                            <li>
+                                <a class="nav-link d-flex align-items-center gap-3 nav-super-link text-info" asp-controller="Tenants" asp-action="SuperDashboard">
+                                    <i class="bi bi-pie-chart-fill"></i> <span>Métricas Globales</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="nav-link d-flex align-items-center gap-3 nav-super-link text-primary-glow" asp-controller="Tenants" asp-action="Index">
+                                    <i class="bi bi-building-fill-gear"></i> <span>Gestión Tenants</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="nav-link d-flex align-items-center gap-3 nav-super-link text-light" asp-controller="Usuarios" asp-action="Index">
+                                    <i class="bi bi-people-fill"></i> <span>Usuarios Globales</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="nav-link d-flex align-items-center gap-3 nav-super-link text-danger" asp-controller="Auditoria" asp-action="Index">
+                                    <i class="bi bi-shield-shaded"></i> <span>Auditoría de Logs</span>
                                 </a>
                             </li>
                         }
                     }
                 </ul>
-                <hr>
+
+                <div class="sidebar-divider my-3"></div>
+
+                <!-- USER FOOTER EN SIDEBAR -->
                 @if (User.Identity != null && User.Identity.IsAuthenticated)
                 {
-                    <div class="d-flex flex-column gap-2 pt-2 border-top border-secondary">
-                        <span class="small text-truncate text-white-50">Hola, <strong>@User.Identity.Name</strong></span>
-                        <a class="btn btn-sm btn-danger w-100" asp-controller="Account" asp-action="Logout">Salir</a>
+                    <div class="user-card-sidebar p-2 rounded-3 d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-2 overflow-hidden">
+                            <div class="avatar-circle">
+                                @(User.Identity.Name?.Substring(0, 1).ToUpper() ?? "U")
+                            </div>
+                            <div class="d-flex flex-column text-truncate">
+                                <span class="fw-bold fs-7 text-white text-truncate">@(User.Identity?.Name ?? "Invitado")</span>
+                                <span class="text-muted fs-8">@(esSuperAdmin ? "SuperAdmin" : "Operador")</span>
+                            </div>
+                        </div>
+                        <a class="btn btn-icon btn-outline-danger btn-sm rounded-circle" asp-controller="Account" asp-action="Logout" title="Cerrar Sesión">
+                            <i class="bi bi-power"></i>
+                        </a>
                     </div>
                 }
                 else
                 {
-                    <div class="pt-2">
-                        <a class="btn btn-sm btn-tenant-action w-100" asp-controller="Account" asp-action="Login">Iniciar Sesión 🔑</a>
-                    </div>
+                    <a class="btn btn-primary w-100 fw-bold py-2 shadow-sm" asp-controller="Account" asp-action="Login">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Iniciar Sesión
+                    </a>
                 }
             </nav>
         }
 
         <div class="saas-content @(usaLayoutLateral ? "has-sidebar" : "")">
 
-            @* 🍔 MENÚ SUPERIOR (Sólo para no-SuperAdmins que usen Layout Superior) *@
+            @* 🍔 MENÚ SUPERIOR (Para no-SuperAdmins con Layout Superior) *@
             @if (!usaLayoutLateral)
             {
                 <header>
@@ -170,48 +278,28 @@
                                 💈 <span class="text-tenant-brand">@nombreNegocio</span>
                             </a>
 
-                            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsiveContent" aria-controls="navbarResponsiveContent" aria-expanded="false" aria-label="Toggle navigation">
+                            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsiveContent">
                                 <span class="navbar-toggler-icon"></span>
                             </button>
 
                             <div class="navbar-collapse collapse" id="navbarResponsiveContent">
                                 <ul class="navbar-nav flex-grow-1 ms-md-3 my-2 my-md-0">
                                     <li class="nav-item"><a class="nav-link text-white fw-semibold" asp-controller="Home" asp-action="Index">🏠 Inicio</a></li>
-                                    @if (User.Identity.IsAuthenticated)
+                                    @if (User.Identity?.IsAuthenticated == true)
                                     {
                                         <li class="nav-item"><a class="nav-link text-white-50 fw-semibold" asp-controller="Servicios" asp-action="Index">✂️ Servicios</a></li>
                                         <li class="nav-item"><a class="nav-link text-white-50 fw-semibold" asp-controller="Productos" asp-action="Index">🛒 Productos</a></li>
 
-                                        if (!User.IsInRole("Cliente"))
+                                        @if (!User.IsInRole("Cliente"))
                                         {
                                             <li class="nav-item"><a class="nav-link text-white-50 fw-semibold" asp-controller="Barberos" asp-action="Index">💈 Barberos</a></li>
-
-                                            @if (tieneHerramientas)
-                                            {
-                                                <li class="nav-item"><a class="nav-link text-white-50 fw-semibold" asp-controller="AlquileresHerramientas" asp-action="Index">🔧 Alquiler Máquinas</a></li>
-                                                <li class="nav-item"><a class="nav-link text-warning fw-semibold" asp-controller="Herramientas" asp-action="Create">⚙️ + Herramienta</a></li>
-                                            }
-                                        }
-                                        if (User.IsInRole("SuperAdmin") || User.IsInRole("AdminBarberia"))
-                                        {
-                                            <li class="nav-item"><a class="nav-link text-white-50 fw-semibold" asp-controller="Facturas" asp-action="Index">💵 Facturación</a></li>
-                                        }
-                                        if (User.IsInRole("AdminBarberia"))
-                                        {
-                                            <li class="nav-item"><a class="nav-link text-white-50 fw-semibold" asp-controller="Caja" asp-action="Index">💰 Caja Chica</a></li>
-                                            @* 📅 AUSENCIAS EN MENÚ SUPERIOR (SÓLO ADMIN) *@
-                                            <li class="nav-item"><a class="nav-link text-white-50 fw-semibold" asp-controller="BarberoAusencias" asp-action="Index">📅 Ausencias Barberos</a></li>
                                         }
                                         <li class="nav-item"><a class="nav-link text-white-50 fw-semibold" asp-controller="Citas" asp-action="Index">📆 Citas</a></li>
-                                        if (User.IsInRole("AdminBarberia"))
-                                        {
-                                            <li class="nav-item"><a class="nav-link text-danger fw-bold" asp-controller="Tenants" asp-action="DashboardSede">🚨 CONTROL</a></li>
-                                        }
                                     }
                                 </ul>
-                                <div class="d-flex flex-column flex-md-row align-items-md-center gap-2 mt-2 mt-md-0 pt-2 pt-md-0 border-top border-secondary border-md-0">
-                                    <span class="text-white small text-truncate">Hola, <strong>@User.Identity.Name</strong></span>
-                                    <a class="btn btn-sm btn-danger" asp-controller="Account" asp-action="Logout">Salir</a>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="text-white small">Hola, <strong>@(User.Identity?.Name ?? "Invitado")</strong></span>
+                                    <a class="btn btn-sm btn-outline-danger" asp-controller="Account" asp-action="Logout">Salir</a>
                                 </div>
                             </div>
                         </div>
@@ -219,33 +307,39 @@
                 </header>
             }
 
-            <div class="container-fluid px-3 px-md-4" style="margin-bottom: 100px; padding-top: @(usaLayoutLateral ? "20px" : "0px");">
+            <div class="container-fluid px-3 px-md-5 pt-4" style="margin-bottom: 80px;">
                 <main role="main" class="pb-5">
                     @RenderBody()
                 </main>
             </div>
 
-            <footer class="border-top footer text-muted bg-white py-3 position-fixed bottom-0 start-0 w-100 z-3"
-                    style="padding-left: @(usaLayoutLateral ? "280px" : "20px"); transition: padding 0.3s ease;">
-                <div class="container-fluid px-4 text-center text-md-start d-md-flex justify-content-between small">
-                    <span>&copy; 2026 - <strong>@nombreNegocio</strong> - Control SaaS Adaptativo.</span>
-                    <span class="text-secondary d-block d-md-inline mt-1 mt-md-0">Valledupar, Cesar 🇨🇴</span>
+            <!-- FOOTER -->
+            <footer class="footer-saas position-fixed bottom-0 start-0 w-100 z-3 @(esSuperAdmin ? "footer-dark" : "bg-white border-top")"
+                    style="padding-left: @(usaLayoutLateral ? "270px" : "20px"); transition: all 0.3s ease;">
+                <div class="container-fluid px-4 py-2 text-center text-md-start d-md-flex justify-content-between align-items-center small">
+                    <span class="@(esSuperAdmin ? "text-muted" : "text-secondary")">&copy; 2026 - <strong class="@(esSuperAdmin ? "text-white" : "text-dark")">@nombreNegocio</strong> - Core System.</span>
+                    <span class="badge bg-dark border border-secondary text-white-50 d-none d-md-inline-block">Valledupar, Cesar 🇨🇴</span>
                 </div>
             </footer>
         </div>
     </div>
 
+    <!-- WIDGET NOTIFICACIONES -->
     @if (User.Identity?.IsAuthenticated == true)
     {
         <div class="dropdown position-fixed top-0 end-0 m-3 z-3" id="notificacionesWidget">
             @Html.AntiForgeryToken()
-            <button class="btn btn-light shadow-sm position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notificaciones">
-                <i class="bi bi-bell-fill"></i><span id="contadorNotificaciones" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">0</span>
+            <button class="btn btn-dark-glass rounded-circle shadow position-relative p-2" type="button" data-bs-toggle="dropdown">
+                <i class="bi bi-bell-fill fs-5 text-warning"></i>
+                <span id="contadorNotificaciones" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">0</span>
             </button>
-            <div class="dropdown-menu dropdown-menu-end shadow p-0" style="width: 360px; max-width: calc(100vw - 24px);">
-                <div class="d-flex justify-content-between align-items-center p-3 border-bottom"><strong>Notificaciones</strong><button id="marcarTodasNotificaciones" class="btn btn-link btn-sm p-0">Marcar todas</button></div>
-                <div id="notificacionesDropdown"></div>
-                <div class="p-2 text-center border-top"><a asp-controller="Notificaciones" asp-action="Index" class="small">Ver todas</a></div>
+            <div class="dropdown-menu dropdown-menu-end shadow-lg p-0 border-0 rounded-3 overflow-hidden" style="width: 360px; max-width: calc(100vw - 24px);">
+                <div class="d-flex justify-content-between align-items-center p-3 bg-dark text-white border-bottom border-secondary">
+                    <strong class="fs-6"><i class="bi bi-bell me-2"></i>Notificaciones</strong>
+                    <button id="marcarTodasNotificaciones" class="btn btn-link text-warning btn-sm p-0 text-decoration-none">Marcar todas</button>
+                </div>
+                <div id="notificacionesDropdown" class="bg-dark text-light"></div>
+                <div class="p-2 text-center border-top border-secondary bg-dark"><a asp-controller="Notificaciones" asp-action="Index" class="small text-info text-decoration-none">Ver historial completo</a></div>
             </div>
         </div>
     }
@@ -257,18 +351,22 @@
     {
         <script>
             (() => {
-                const token = document.querySelector('#notificacionesWidget input[name="__RequestVerificationToken"]')?.value;
-                const headers = token ? { 'RequestVerificationToken': token } : {};
-                async function actualizar() {
-                    const [dropdown, conteo] = await Promise.all([fetch('/Notificaciones/Dropdown'), fetch('/Notificaciones/ObtenerNoLeidas')]);
-                    if (dropdown.ok) document.getElementById('notificacionesDropdown').innerHTML = await dropdown.text();
-                    if (conteo.ok) { const data = await conteo.json(); const badge = document.getElementById('contadorNotificaciones'); badge.textContent = data.cantidad; badge.classList.toggle('d-none', data.cantidad === 0); }
-                }
-                async function post(url) { await fetch(url, { method: 'POST', headers }); await actualizar(); }
-                document.getElementById('marcarTodasNotificaciones')?.addEventListener('click', () => post('/Notificaciones/MarcarTodas'));
-                document.addEventListener('click', event => { const enlace = event.target.closest('[data-notification-link]'); if (enlace) post('/Notificaciones/MarcarLeida?id=' + enlace.dataset.notificationLink); const borrar = event.target.closest('.eliminar-notificacion'); if (borrar) { event.preventDefault(); post('/Notificaciones/Eliminar?id=' + borrar.dataset.id); borrar.closest('[data-id]')?.remove(); } });
-                document.getElementById('marcarTodas')?.addEventListener('click', () => post('/Notificaciones/MarcarTodas'));
-                actualizar(); setInterval(actualizar, 60000);
+            const token = document.querySelector('#notificacionesWidget input[name="__RequestVerificationToken"]')?.value;
+            const headers = token ? { 'RequestVerificationToken': token } : {};
+            async function actualizar() {
+            const [dropdown, conteo] = await Promise.all([fetch('/Notificaciones/Dropdown'), fetch('/Notificaciones/ObtenerNoLeidas')]);
+            if (dropdown.ok) document.getElementById('notificacionesDropdown').innerHTML = await dropdown.text();
+            if (conteo.ok) { const data = await conteo.json(); const badge = document.getElementById('contadorNotificaciones'); badge.textContent = data.cantidad; badge.classList.toggle('d-none', data.cantidad === 0); }
+            }
+            async function post(url) { await fetch(url, { method: 'POST', headers }); await actualizar(); }
+            document.getElementById('marcarTodasNotificaciones')?.addEventListener('click', () => post('/Notificaciones/MarcarTodas'));
+            document.addEventListener('click', event => {
+            const enlace = event.target.closest('[data-notification-link]');
+            if (enlace) post('/Notificaciones/MarcarLeida?id=' + enlace.dataset.notificationLink);
+            const borrar = event.target.closest('.eliminar-notificacion');
+            if (borrar) { event.preventDefault(); post('/Notificaciones/Eliminar?id=' + borrar.dataset.id); borrar.closest('[data-id]')?.remove(); }
+            });
+            actualizar(); setInterval(actualizar, 60000);
             })();
         </script>
     }

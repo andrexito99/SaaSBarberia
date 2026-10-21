@@ -24,6 +24,7 @@ public partial class Tenant
     public string EstiloSidebar { get; set; } = "DarkStyle";
 
     public bool TieneModuloHerramientas { get; set; } = false;
+    public bool TieneModuloWhatsApp { get; set; } = false;
 
     public int TiempoEntreCitas { get; set; } = 0;
 
@@ -36,4 +37,5 @@ public partial class Tenant
     public virtual ICollection<Servicio> Servicios { get; set; } = new List<Servicio>();
     public virtual ICollection<Usuario> Usuarios { get; set; } = new List<Usuario>();
     public virtual ICollection<HorarioLaboral> HorariosLaborales { get; set; } = new List<HorarioLaboral>();
+    public virtual ICollection<TenantModulo> Modulos { get; set; } = new List<TenantModulo>();
 }

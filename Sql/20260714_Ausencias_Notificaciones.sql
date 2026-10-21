@@ -27,6 +27,13 @@ END;
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_BarberoAusencias_Agenda' AND object_id = OBJECT_ID(N'dbo.BarberoAusencias'))
     CREATE INDEX IX_BarberoAusencias_Agenda ON dbo.BarberoAusencias(TenantId, BarberoId, FechaInicio, FechaFin);
 
+/* Índices para los bloqueos de rango de la reserva serializable. */
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_Citas_Agenda_Tenant_Barbero_Fecha' AND object_id = OBJECT_ID(N'dbo.Citas'))
+    CREATE INDEX IX_Citas_Agenda_Tenant_Barbero_Fecha ON dbo.Citas(TenantId, BarberoId, FechaHora);
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_Citas_Agenda_Tenant_Cliente_Fecha' AND object_id = OBJECT_ID(N'dbo.Citas'))
+    CREATE INDEX IX_Citas_Agenda_Tenant_Cliente_Fecha ON dbo.Citas(TenantId, ClienteId, FechaHora);
+
 IF OBJECT_ID(N'dbo.Notificaciones', N'U') IS NULL
 BEGIN
     CREATE TABLE dbo.Notificaciones

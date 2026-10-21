@@ -42,7 +42,7 @@ namespace SaaSBarberia.Controllers
             {
                 citas = citas.Where(c => c.ClienteId == CurrentUsuarioId).ToList();
             }
-            else if (User.IsInRole("AdminBarberia") || User.IsInRole("Barbero"))
+            else if (User.IsInRole("Administrador") || User.IsInRole("Barbero"))
             {
                 var empleado = await _citaService.ObtenerClientePorIdAsync(CurrentUsuarioId);
                 if (empleado != null && empleado.TenantId != null)
@@ -126,7 +126,7 @@ namespace SaaSBarberia.Controllers
         {
             if (tenantId <= 0) return BadRequest("Tenant inválido.");
 
-            if (User.IsInRole("AdminBarberia") || User.IsInRole("Barbero"))
+            if (User.IsInRole("Administrador") || User.IsInRole("Barbero"))
             {
                 var usuarioDb = await _citaService.ObtenerClientePorIdAsync(CurrentUsuarioId);
                 if (usuarioDb?.TenantId != tenantId) return Forbid();
@@ -304,8 +304,18 @@ namespace SaaSBarberia.Controllers
                     }
                 }
 
-                await _citaService.GuardarAsync(cita, CurrentUsuarioId, CurrentUserIp);
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    // Revalida dentro de una transacción serializable justo antes de insertar.
+                    await _citaService.GuardarValidandoDisponibilidadAsync(cita, CurrentUsuarioId, CurrentUserIp);
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (CitaNoDisponibleException ex)
+                {
+                    ModelState.AddModelError("", ex.Message);
+                    await RecargarCombosErrorAsync(cita);
+                    return View(cita);
+                }
             }
 
             await RecargarCombosErrorAsync(cita);
@@ -327,6 +337,30 @@ namespace SaaSBarberia.Controllers
             cita.Estado = "Cancelada";
             await _citaService.GuardarAsync(cita, CurrentUsuarioId, CurrentUserIp);
 
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Barbero,Administrador,SuperAdmin")]
+        public async Task<IActionResult> Completar(int id)
+        {
+            var cita = await _citaService.ObtenerPorIdAsync(id);
+            if (cita == null) return NotFound();
+
+            if (User.IsInRole("Barbero"))
+            {
+                var esBarberoAsignado = await _context.Barberos
+                    .AnyAsync(b => b.Id == cita.BarberoId && b.UsuarioId == CurrentUsuarioId && b.TenantId == cita.TenantId);
+                if (!esBarberoAsignado) return Forbid();
+            }
+            else if (!User.IsInRole("SuperAdmin") &&
+                     (!int.TryParse(User.FindFirst("TenantId")?.Value, out var tenantId) || tenantId != cita.TenantId))
+            {
+                return Forbid();
+            }
+
+            if (!await _citaService.CompletarAsync(id, cita.TenantId, CurrentUsuarioId, CurrentUserIp)) return NotFound();
             return RedirectToAction(nameof(Index));
         }
 
@@ -388,12 +422,7 @@ namespace SaaSBarberia.Controllers
             var cita = await _citaService.ObtenerPorIdAsync(id.Value);
             if (cita == null) return NotFound();
 
-            ViewBag.TenantId = new SelectList(await _citaService.ObtenerTenantsAsync(), "Id", "NombreNegocio", cita.TenantId);
-            ViewBag.ClienteId = new SelectList(await _citaService.ObtenerClientesAsync(), "Id", "Nombre", cita.ClienteId);
-
-            var barberos = await _citaService.ObtenerBarberosAsync();
-            ViewBag.BarberoId = new SelectList(barberos, "Id", "Usuario.Nombre", cita.BarberoId);
-            ViewBag.ServicioId = new SelectList(await _citaService.ObtenerServiciosAsync(), "Id", "Nombre", cita.ServicioId);
+            await CargarCombosEdicionAsync(cita);
 
             return View(cita);
         }
@@ -413,12 +442,18 @@ namespace SaaSBarberia.Controllers
             {
                 try
                 {
-                    await _citaService.GuardarAsync(cita, CurrentUsuarioId, CurrentUserIp);
+                    await _citaService.GuardarValidandoDisponibilidadAsync(cita, CurrentUsuarioId, CurrentUserIp);
                 }
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!_context.Citas.Any(e => e.Id == cita.Id)) return NotFound();
                     else throw;
+                }
+                catch (CitaNoDisponibleException ex)
+                {
+                    ModelState.AddModelError("", ex.Message);
+                    await CargarCombosEdicionAsync(cita);
+                    return View(cita);
                 }
                 return RedirectToAction(nameof(Index));
             }
@@ -463,6 +498,14 @@ namespace SaaSBarberia.Controllers
                 }
                 await CargarCombosPorRolYTenantAsync(isSuperAdmin: false, tenantId: cita.TenantId);
             }
+        }
+
+        private async Task CargarCombosEdicionAsync(Cita cita)
+        {
+            ViewBag.TenantId = new SelectList(await _citaService.ObtenerTenantsAsync(), "Id", "NombreNegocio", cita.TenantId);
+            ViewBag.ClienteId = new SelectList(await _citaService.ObtenerClientesAsync(), "Id", "Nombre", cita.ClienteId);
+            ViewBag.BarberoId = new SelectList(await _citaService.ObtenerBarberosAsync(), "Id", "Usuario.Nombre", cita.BarberoId);
+            ViewBag.ServicioId = new SelectList(await _citaService.ObtenerServiciosAsync(), "Id", "Nombre", cita.ServicioId);
         }
 
         private async Task CargarCombosPorRolYTenantAsync(bool isSuperAdmin, int tenantId = 0)

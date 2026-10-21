@@ -4,14 +4,14 @@
     ViewData["Title"] = "Catálogo de Productos";
 }
 
-<div class="container my-4">
+<div class="container my-4" data-listing>
     <!-- Encabezado Estilizado -->
     <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
         <div>
             <h1 class="fw-bold text-dark"><i class="fas fa-boxes me-2"></i>Catálogo de Productos</h1>
             <p class="text-muted mb-0">Gestiona el inventario y los productos disponibles en tu barbería</p>
         </div>
-        @if (User.IsInRole("AdminBarberia") || User.IsInRole("SuperAdmin"))
+        @if (User.IsInRole("Administrador") || User.IsInRole("SuperAdmin"))
         {
             <a asp-action="Create" class="btn btn-dark btn-lg shadow-sm">
                 <i class="fas fa-plus-circle me-2"></i>Crear Nuevo Producto
@@ -20,7 +20,7 @@
     </div>
 
     <!-- Grid del Catálogo en Tarjetas (Cards) -->
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" data-listing-grid>
         @if (!Model.Any())
         {
             <div class="col-12 text-center my-5">
@@ -81,7 +81,7 @@
                             <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary px-3" title="Detalles">
                                 <i class="fas fa-eye"></i> Ver
                             </a>
-                            @if (User.IsInRole("AdminBarberia") || User.IsInRole("SuperAdmin"))
+                            @if (User.IsInRole("Administrador") || User.IsInRole("SuperAdmin"))
                             {
                                 <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary px-3" title="Editar">
                                     <i class="fas fa-edit"></i>

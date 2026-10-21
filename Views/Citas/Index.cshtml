@@ -1,7 +1,9 @@
+@using System.Security.Claims
 @model IEnumerable<SaaSBarberia.Models.Cita>
 
 @{
     ViewData["Title"] = "Agenda de Citas";
+    var usuarioActualId = int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var usuarioId) ? usuarioId : 0;
 }
 
 <div class="container mt-4">
@@ -10,7 +12,7 @@
         <a asp-action="Create" class="btn btn-primary px-4 fw-semibold">⚡ Agendar Nueva Cita</a>
     </div>
 
-    <div class="card shadow-sm border-0 p-3">
+    <div class="card shadow-sm border-0 p-3" data-listing>
         <div class="table-responsive">
             <table class="table table-hover align-middle">
                 <thead class="table-light">
@@ -25,7 +27,7 @@
                         {
                             <th class="text-center">Gestión</th>
                         }
-                        @if (User.IsInRole("SuperAdmin") || User.IsInRole("AdminBarberia") || User.IsInRole("Barbero"))
+                        @if (User.IsInRole("SuperAdmin") || User.IsInRole("Administrador") || User.IsInRole("Barbero"))
                         {
                             <th class="text-center">Acciones</th>
                         }
@@ -91,10 +93,16 @@
                                 </td>
                             }
 
-                            @if (User.IsInRole("SuperAdmin") || User.IsInRole("AdminBarberia") || User.IsInRole("Barbero"))
+                            @if (User.IsInRole("SuperAdmin") || User.IsInRole("Administrador") || User.IsInRole("Barbero"))
                             {
                                 <td class="text-center">
                                     <div class="btn-group btn-group-sm">
+                                        @if (User.IsInRole("Barbero") && item.Barbero?.UsuarioId == usuarioActualId && item.Estado == "Pendiente")
+                                        {
+                                            <form asp-action="Completar" asp-route-id="@item.Id" method="post" class="d-inline">
+                                                <button type="submit" class="btn btn-success" title="Completar cita">Completar</button>
+                                            </form>
+                                        }
                                         <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-light border text-primary">✏️</a>
                                         <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-light border text-danger">🗑️</a>
                                     </div>

@@ -19,9 +19,20 @@ namespace SaaSBarberia.Services
             _auditoriaService = auditoriaService;
         }
 
+        private IQueryable<Factura> FacturasDelTenantActual()
+        {
+            var facturas = _context.Facturas.AsQueryable();
+            if (_context.EsSuperAdmin) return facturas;
+
+            var tenantId = _context.TenantIdActual;
+            return tenantId.HasValue && tenantId.Value > 0
+                ? facturas.Where(f => f.TenantId == tenantId.Value)
+                : facturas.Where(_ => false);
+        }
+
         public async Task<List<Factura>> ObtenerTodasConRelacionesAsync()
         {
-            return await _context.Facturas
+            return await FacturasDelTenantActual()
                 .Include(f => f.Cita)
                 .Include(f => f.Tenant)
                 .ToListAsync();
@@ -29,17 +40,40 @@ namespace SaaSBarberia.Services
 
         public async Task<Factura?> ObtenerPorIdAsync(int id)
         {
-            return await _context.Facturas
+            return await FacturasDelTenantActual()
                 .Include(f => f.Cita)
                 .Include(f => f.Tenant)
                 .FirstOrDefaultAsync(f => f.Id == id);
         }
 
+        private async Task<bool> CitaPerteneceAlTenantAsync(int citaId, int tenantId)
+        {
+            return citaId > 0 && tenantId > 0 &&
+                await _context.Citas.AnyAsync(c => c.Id == citaId && c.TenantId == tenantId);
+        }
+
+        private async Task<bool> TenantExisteAsync(int tenantId)
+        {
+            return tenantId > 0 && await _context.Tenants.AnyAsync(t => t.Id == tenantId);
+        }
+
         // 💾 GUARDAR / ACTUALIZAR FACTURA CON AUDITORÍA DE DINERO
-        public async Task GuardarAsync(Factura factura, int usuarioId, string ip)
+        public async Task<bool> GuardarAsync(Factura factura, int usuarioId, string ip)
         {
             if (factura.Id == 0)
             {
+                if (!_context.EsSuperAdmin)
+                {
+                    var tenantIdActual = _context.TenantIdActual;
+                    if (!tenantIdActual.HasValue || tenantIdActual.Value <= 0) return false;
+                    factura.TenantId = tenantIdActual.Value;
+                }
+
+                if (!await TenantExisteAsync(factura.TenantId) || !await CitaPerteneceAlTenantAsync(factura.CitaId, factura.TenantId))
+                {
+                    return false;
+                }
+
                 _context.Add(factura);
                 await _context.SaveChangesAsync(); // Guardamos para generar Id de factura
 
@@ -53,61 +87,67 @@ namespace SaaSBarberia.Services
                     $"Se generó la factura ID {factura.Id} asociada a la Cita ID {factura.CitaId}. Total cobrado: ${factura.Total.ToString("N2")} usando método de pago: {factura.MetodoPago}.",
                     ip
                 );
+
+                return true;
             }
-            else
-            {
-                // Obtenemos la factura original sin traqueo para ver si alteraron valores monetarios
-                var original = await _context.Facturas
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(f => f.Id == factura.Id);
 
-                _context.Update(factura);
-                await _context.SaveChangesAsync();
+            // Se obtiene la entidad dentro del Tenant autorizado y se copian solo los campos editables.
+            // Nunca se adjunta ni se actualiza una entidad proveniente directamente del request.
+            var original = await FacturasDelTenantActual().FirstOrDefaultAsync(f => f.Id == factura.Id);
+            if (original == null || !await CitaPerteneceAlTenantAsync(factura.CitaId, original.TenantId)) return false;
 
-                if (original != null)
-                {
-                    string cambios = $"Se modificó la factura ID {factura.Id}. ";
-                    if (original.Total != factura.Total)
-                        cambios += $"Monto Alterado: ${original.Total.ToString("N2")} -> ${factura.Total.ToString("N2")}. ";
-                    if (original.MetodoPago != factura.MetodoPago)
-                        cambios += $"Método: '{original.MetodoPago}' -> '{factura.MetodoPago}'. ";
-                    if (original.FechaPago != factura.FechaPago)
-                        cambios += $"Fecha: {original.FechaPago:dd/MM/yyyy} -> {factura.FechaPago:dd/MM/yyyy}. ";
+            var totalAnterior = original.Total;
+            var metodoPagoAnterior = original.MetodoPago;
+            var fechaPagoAnterior = original.FechaPago;
 
-                    // 🔥 AUDITORÍA: Alerta de edición de dinero
-                    await _auditoriaService.RegistrarAsync(factura.TenantId, usuarioId, "Factura", factura.Id.ToString(), "Editar", cambios, ip);
-                }
-            }
+            original.CitaId = factura.CitaId;
+            original.Total = factura.Total;
+            original.MetodoPago = factura.MetodoPago;
+            original.FechaPago = factura.FechaPago;
+            await _context.SaveChangesAsync();
+
+            string cambios = $"Se modificó la factura ID {original.Id}. ";
+            if (totalAnterior != original.Total)
+                cambios += $"Monto Alterado: ${totalAnterior.ToString("N2")} -> ${original.Total.ToString("N2")}. ";
+            if (metodoPagoAnterior != original.MetodoPago)
+                cambios += $"Método: '{metodoPagoAnterior}' -> '{original.MetodoPago}'. ";
+            if (fechaPagoAnterior != original.FechaPago)
+                cambios += $"Fecha: {fechaPagoAnterior:dd/MM/yyyy} -> {original.FechaPago:dd/MM/yyyy}. ";
+
+            // 🔥 AUDITORÍA: Alerta de edición de dinero
+            await _auditoriaService.RegistrarAsync(original.TenantId, usuarioId, "Factura", original.Id.ToString(), "Editar", cambios, ip);
+            return true;
         }
 
         // 🗑️ ELIMINAR FACTURA CON RASTRO IMPECABLE
-        public async Task EliminarAsync(int id, int usuarioId, string ip)
+        public async Task<bool> EliminarAsync(int id, int usuarioId, string ip)
         {
-            var factura = await ObtenerPorIdAsync(id);
-            if (factura != null)
-            {
-                int tenantId = factura.TenantId;
-                string detallesEliminados = $"Factura ID {factura.Id} (Cita ID: {factura.CitaId}). Total que desapareció del sistema: ${factura.Total.ToString("N2")}, pagada con {factura.MetodoPago} el {factura.FechaPago:dd/MM/yyyy}.";
+            var factura = await FacturasDelTenantActual().FirstOrDefaultAsync(f => f.Id == id);
+            if (factura == null) return false;
 
-                _context.Facturas.Remove(factura);
-                await _context.SaveChangesAsync();
+            int tenantId = factura.TenantId;
+            string detallesEliminados = $"Factura ID {factura.Id} (Cita ID: {factura.CitaId}). Total que desapareció del sistema: ${factura.Total.ToString("N2")}, pagada con {factura.MetodoPago} el {factura.FechaPago:dd/MM/yyyy}.";
 
-                // 🔥 AUDITORÍA: El rastro imborrable de la plata borrada
-                await _auditoriaService.RegistrarAsync(
-                    tenantId,
-                    usuarioId,
-                    "Factura",
-                    id.ToString(),
-                    "Eliminar",
-                    $"¡ALERTA! Se ELIMINÓ por completo la {detallesEliminados}",
-                    ip
-                );
-            }
+            _context.Facturas.Remove(factura);
+            await _context.SaveChangesAsync();
+
+            // 🔥 AUDITORÍA: El rastro imborrable de la plata borrada
+            await _auditoriaService.RegistrarAsync(
+                tenantId,
+                usuarioId,
+                "Factura",
+                id.ToString(),
+                "Eliminar",
+                $"¡ALERTA! Se ELIMINÓ por completo la {detallesEliminados}",
+                ip
+            );
+
+            return true;
         }
 
         public bool Existe(int id)
         {
-            return _context.Facturas.Any(e => e.Id == id);
+            return FacturasDelTenantActual().Any(e => e.Id == id);
         }
 
         public async Task<List<Cita>> ObtenerCitasDisponiblesAsync()
@@ -117,7 +157,12 @@ namespace SaaSBarberia.Services
 
         public async Task<List<Tenant>> ObtenerTenantsAsync()
         {
-            return await _context.Tenants.ToListAsync();
+            if (_context.EsSuperAdmin) return await _context.Tenants.ToListAsync();
+
+            var tenantId = _context.TenantIdActual;
+            return tenantId.HasValue && tenantId.Value > 0
+                ? await _context.Tenants.Where(t => t.Id == tenantId.Value).ToListAsync()
+                : new List<Tenant>();
         }
     }
 }

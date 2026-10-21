@@ -10,7 +10,7 @@ namespace SaaSBarberia.Data;
 
 public partial class BarberSaaSDbContext : DbContext
 {
-    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IHttpContextAccessor? _httpContextAccessor;
 
     // Constructor por defecto obligatorio para migraciones o herramientas de EF
     public BarberSaaSDbContext()
@@ -18,7 +18,7 @@ public partial class BarberSaaSDbContext : DbContext
     }
 
     // 🌟 Inyectamos IHttpContextAccessor junto con las opciones normales del contexto
-    public BarberSaaSDbContext(DbContextOptions<BarberSaaSDbContext> options, IHttpContextAccessor httpContextAccessor = null)
+    public BarberSaaSDbContext(DbContextOptions<BarberSaaSDbContext> options, IHttpContextAccessor? httpContextAccessor = null)
         : base(options)
     {
         _httpContextAccessor = httpContextAccessor;
@@ -61,6 +61,10 @@ public partial class BarberSaaSDbContext : DbContext
     public virtual DbSet<DetalleCaja> DetallesCaja { get; set; }
     public DbSet<BarberoAusencia> BarberoAusencias { get; set; }
     public DbSet<Notificacion> Notificaciones { get; set; }
+    public DbSet<WhatsAppConfiguracion> WhatsAppConfiguraciones { get; set; }
+    public DbSet<WhatsAppPlantilla> WhatsAppPlantillas { get; set; }
+    public DbSet<WhatsAppMensajeHistorial> WhatsAppMensajesHistorial { get; set; }
+    public DbSet<TenantModulo> TenantModulos { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) { }
 
@@ -76,6 +80,9 @@ public partial class BarberSaaSDbContext : DbContext
         modelBuilder.Entity<MovimientoCaja>().HasQueryFilter(mc => EsSuperAdmin || mc.TenantId == TenantIdActual);
         modelBuilder.Entity<BarberoAusencia>().HasQueryFilter(a => EsSuperAdmin || a.TenantId == TenantIdActual);
         modelBuilder.Entity<Notificacion>().HasQueryFilter(n => EsSuperAdmin || n.TenantId == TenantIdActual);
+        modelBuilder.Entity<Producto>().HasQueryFilter(p => EsSuperAdmin || p.TenantId == TenantIdActual);
+        modelBuilder.Entity<Herramienta>().HasQueryFilter(h => EsSuperAdmin || h.TenantId == TenantIdActual);
+        modelBuilder.Entity<AlquilerHerramienta>().HasQueryFilter(a => EsSuperAdmin || a.TenantId == TenantIdActual);
 
         modelBuilder.Entity<HorarioLaboral>(entity =>
         {
@@ -205,9 +212,75 @@ public partial class BarberSaaSDbContext : DbContext
             entity.HasOne(e => e.UsuarioDestino).WithMany().HasForeignKey(e => e.UsuarioDestinoId).OnDelete(DeleteBehavior.Restrict).HasConstraintName("FK_Notificaciones_Usuarios");
         });
 
+        modelBuilder.Entity<WhatsAppConfiguracion>(entity =>
+        {
+            entity.ToTable("WhatsAppConfiguraciones");
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.TenantId).IsUnique().HasDatabaseName("UX_WhatsAppConfiguraciones_Tenant");
+            entity.Property(e => e.NumeroWhatsApp).HasMaxLength(30);
+            entity.Property(e => e.PhoneNumberId).HasMaxLength(100);
+            entity.Property(e => e.BusinessAccountId).HasMaxLength(100);
+            entity.Property(e => e.AccessTokenProtegido).HasMaxLength(4000);
+            entity.Property(e => e.EstadoConexion).HasMaxLength(20).HasDefaultValue("No conectado");
+            entity.Property(e => e.WebhookVerifyTokenProtegido).HasMaxLength(4000);
+            entity.Property(e => e.FechaConexion).HasColumnType("datetime2");
+            entity.HasOne(e => e.Tenant).WithMany().HasForeignKey(e => e.TenantId).OnDelete(DeleteBehavior.Cascade).HasConstraintName("FK_WhatsAppConfiguraciones_Tenants");
+            entity.HasQueryFilter(e => EsSuperAdmin || e.TenantId == TenantIdActual);
+        });
+
+        modelBuilder.Entity<WhatsAppPlantilla>(entity =>
+        {
+            entity.ToTable("WhatsAppPlantillas");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Tipo).HasMaxLength(50);
+            entity.Property(e => e.Contenido).HasMaxLength(4000);
+            entity.Property(e => e.FechaActualizacion).HasColumnType("datetime2");
+            entity.HasIndex(e => new { e.TenantId, e.Tipo }).IsUnique().HasDatabaseName("UX_WhatsAppPlantillas_Tenant_Tipo");
+            entity.HasOne(e => e.Tenant).WithMany().HasForeignKey(e => e.TenantId).OnDelete(DeleteBehavior.Cascade).HasConstraintName("FK_WhatsAppPlantillas_Tenants");
+            entity.HasQueryFilter(e => EsSuperAdmin || e.TenantId == TenantIdActual);
+        });
+
+        modelBuilder.Entity<WhatsAppMensajeHistorial>(entity =>
+        {
+            entity.ToTable("WhatsAppMensajesHistorial");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Telefono).HasMaxLength(30);
+            entity.Property(e => e.Tipo).HasMaxLength(50);
+            entity.Property(e => e.Mensaje).HasMaxLength(4000);
+            entity.Property(e => e.Estado).HasMaxLength(30);
+            entity.Property(e => e.Error).HasMaxLength(2000);
+            entity.Property(e => e.MetaMessageId).HasMaxLength(200);
+            entity.Property(e => e.RespuestaMeta).HasMaxLength(4000);
+            entity.Property(e => e.Fecha).HasColumnType("datetime2");
+            entity.HasIndex(e => new { e.TenantId, e.CitaId, e.Tipo }).IsUnique().HasFilter("[CitaId] IS NOT NULL").HasDatabaseName("UX_WhatsAppMensajesHistorial_Cita_Tipo");
+            entity.HasIndex(e => new { e.TenantId, e.Fecha }).HasDatabaseName("IX_WhatsAppMensajesHistorial_Tenant_Fecha");
+            entity.HasOne(e => e.Tenant).WithMany().HasForeignKey(e => e.TenantId).OnDelete(DeleteBehavior.Cascade).HasConstraintName("FK_WhatsAppMensajesHistorial_Tenants");
+            entity.HasOne(e => e.Cita).WithMany().HasForeignKey(e => e.CitaId).OnDelete(DeleteBehavior.SetNull).HasConstraintName("FK_WhatsAppMensajesHistorial_Citas");
+            entity.HasOne(e => e.Cliente).WithMany().HasForeignKey(e => e.ClienteId).OnDelete(DeleteBehavior.SetNull).HasConstraintName("FK_WhatsAppMensajesHistorial_Usuarios");
+            entity.HasOne(e => e.Barbero).WithMany().HasForeignKey(e => e.BarberoId).OnDelete(DeleteBehavior.SetNull).HasConstraintName("FK_WhatsAppMensajesHistorial_Barberos");
+            entity.HasQueryFilter(e => EsSuperAdmin || e.TenantId == TenantIdActual);
+        });
+
+        modelBuilder.Entity<TenantModulo>(entity =>
+        {
+            entity.ToTable("TenantModulos");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Codigo).HasMaxLength(50);
+            entity.Property(e => e.FechaActualizacion).HasColumnType("datetime2");
+            entity.HasIndex(e => new { e.TenantId, e.Codigo }).IsUnique().HasDatabaseName("UX_TenantModulos_Tenant_Codigo");
+            entity.HasOne(e => e.Tenant).WithMany(t => t.Modulos).HasForeignKey(e => e.TenantId).OnDelete(DeleteBehavior.Cascade).HasConstraintName("FK_TenantModulos_Tenants");
+            entity.HasQueryFilter(e => EsSuperAdmin || e.TenantId == TenantIdActual);
+        });
+
         modelBuilder.Entity<Cita>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__Citas__3214EC07E78AC117");
+            // Este índice permite que la validación serializable de agenda tome bloqueos
+            // de rango por barbero, sin mezclar reservas entre tenants.
+            entity.HasIndex(e => new { e.TenantId, e.BarberoId, e.FechaHora })
+                .HasDatabaseName("IX_Citas_Agenda_Tenant_Barbero_Fecha");
+            entity.HasIndex(e => new { e.TenantId, e.ClienteId, e.FechaHora })
+                .HasDatabaseName("IX_Citas_Agenda_Tenant_Cliente_Fecha");
             entity.Property(e => e.Estado).HasMaxLength(50).IsUnicode(false).HasDefaultValue("Pendiente");
             entity.Property(e => e.FechaHora).HasColumnType("datetime");
             entity.Property(e => e.Notas).HasMaxLength(255).IsUnicode(false);
@@ -278,6 +351,7 @@ public partial class BarberSaaSDbContext : DbContext
             entity.Property(e => e.NombreNegocio).HasMaxLength(150).IsUnicode(false);
             entity.Property(e => e.PlanSuscripcion).HasMaxLength(50).IsUnicode(false).HasDefaultValue("Bronce");
             entity.Property(e => e.Subdominio).HasMaxLength(50).IsUnicode(false);
+            entity.Property(e => e.TieneModuloWhatsApp).HasDefaultValue(false);
         });
 
         modelBuilder.Entity<Usuario>(entity =>

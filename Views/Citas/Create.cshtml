@@ -13,7 +13,7 @@
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
             @* 🌟 SI ES CLIENTE O ADMIN DE BARBERÍA, EL TENANT VA OCULTO *@
-            @if (User.IsInRole("Cliente") || User.IsInRole("AdminBarberia"))
+            @if (User.IsInRole("Cliente") || User.IsInRole("Administrador"))
             {
                 <input type="hidden" asp-for="TenantId" />
 

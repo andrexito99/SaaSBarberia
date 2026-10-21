@@ -26,7 +26,7 @@ namespace SaaSBarberia.Controllers
         {
             if (User.Identity != null && User.Identity.IsAuthenticated)
             {
-                if (User.IsInRole("AdminBarberia"))
+                if (User.IsInRole("Administrador"))
                 {
                     var usuarioIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                     if (string.IsNullOrEmpty(usuarioIdStr)) return RedirectToAction("Login", "Account");

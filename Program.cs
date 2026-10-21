@@ -34,7 +34,13 @@ builder.Services.AddScoped<IAuditoriaService, AuditoriaService>();
 builder.Services.AddScoped<INotificacionService, NotificacionService>();
 builder.Services.AddScoped<IEventosSistemaService, EventosSistemaService>();
 builder.Services.AddScoped<BarberoAusenciaService>();
+builder.Services.AddScoped<WhatsAppConfiguracionService>();
+builder.Services.AddScoped<WhatsAppPlantillaService>();
+builder.Services.AddScoped<TenantModuloService>();
+builder.Services.AddHttpClient<IWhatsAppService, WhatsAppService>();
+builder.Services.AddHostedService<WhatsAppRecordatoriosWorker>();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ITenantProvider, TenantProvider>();
 
 // Para evitar que los filtros automáticos bloqueen los arrays del formulario
 builder.Services.AddControllersWithViews()

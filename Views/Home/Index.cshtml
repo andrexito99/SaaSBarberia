@@ -1,4 +1,4 @@
-﻿@model SaaSBarberia.Models.AdminDashboardViewModel
+@model SaaSBarberia.Models.AdminDashboardViewModel
 
 @{
     ViewData["Title"] = "Panel de Control";
@@ -13,9 +13,9 @@
     </div>
 
     @* 📊 ======================================================== *@
-    @* 🌟 SECCIÓN OPERATIVA DEL DASHBOARD PARA ADMINBARBERIA        *@
+    @* 🌟 SECCIÓN OPERATIVA DEL DASHBOARD PARA ADMINISTRADOR DE BARBERIA        *@
     @* ========================================================== *@
-    @if (User.IsInRole("AdminBarberia") && Model != null)
+    @if (User.IsInRole("Administrador") && Model != null)
     {
         <div class="mb-5">
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -213,9 +213,9 @@
             </div>
         </div>
     }
-    else if (!User.IsInRole("AdminBarberia"))
+    else if (!User.IsInRole("Administrador"))
     {
-        @* 👨‍💼 VISTA GENERAL DE ACCESOS RÁPIDOS (SUPERADMINS U OTROS ROLES QUE NO SEAN ADMINBARBERIA) *@
+        @* 👨‍💼 VISTA GENERAL DE ACCESOS RÁPIDOS (SUPERADMINS U OTROS ROLES QUE NO SEAN ADMINISTRADOR DE BARBERIA) *@
         <h3 class="text-secondary fw-bold mb-3">🛠️ Accesos Rápidos del Sistema</h3>
         <div class="row row-cols-1 row-cols-md-3 g-4">
             <div class="col">
@@ -237,7 +237,7 @@
                         <p class="card-text text-muted small">Gestiona el equipo de colaboradores, sus especialidades y los porcentajes de comisión.</p>
                     </div>
                     <div class="card-footer bg-white border-0 pb-3">
-                        <a asp-controller="Barberoes" asp-action="Index" class="btn btn-outline-warning btn-sm w-100 fw-semibold text-dark">Ver Equipo de Barberos →</a>
+                        <a asp-controller="Barberos" asp-action="Index" class="btn btn-outline-warning btn-sm w-100 fw-semibold text-dark">Ver Equipo de Barberos →</a>
                     </div>
                 </div>
             </div>
@@ -269,7 +269,7 @@
 </style>
 
 @* 🛠️ SCRIPTS DE CHART.JS *@
-@if (User.IsInRole("AdminBarberia") && Model != null)
+@if (User.IsInRole("Administrador") && Model != null)
 {
     @section Scripts {
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

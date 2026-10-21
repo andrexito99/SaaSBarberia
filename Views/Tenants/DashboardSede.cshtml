@@ -1,4 +1,4 @@
-﻿@model SaaSBarberia.Models.Tenant
+@model SaaSBarberia.Models.Tenant
 
 @{
     ViewData["Title"] = "Dashboard de Sede";
@@ -34,7 +34,7 @@
                     <input type="hidden" name="id" value="@Model.Id" />
                     <input type="hidden" name="estadoCierre" value="true" />
                     <button type="submit" class="btn btn-danger btn-lg px-5 shadow rounded-pill fw-bold"
-                            onclick="return confirm('¿Seguro, care verga? Esto tumbará los horarios de hoy en la app.');">
+                            onclick="return confirm('¿Está seguro de activar el cierre de emergencia? Esto bloqueará los horarios de hoy en la app.');">
                         ⚠️ BOTÓN DE PÁNICO: CERRAR HOY
                     </button>
                 </form>
@@ -72,14 +72,17 @@
                             <tbody>
                                 @foreach (var cita in citasAfectadas)
                                 {
-                                    string mensajeText = $"Hola {cita.Cliente.Nombre}, te escribimos de {Model.NombreNegocio}. Qué pena contigo hermano, pero tuvimos un imprevisto de última hora y tuvimos que cerrar la sede hoy. Tu cita de las {cita.FechaHora.ToString("hh:mm tt")} con {cita.Barbero.Usuario.Nombre} queda cancelada. Escríbenos por acá para agendarte otro espacio. ¡Disculpas!";
-                                    string urlWhatsapp = $"https://api.whatsapp.com/send?phone=57{cita.Cliente.Telefono}&text={Uri.EscapeDataString(mensajeText)}";
+                                    string clienteNombre = cita.Cliente?.Nombre ?? "Cliente";
+                                    string clienteTel = cita.Cliente?.Telefono ?? "";
+                                    string barberoNombre = cita.Barbero?.Usuario?.Nombre ?? "Barbero";
+                                    string mensajeText = $"Hola {clienteNombre}, te escribimos de {Model.NombreNegocio}. Tuvimos un imprevisto de última hora y tuvimos que cerrar la sede hoy. Tu cita de las {cita.FechaHora.ToString("hh:mm tt")} con {barberoNombre} queda cancelada. Escríbenos por acá para agendarte otro espacio. ¡Disculpas!";
+                                    string urlWhatsapp = $"https://api.whatsapp.com/send?phone=57{clienteTel}&text={Uri.EscapeDataString(mensajeText)}";
 
                                     <tr class="fila-cliente" data-url="@urlWhatsapp">
-                                        <td class="fw-bold text-dark nombre-cliente">@cita.Cliente.Nombre</td>
-                                        <td>@cita.Cliente.Telefono</td>
+                                        <td class="fw-bold text-dark nombre-cliente">@clienteNombre</td>
+                                        <td>@clienteTel</td>
                                         <td class="text-danger fw-bold">@cita.FechaHora.ToString("hh:mm tt")</td>
-                                        <td>@cita.Barbero.Usuario.Nombre</td>
+                                        <td>@barberoNombre</td>
                                         <td>
                                             <a href="@urlWhatsapp" target="_blank" class="btn btn-sm btn-success px-3 rounded-pill btn-alerta-individual">
                                                 💬 Enviar Alerta

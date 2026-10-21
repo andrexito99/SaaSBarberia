@@ -68,12 +68,29 @@
                 </select>
             </div>
 
+            <h5 class="fw-bold text-secondary mb-3">Módulos</h5>
+            <div class="form-check form-switch mb-3 p-3 card bg-light border-0">
+                <div class="ms-4">
+                    <input class="form-check-input" type="checkbox" checked disabled>
+                    <label class="form-check-label fw-bold text-dark">Agenda (incluida)</label>
+                    <small class="text-muted d-block">La agenda es parte del funcionamiento base de la barbería.</small>
+                </div>
+            </div>
+
             <div class="form-check form-switch mb-3 p-3 card bg-light border-0">
                 <div class="ms-4">
                     <input class="form-check-input" type="checkbox" asp-for="TieneModuloHerramientas" id="TieneModuloHerramientas">
                     <label class="form-check-label fw-bold text-dark" for="TieneModuloHerramientas">
                         🔌 Activar Módulo de Alquiler de Herramientas
                     </label>
+                </div>
+            </div>
+
+            <div class="form-check form-switch mb-3 p-3 card bg-light border-0">
+                <div class="ms-4">
+                    <input class="form-check-input" type="checkbox" asp-for="TieneModuloWhatsApp" id="TieneModuloWhatsApp">
+                    <small class="text-muted d-block">Después de crear la barbería, el administrador de la sede deberá conectar su número desde Configuración WhatsApp.</small>
+                    <label class="form-check-label fw-bold text-dark" for="TieneModuloWhatsApp">💬 Activar módulo de WhatsApp Business</label>
                 </div>
             </div>
 

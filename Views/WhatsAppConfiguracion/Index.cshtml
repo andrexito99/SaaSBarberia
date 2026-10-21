@@ -1,0 +1,23 @@
+@model SaaSBarberia.Models.WhatsAppConfiguracionViewModel
+@{ ViewData["Title"] = "Configuración WhatsApp"; }
+<div class="container mt-4" style="max-width:800px">
+    <div class="card shadow-sm border-0 p-4">
+        <div class="d-flex justify-content-between align-items-center mb-2"><h3 class="mb-0">💬 Configuración WhatsApp Business</h3><span class="badge @(Model.ConexionActiva ? "bg-success" : "bg-secondary")">@(Model.ConexionActiva ? "Conectado" : "No conectado")</span></div>
+        <p class="text-muted">Estado: <strong>@Model.EstadoConexion</strong>. Fecha de conexión: @(Model.FechaConexion?.ToString("dd/MM/yyyy HH:mm") ?? "Sin conexión"). La conexión final se realizará mediante Meta Embedded Signup de la cuenta Business de la plataforma; el formulario manual se conserva solo para Sandbox.</p>
+        @if (TempData["Mensaje"] != null) { <div class="alert alert-success">@TempData["Mensaje"]</div> }
+        @if (TempData["Error"] != null) { <div class="alert alert-danger">@TempData["Error"]</div> }
+        <form asp-action="Index">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="row"><div class="col-md-6 mb-3"><label asp-for="NumeroWhatsApp" class="form-label">Número WhatsApp</label><input asp-for="NumeroWhatsApp" class="form-control" placeholder="573001234567" /></div><div class="col-md-6 mb-3"><label asp-for="PhoneNumberId" class="form-label">Phone Number ID</label><input asp-for="PhoneNumberId" class="form-control" /></div></div>
+            <div class="mb-3"><label asp-for="BusinessAccountId" class="form-label">Business Account ID</label><input asp-for="BusinessAccountId" class="form-control" /></div>
+            <div class="mb-3"><label asp-for="NuevoAccessToken" class="form-label">Nuevo access token</label><input asp-for="NuevoAccessToken" class="form-control" autocomplete="new-password" placeholder="Déjalo vacío para conservar el actual" /></div>
+            <input asp-for="ConexionActiva" type="hidden" />
+            <hr/><h5>Automatizaciones</h5><div class="row"><div class="col-md-6"><div class="form-check"><input asp-for="EnviarConfirmaciones" class="form-check-input"/><label asp-for="EnviarConfirmaciones" class="form-check-label">Confirmaciones</label></div><div class="form-check"><input asp-for="EnviarRecordatorio24Horas" class="form-check-input"/><label asp-for="EnviarRecordatorio24Horas" class="form-check-label">Recordatorio 24 horas</label></div><div class="form-check"><input asp-for="EnviarRecordatorio2Horas" class="form-check-input"/><label asp-for="EnviarRecordatorio2Horas" class="form-check-label">Recordatorio 2 horas</label></div></div><div class="col-md-6"><div class="form-check"><input asp-for="EnviarCancelaciones" class="form-check-input"/><label asp-for="EnviarCancelaciones" class="form-check-label">Cancelaciones</label></div><div class="form-check"><input asp-for="EnviarReprogramaciones" class="form-check-input"/><label asp-for="EnviarReprogramaciones" class="form-check-label">Reprogramaciones</label></div><div class="form-check"><input asp-for="PermitirMensajesPersonalizados" class="form-check-input"/><label asp-for="PermitirMensajesPersonalizados" class="form-check-label">Mensajes personalizados</label></div></div></div>
+            <div class="mt-4 d-flex gap-2"><button class="btn btn-primary">Guardar</button><button class="btn btn-success" formaction="@Url.Action("Conectar")">@(Model.ConexionActiva ? "Reconectar Sandbox" : "Conectar Sandbox")</button></div>
+        </form>
+        <div class="alert alert-info mt-3 mb-0"><strong>Conectar con Meta</strong><br/>Configura <code>MetaWhatsApp:AppId</code>, <code>AppSecret</code> y <code>EmbeddedSignupConfigId</code> en secretos de producción. El número se asociará a la cuenta Meta Business propietaria de la plataforma, no a una cuenta del tenant.</div>
+        @if (Model.ConexionActiva) { <form asp-action="Desconectar" method="post" class="d-inline"><button class="btn btn-outline-danger mt-2">Desconectar</button></form> }
+        <hr/><form asp-action="EnviarPrueba" method="post" class="row g-2"><div class="col-md-8"><input name="telefonoPrueba" class="form-control" placeholder="Número para mensaje de prueba" /></div><div class="col-md-4"><button class="btn btn-outline-success w-100">Enviar mensaje de prueba</button></div></form>
+    </div>
+</div>
+@section Scripts { @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); } }

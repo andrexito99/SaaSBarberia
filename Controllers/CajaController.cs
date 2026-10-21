@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SaaSBarberia.Controllers;
 
-[Authorize(Roles = "AdminBarberia")] // 🔒 Solo administradores tocan la caja
+[Authorize(Roles = "Administrador")] // 🔒 Solo administradores tocan la caja
 public class CajaController : Controller
 {
     private readonly CajaService _cajaService;

@@ -11,8 +11,9 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting; // 🔥 IMPORTANTE
+using Microsoft.AspNetCore.Authorization;
 
-[Authorize]
+[Authorize(Roles = "Administrador,SuperAdmin")]
 public class BarberosController : Controller
 {
     private readonly BarberoService _barberoService;
@@ -34,7 +35,7 @@ public class BarberosController : Controller
         if (CurrentUsuarioId == 0) return RedirectToAction("Login", "Account");
         var barberos = await _barberoService.ObtenerTodosConRelacionesAsync();
 
-        if (User.IsInRole("AdminBarberia") || User.IsInRole("Barbero") || User.IsInRole("Cliente"))
+        if (User.IsInRole("Administador") || User.IsInRole("Barbero") || User.IsInRole("Cliente"))
         {
             var cuenta = await _citaService.ObtenerClientePorIdAsync(CurrentUsuarioId);
             if (cuenta != null && cuenta.TenantId != null)
@@ -59,7 +60,7 @@ public class BarberosController : Controller
         var usuarios = await _barberoService.ObtenerUsuariosDisponiblesAsync();
         var tenants = await _barberoService.ObtenerTenantsAsync();
 
-        if (User.IsInRole("AdminBarberia"))
+        if (User.IsInRole("Administrador"))
         {
             var adminDb = await _citaService.ObtenerClientePorIdAsync(CurrentUsuarioId);
             if (adminDb != null && adminDb.TenantId != null)

@@ -6,25 +6,22 @@ using Microsoft.EntityFrameworkCore;
 using SaaSBarberia.Models;
 using SaaSBarberia.Services;
 using System;
-using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting; // 🔥 IMPORTANTE
-using Microsoft.AspNetCore.Authorization;
 
 [Authorize(Roles = "Administrador,SuperAdmin")]
 public class BarberosController : Controller
 {
     private readonly BarberoService _barberoService;
     private readonly CitaService _citaService;
-    private readonly IWebHostEnvironment _webHostEnvironment; // 🔥 Manejo de archivos en disco
+    private readonly SupabaseStorageService _storageService; // 🚀 Reemplazado por Supabase Storage
 
-    public BarberosController(BarberoService barberoService, CitaService citaService, IWebHostEnvironment webHostEnvironment)
+    public BarberosController(BarberoService barberoService, CitaService citaService, SupabaseStorageService storageService)
     {
         _barberoService = barberoService;
         _citaService = citaService;
-        _webHostEnvironment = webHostEnvironment;
+        _storageService = storageService;
     }
 
     private int CurrentUsuarioId => int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out int userId) ? userId : 0;
@@ -35,7 +32,7 @@ public class BarberosController : Controller
         if (CurrentUsuarioId == 0) return RedirectToAction("Login", "Account");
         var barberos = await _barberoService.ObtenerTodosConRelacionesAsync();
 
-        if (User.IsInRole("Administador") || User.IsInRole("Barbero") || User.IsInRole("Cliente"))
+        if (User.IsInRole("Administrador") || User.IsInRole("Barbero") || User.IsInRole("Cliente"))
         {
             var cuenta = await _citaService.ObtenerClientePorIdAsync(CurrentUsuarioId);
             if (cuenta != null && cuenta.TenantId != null)
@@ -77,9 +74,9 @@ public class BarberosController : Controller
         }
         return View(new Barbero());
     }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
-    // 🔥 CORREGIDO: Recibe 'fotoArchivo' mapeado con la vista y bindea 'FotoRuta' (string)
     public async Task<IActionResult> Create([Bind("Id,TenantId,UsuarioId,Especialidad,ComisionPorcentaje,RutaFoto")] Barbero barbero, IFormFile? fotoArchivo)
     {
         ModelState.Remove(nameof(barbero.Tenant));
@@ -87,20 +84,14 @@ public class BarberosController : Controller
 
         if (ModelState.IsValid)
         {
-            // 💾 GUARDADO EN DISCO
+            // ☁️ GUARDADO EN SUPABASE STORAGE
             if (fotoArchivo != null && fotoArchivo.Length > 0)
             {
-                string carpetaSubidas = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "barberos");
-                if (!Directory.Exists(carpetaSubidas)) Directory.CreateDirectory(carpetaSubidas);
-
-                string nombreUnico = Guid.NewGuid().ToString() + Path.GetExtension(fotoArchivo.FileName);
-                string rutaCompleta = Path.Combine(carpetaSubidas, nombreUnico);
-
-                using (var stream = new FileStream(rutaCompleta, FileMode.Create))
+                string? urlImagen = await _storageService.SubirImagenAsync(fotoArchivo, "barberos");
+                if (!string.IsNullOrEmpty(urlImagen))
                 {
-                    await fotoArchivo.CopyToAsync(stream);
+                    barbero.RutaFoto = urlImagen;
                 }
-                barbero.RutaFoto = "/uploads/barberos/" + nombreUnico;
             }
 
             await _barberoService.GuardarAsync(barbero, CurrentUsuarioId, CurrentUserIp);
@@ -109,7 +100,6 @@ public class BarberosController : Controller
 
         var usuarios = await _barberoService.ObtenerUsuariosDisponiblesAsync();
         var tenants = await _barberoService.ObtenerTenantsAsync();
-        // (Mantenemos recarga de combos por error de validación...)
         return View(barbero);
     }
 
@@ -121,14 +111,11 @@ public class BarberosController : Controller
 
         var usuarios = await _barberoService.ObtenerUsuariosDisponiblesAsync();
         var tenants = await _barberoService.ObtenerTenantsAsync();
-        // Combos...
         return View(barbero);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    // 🔥 CORREGIDO 1: Cambiado 'FotoRuta' por 'RutaFoto' en el Bind para que reciba el hidden correctamente
-    // 🔥 CORREGIDO 2: Parámetro cambiado de 'fotoArchivo' a 'fotoInput' para que haga match perfecto con el name de tu vista
     public async Task<IActionResult> Edit(int id, [Bind("Id,TenantId,UsuarioId,Especialidad,ComisionPorcentaje,RutaFoto")] Barbero barbero, IFormFile? fotoInput)
     {
         if (id != barbero.Id) return NotFound();
@@ -140,35 +127,18 @@ public class BarberosController : Controller
         {
             try
             {
-                // 📸 1. Si el usuario de verdad subió un archivo nuevo por el formulario
+                // 📸 1. Si subió una foto nueva, la mandamos a Supabase Storage
                 if (fotoInput != null && fotoInput.Length > 0)
                 {
-                    // 🗑️ Borrar foto vieja si existe en el disco duro para no acumular basura
-                    var barberoExistente = await _barberoService.ObtenerPorIdAsync(id);
-                    if (barberoExistente != null && !string.IsNullOrEmpty(barberoExistente.RutaFoto))
+                    string? urlImagen = await _storageService.SubirImagenAsync(fotoInput, "barberos");
+                    if (!string.IsNullOrEmpty(urlImagen))
                     {
-                        string rutaVieja = Path.Combine(_webHostEnvironment.WebRootPath, barberoExistente.RutaFoto.TrimStart('/'));
-                        if (System.IO.File.Exists(rutaVieja)) System.IO.File.Delete(rutaVieja);
+                        barbero.RutaFoto = urlImagen;
                     }
-
-                    // 💾 Guardar foto nueva en la carpeta uploads
-                    string carpetaSubidas = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "barberos");
-                    if (!Directory.Exists(carpetaSubidas)) Directory.CreateDirectory(carpetaSubidas);
-
-                    string nombreUnico = Guid.NewGuid().ToString() + Path.GetExtension(fotoInput.FileName);
-                    string rutaCompleta = Path.Combine(carpetaSubidas, nombreUnico);
-
-                    using (var stream = new FileStream(rutaCompleta, FileMode.Create))
-                    {
-                        await fotoInput.CopyToAsync(stream);
-                    }
-
-                    // Clavamos la nueva ruta generada
-                    barbero.RutaFoto = "/uploads/barberos/" + nombreUnico;
                 }
                 else
                 {
-                    // 🔄 2. Si no subió foto nueva, mantenemos la ruta que ya traía el input hidden de la vista
+                    // 🔄 2. Si no subió foto nueva, mantenemos la ruta que ya traía el input hidden
                     var barberoExistente = await _barberoService.ObtenerPorIdAsync(id);
                     if (barberoExistente != null) barbero.RutaFoto = barberoExistente.RutaFoto;
                 }
@@ -198,14 +168,7 @@ public class BarberosController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        // 🗑️ Limpieza física de la foto antes de borrar de la BD
-        var barbero = await _barberoService.ObtenerPorIdAsync(id);
-        if (barbero != null && !string.IsNullOrEmpty(barbero.RutaFoto))
-        {
-            string rutaArchivo = Path.Combine(_webHostEnvironment.WebRootPath, barbero.RutaFoto.TrimStart('/'));
-            if (System.IO.File.Exists(rutaArchivo)) System.IO.File.Delete(rutaArchivo);
-        }
-
+        // En Supabase Storage eliminamos el registro y la referencia de la BD; el archivo queda en el bucket o se gestiona online.
         await _barberoService.EliminarAsync(id, CurrentUsuarioId, CurrentUserIp);
         return RedirectToAction(nameof(Index));
     }

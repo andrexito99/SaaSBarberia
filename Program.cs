@@ -4,6 +4,7 @@ using SaaSBarberia.Data;
 using SaaSBarberia.Services;
 using System.Globalization;
 using Microsoft.AspNetCore.Localization;
+using Supabase; // 👈 NECESARIO PARA SUPABASE
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +13,16 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 builder.Services.AddDbContext<BarberSaaSDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("con")));
+
+// 🔥 CONFIGURACIÓN DE SUPABASE CLIENT Y STORAGE SERVICE
+var supabaseUrl = builder.Configuration["Supabase:https://yzddksrfdugpwrenbhsa.supabase.co/rest/v1/"];
+var supabaseKey = builder.Configuration["Supabase:sb_publishable_N6yr-xF1ZwH6mzDJDmRzUQ_6DUiA3wq"];
+var supabaseOptions = new Supabase.SupabaseOptions { AutoConnectRealtime = false };
+
+var supabaseClient = new Supabase.Client(supabaseUrl, supabaseKey, supabaseOptions);
+builder.Services.AddSingleton(supabaseClient);
+builder.Services.AddScoped<SupabaseStorageService>();
+// ----------------------------------------------------
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -69,7 +80,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseDeveloperExceptionPage();
-//app.UseMiddleware<SaaSBarberia.Middleware.ExceptionMiddleware>();
+
 app.UseHttpsRedirection();
 app.UseRouting();
 
@@ -77,6 +88,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")

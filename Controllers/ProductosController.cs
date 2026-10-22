@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -9,7 +8,6 @@ using Microsoft.EntityFrameworkCore;
 using SaaSBarberia.Filters;
 using SaaSBarberia.Models;
 using SaaSBarberia.Services;
-using Microsoft.AspNetCore.Hosting;
 
 namespace SaaSBarberia.Controllers
 {
@@ -18,12 +16,12 @@ namespace SaaSBarberia.Controllers
     public class ProductosController : Controller
     {
         private readonly IProductosService _productosService;
-        private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly SupabaseStorageService _storageService; // 🚀 Reemplazamos IWebHostEnvironment por Supabase Storage
 
-        public ProductosController(IProductosService productosService, IWebHostEnvironment webHostEnvironment)
+        public ProductosController(IProductosService productosService, SupabaseStorageService storageService)
         {
             _productosService = productosService;
-            _webHostEnvironment = webHostEnvironment;
+            _storageService = storageService;
         }
 
         private int CurrentTenantId
@@ -62,24 +60,18 @@ namespace SaaSBarberia.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Administrador,SuperAdmin")]
-        // 🔥 CORREGIDO: Cambiado 'ImagenUrl' por 'RutaImagen' en el Bind
         public async Task<IActionResult> Create([Bind("Id,Nombre,Descripcion,PrecioVenta,Stock,RutaImagen")] Producto producto, IFormFile? productoArchivo)
         {
             if (ModelState.IsValid)
             {
                 if (productoArchivo != null && productoArchivo.Length > 0)
                 {
-                    string carpetaSubidas = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "productos");
-                    if (!Directory.Exists(carpetaSubidas)) Directory.CreateDirectory(carpetaSubidas);
-
-                    string nombreUnico = Guid.NewGuid().ToString() + Path.GetExtension(productoArchivo.FileName);
-                    string rutaCompleta = Path.Combine(carpetaSubidas, nombreUnico);
-
-                    using (var stream = new FileStream(rutaCompleta, FileMode.Create))
+                    // ☁️ Subir imagen a la carpeta "productos" en Supabase Storage
+                    string? urlImagen = await _storageService.SubirImagenAsync(productoArchivo, "productos");
+                    if (!string.IsNullOrEmpty(urlImagen))
                     {
-                        await productoArchivo.CopyToAsync(stream);
+                        producto.RutaImagen = urlImagen;
                     }
-                    producto.RutaImagen = "/uploads/productos/" + nombreUnico;
                 }
 
                 await _productosService.CreateAsync(producto, CurrentTenantId, CurrentUsuarioId, CurrentUserIp);
@@ -100,7 +92,6 @@ namespace SaaSBarberia.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Administrador,SuperAdmin")]
-        // 🔥 CORREGIDO: Mapeo correcto de 'RutaImagen' en el Bind para no perder el hidden
         public async Task<IActionResult> Edit(int id, [Bind("Id,Nombre,Descripcion,PrecioVenta,Stock,RutaImagen")] Producto producto, IFormFile? productoArchivo)
         {
             if (id != producto.Id) return NotFound();
@@ -111,28 +102,14 @@ namespace SaaSBarberia.Controllers
                 {
                     if (productoArchivo != null && productoArchivo.Length > 0)
                     {
-                        // 🗑️ Borrar imagen vieja del disco duro
-                        var prodExistente = await _productosService.GetByIdAsync(producto.Id, CurrentTenantId);
-                        if (prodExistente != null && !string.IsNullOrEmpty(prodExistente.RutaImagen))
+                        // ☁️ Subir la nueva imagen a Supabase Storage
+                        string? urlImagen = await _storageService.SubirImagenAsync(productoArchivo, "productos");
+                        if (!string.IsNullOrEmpty(urlImagen))
                         {
-                            string rutaVieja = Path.Combine(_webHostEnvironment.WebRootPath, prodExistente.RutaImagen.TrimStart('/'));
-                            if (System.IO.File.Exists(rutaVieja)) System.IO.File.Delete(rutaVieja);
+                            producto.RutaImagen = urlImagen;
                         }
-
-                        // 💾 Guardar la nueva imagen
-                        string carpetaSubidas = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "productos");
-                        if (!Directory.Exists(carpetaSubidas)) Directory.CreateDirectory(carpetaSubidas);
-
-                        string nombreUnico = Guid.NewGuid().ToString() + Path.GetExtension(productoArchivo.FileName);
-                        string rutaCompleta = Path.Combine(carpetaSubidas, nombreUnico);
-
-                        using (var stream = new FileStream(rutaCompleta, FileMode.Create))
-                        {
-                            await productoArchivo.CopyToAsync(stream);
-                        }
-                        producto.RutaImagen = "/uploads/productos/" + nombreUnico;
                     }
-                    // Si 'productoArchivo' es null, 'producto.RutaImagen' ya conserva el valor viejo gracias al Bind corregido y al hidden de la vista.
+                    // Si 'productoArchivo' es null, 'producto.RutaImagen' conserva el valor viejo gracias al campo hidden de la vista.
 
                     await _productosService.UpdateAsync(producto, CurrentTenantId, CurrentUsuarioId, CurrentUserIp);
                     return RedirectToAction(nameof(Index));
@@ -164,13 +141,8 @@ namespace SaaSBarberia.Controllers
         [Authorize(Roles = "Administrador,SuperAdmin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var producto = await _productosService.GetByIdAsync(id, CurrentTenantId);
-            if (producto != null && !string.IsNullOrEmpty(producto.RutaImagen))
-            {
-                string rutaArchivo = Path.Combine(_webHostEnvironment.WebRootPath, producto.RutaImagen.TrimStart('/'));
-                if (System.IO.File.Exists(rutaArchivo)) System.IO.File.Delete(rutaArchivo);
-            }
-
+            // Nota: En Supabase Storage las eliminaciones físicas de archivos se pueden omitir o gestionar desde el bucket, 
+            // con borrar el registro de la BD es más que suficiente para liberar la referencia.
             await _productosService.DeleteAsync(id, CurrentTenantId, CurrentUsuarioId, CurrentUserIp);
             return RedirectToAction(nameof(Index));
         }

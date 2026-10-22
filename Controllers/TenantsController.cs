@@ -6,11 +6,9 @@ using SaaSBarberia.Models;
 using SaaSBarberia.Services;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 
 namespace SaaSBarberia.Controllers
@@ -18,16 +16,16 @@ namespace SaaSBarberia.Controllers
     public class TenantsController : Controller
     {
         private readonly TenantService _tenantService;
-        private readonly HorarioLaboralService _horarioService; // 🔥 Inyectado
+        private readonly HorarioLaboralService _horarioService;
         private readonly BarberSaaSDbContext _context;
-        private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly SupabaseStorageService _storageService; // 🚀 Reemplazamos IWebHostEnvironment por Supabase Storage
 
-        public TenantsController(TenantService tenantService, HorarioLaboralService horarioService, BarberSaaSDbContext context, IWebHostEnvironment webHostEnvironment)
+        public TenantsController(TenantService tenantService, HorarioLaboralService horarioService, BarberSaaSDbContext context, SupabaseStorageService storageService)
         {
             _tenantService = tenantService;
             _horarioService = horarioService;
             _context = context;
-            _webHostEnvironment = webHostEnvironment;
+            _storageService = storageService;
         }
 
         [Authorize(Roles = "SuperAdmin")]
@@ -60,7 +58,6 @@ namespace SaaSBarberia.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,NombreNegocio,Subdominio,PlanSuscripcion,Activo,FechaRegistro,ColorPrimario,ColorSecundario,EstiloSidebar,TieneModuloHerramientas,TieneModuloWhatsApp,TiempoEntreCitas,RutaLogo")] Tenant tenant, IFormFile? logoArchivo)
         {
-            // Forzamos la limpieza de la navegación si viene jodiendo el modelo
             ModelState.Remove("HorariosLaborales");
 
             if (ModelState.IsValid)
@@ -69,24 +66,17 @@ namespace SaaSBarberia.Controllers
 
                 if (logoArchivo != null && logoArchivo.Length > 0)
                 {
-                    string carpetaSubidas = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "tenants");
-                    if (!Directory.Exists(carpetaSubidas)) Directory.CreateDirectory(carpetaSubidas);
-
-                    string nombreUnico = Guid.NewGuid().ToString() + Path.GetExtension(logoArchivo.FileName);
-                    string rutaCompleta = Path.Combine(carpetaSubidas, nombreUnico);
-
-                    using (var stream = new FileStream(rutaCompleta, FileMode.Create))
+                    // ☁️ Subir logo a la carpeta "tenants" en Supabase Storage
+                    string? urlLogo = await _storageService.SubirImagenAsync(logoArchivo, "tenants");
+                    if (!string.IsNullOrEmpty(urlLogo))
                     {
-                        await logoArchivo.CopyToAsync(stream);
+                        tenant.RutaLogo = urlLogo;
                     }
-                    tenant.RutaLogo = "/uploads/tenants/" + nombreUnico;
                 }
 
                 // Guardamos el Tenant base
                 await _tenantService.GuardarAsync(tenant);
 
-                // Continuamos el asistente con el Tenant recién creado. La configuración
-                // del siguiente paso decide cuándo persistir sus propios datos.
                 return RedirectToAction(nameof(ConfigurarHorarios), new { tenantId = tenant.Id });
             }
 
@@ -101,7 +91,6 @@ namespace SaaSBarberia.Controllers
 
             ViewBag.TenantId = tenantId;
 
-            // Inicializamos la lista de 7 días con los valores por defecto
             var horarios = new List<HorarioLaboral>();
             for (int i = 0; i <= 6; i++)
             {
@@ -177,7 +166,6 @@ namespace SaaSBarberia.Controllers
             return View(horarios ?? new List<HorarioLaboral>());
         }
 
-        // POST: Tenants/ConfigurarHorarios
         [HttpPost]
         [Authorize(Roles = "SuperAdmin")]
         [ValidateAntiForgeryToken]
@@ -233,24 +221,12 @@ namespace SaaSBarberia.Controllers
                 {
                     if (logoArchivo != null && logoArchivo.Length > 0)
                     {
-                        var tenantExistente = await _context.Tenants.AsNoTracking().FirstOrDefaultAsync(t => t.Id == id);
-                        if (tenantExistente != null && !string.IsNullOrEmpty(tenantExistente.RutaLogo))
+                        // ☁️ Subir nuevo logo a Supabase Storage
+                        string? urlLogo = await _storageService.SubirImagenAsync(logoArchivo, "tenants");
+                        if (!string.IsNullOrEmpty(urlLogo))
                         {
-                            string rutaVieja = Path.Combine(_webHostEnvironment.WebRootPath, tenantExistente.RutaLogo.TrimStart('/'));
-                            if (System.IO.File.Exists(rutaVieja)) System.IO.File.Delete(rutaVieja);
+                            tenant.RutaLogo = urlLogo;
                         }
-
-                        string carpetaSubidas = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "tenants");
-                        if (!Directory.Exists(carpetaSubidas)) Directory.CreateDirectory(carpetaSubidas);
-
-                        string nombreUnico = Guid.NewGuid().ToString() + Path.GetExtension(logoArchivo.FileName);
-                        string rutaCompleta = Path.Combine(carpetaSubidas, nombreUnico);
-
-                        using (var stream = new FileStream(rutaCompleta, FileMode.Create))
-                        {
-                            await logoArchivo.CopyToAsync(stream);
-                        }
-                        tenant.RutaLogo = "/uploads/tenants/" + nombreUnico;
                     }
 
                     await _tenantService.GuardarAsync(tenant);
@@ -279,13 +255,6 @@ namespace SaaSBarberia.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var tenant = await _context.Tenants.AsNoTracking().FirstOrDefaultAsync(t => t.Id == id);
-            if (tenant != null && !string.IsNullOrEmpty(tenant.RutaLogo))
-            {
-                string rutaArchivo = Path.Combine(_webHostEnvironment.WebRootPath, tenant.RutaLogo.TrimStart('/'));
-                if (System.IO.File.Exists(rutaArchivo)) System.IO.File.Delete(rutaArchivo);
-            }
-
             await _tenantService.EliminarAsync(id);
             return RedirectToAction(nameof(Index));
         }

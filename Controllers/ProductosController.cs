@@ -16,7 +16,7 @@ namespace SaaSBarberia.Controllers
     public class ProductosController : Controller
     {
         private readonly IProductosService _productosService;
-        private readonly SupabaseStorageService _storageService; // 🚀 Reemplazamos IWebHostEnvironment por Supabase Storage
+        private readonly SupabaseStorageService _storageService;
 
         public ProductosController(IProductosService productosService, SupabaseStorageService storageService)
         {
@@ -62,6 +62,10 @@ namespace SaaSBarberia.Controllers
         [Authorize(Roles = "Administrador,SuperAdmin")]
         public async Task<IActionResult> Create([Bind("Id,Nombre,Descripcion,PrecioVenta,Stock,RutaImagen")] Producto producto, IFormFile? productoArchivo)
         {
+            // 👈 ASIGNAMOS EL TENANTID OBLIGATORIO AL MODELO
+            producto.TenantId = CurrentTenantId;
+            ModelState.Remove(nameof(producto.Tenant));
+
             if (ModelState.IsValid)
             {
                 if (productoArchivo != null && productoArchivo.Length > 0)
@@ -96,6 +100,10 @@ namespace SaaSBarberia.Controllers
         {
             if (id != producto.Id) return NotFound();
 
+            // 👈 MANTENEMOS EL TENANTID CORRECTO EN LA EDICIÓN
+            producto.TenantId = CurrentTenantId;
+            ModelState.Remove(nameof(producto.Tenant));
+
             if (ModelState.IsValid)
             {
                 try
@@ -109,7 +117,6 @@ namespace SaaSBarberia.Controllers
                             producto.RutaImagen = urlImagen;
                         }
                     }
-                    // Si 'productoArchivo' es null, 'producto.RutaImagen' conserva el valor viejo gracias al campo hidden de la vista.
 
                     await _productosService.UpdateAsync(producto, CurrentTenantId, CurrentUsuarioId, CurrentUserIp);
                     return RedirectToAction(nameof(Index));
@@ -141,8 +148,6 @@ namespace SaaSBarberia.Controllers
         [Authorize(Roles = "Administrador,SuperAdmin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            // Nota: En Supabase Storage las eliminaciones físicas de archivos se pueden omitir o gestionar desde el bucket, 
-            // con borrar el registro de la BD es más que suficiente para liberar la referencia.
             await _productosService.DeleteAsync(id, CurrentTenantId, CurrentUsuarioId, CurrentUserIp);
             return RedirectToAction(nameof(Index));
         }

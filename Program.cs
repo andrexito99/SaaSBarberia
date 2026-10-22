@@ -15,8 +15,8 @@ builder.Services.AddDbContext<BarberSaaSDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("con")));
 
 // 🔥 CONFIGURACIÓN DE SUPABASE CLIENT Y STORAGE SERVICE
-var supabaseUrl = builder.Configuration["Supabase:https://yzddksrfdugpwrenbhsa.supabase.co/rest/v1/"];
-var supabaseKey = builder.Configuration["Supabase:sb_publishable_N6yr-xF1ZwH6mzDJDmRzUQ_6DUiA3wq"];
+var supabaseUrl = builder.Configuration["Supabase:Url"];
+var supabaseKey = builder.Configuration["Supabase:Key"];
 var supabaseOptions = new Supabase.SupabaseOptions { AutoConnectRealtime = false };
 
 var supabaseClient = new Supabase.Client(supabaseUrl, supabaseKey, supabaseOptions);

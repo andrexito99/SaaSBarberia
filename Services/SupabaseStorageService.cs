@@ -1,5 +1,8 @@
 ﻿using Supabase;
 using Microsoft.AspNetCore.Http;
+using System;
+using System.IO;
+using System.Threading.Tasks;
 
 public class SupabaseStorageService
 {
@@ -15,22 +18,41 @@ public class SupabaseStorageService
     {
         if (archivo == null || archivo.Length == 0) return null;
 
-        // Generar un nombre único para el archivo para evitar duplicados o sobreescrituras
-        var fileName = $"{carpeta}/{Guid.NewGuid()}_{Path.GetFileName(archivo.FileName)}";
+        try
+        {
+            // Limpiar nombre y generar un nombre único seguro
+            var extension = Path.GetExtension(archivo.FileName);
+            var fileName = $"{carpeta}/{Guid.NewGuid()}{extension}";
 
-        using var memoryStream = new MemoryStream();
-        await archivo.CopyToAsync(memoryStream);
-        var fileBytes = memoryStream.ToArray();
+            using var memoryStream = new MemoryStream();
+            await archivo.CopyToAsync(memoryStream);
+            var fileBytes = memoryStream.ToArray();
 
-        // Subir los bytes al Storage de Supabase
-        var options = new Supabase.Storage.FileOptions { ContentType = archivo.ContentType };
-        await _supabaseClient.Storage
-            .From(_bucketName)
-            .Upload(fileBytes, fileName, options);
+            // Configurar opciones de subida con Upsert para evitar conflictos de sobreescritura
+            var options = new Supabase.Storage.FileOptions
+            {
+                ContentType = archivo.ContentType,
+                Upsert = true
+            };
 
-        // Devolver la URL pública lista para guardarla en la Base de Datos
-        return _supabaseClient.Storage
-            .From(_bucketName)
-            .GetPublicUrl(fileName);
+            // Subir los bytes al Storage de Supabase
+            await _supabaseClient.Storage
+                .From(_bucketName)
+                .Upload(fileBytes, fileName, options);
+
+            // Obtener la URL pública generada
+            var publicUrl = _supabaseClient.Storage
+                .From(_bucketName)
+                .GetPublicUrl(fileName);
+
+            Console.WriteLine($"---> IMAGEN SUBIDA EXITOSAMENTE A SUPABASE: {publicUrl}");
+            return publicUrl;
+        }
+        catch (Exception ex)
+        {
+            // 🔥 Esto te dirá exactamente en los logs de Render si Supabase rechazó la subida por permisos o credenciales
+            Console.WriteLine($"---> ERROR CRÍTICOS AL SUBIR A SUPABASE STORAGE: {ex.Message} | Inner: {ex.InnerException?.Message}");
+            return null;
+        }
     }
 }

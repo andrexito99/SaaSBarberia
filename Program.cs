@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Localization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Permitir el comportamiento heredado para DateTime (Local/Unspecified) en PostgreSQL
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 builder.Services.AddDbContext<BarberSaaSDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("con")));
 

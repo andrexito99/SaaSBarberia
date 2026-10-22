@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Localization;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<BarberSaaSDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("con")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("con")));
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>

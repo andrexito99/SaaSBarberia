@@ -1,50 +1,84 @@
 @model SaaSBarberia.Models.AlquilerHerramienta
 
 @{
-    ViewData["Title"] = "Actualizar Alquiler";
+    ViewData["Title"] = "Actualizar Préstamo";
 }
 
-<h1>Registrar Devolución o Editar Préstamo</h1>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+<div class="container mt-4" style="max-width: 650px;">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold text-white m-0 d-flex align-items-center gap-2">
+                <i class="bi bi-arrow-return-left text-warning"></i> Registrar Devolución o Editar Préstamo
+            </h2>
+            <p class="text-secondary small mb-0 mt-1">Completa la fecha de devolución para liberar la máquina y marcarla como "Disponible".</p>
+        </div>
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Volver al listado
+        </a>
+    </div>
+
+    <div class="card p-4 p-md-5">
+        <form asp-action="Edit" method="post" autocomplete="off">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger small p-2 mb-3"></div>
             <input type="hidden" asp-for="Id" />
 
-            <div class="form-group mb-3">
-                <label class="control-label">Herramienta</label>
+            <!-- Máquina -->
+            <div class="mb-3">
+                <label class="form-label">
+                    <i class="bi bi-tools text-warning me-1"></i> Herramienta Asignada
+                </label>
                 <select asp-for="HerramientaId" class="form-select" asp-items="ViewBag.HerramientaId"></select>
-                <span asp-validation-for="HerramientaId" class="text-danger"></span>
+                <span asp-validation-for="HerramientaId" class="text-danger small"></span>
             </div>
 
-            <div class="form-group mb-3">
-                <label class="control-label">Barbero</label>
+            <!-- Barbero -->
+            <div class="mb-3">
+                <label class="form-label">
+                    <i class="bi bi-person-fill text-warning me-1"></i> Barbero Responsable
+                </label>
                 <select asp-for="BarberoId" class="form-select" asp-items="ViewBag.BarberoId"></select>
-                <span asp-validation-for="BarberoId" class="text-danger"></span>
+                <span asp-validation-for="BarberoId" class="text-danger small"></span>
             </div>
 
-            <div class="form-group mb-3">
-                <label asp-for="FechaPrestamo" class="control-label">Fecha de Préstamo</label>
+            <!-- Fecha de Préstamo -->
+            <div class="mb-3">
+                <label asp-for="FechaPrestamo" class="form-label">
+                    <i class="bi bi-calendar-event text-warning me-1"></i> Fecha de Entrega
+                </label>
                 <input asp-for="FechaPrestamo" class="form-control" type="datetime-local" />
-                <span asp-validation-for="FechaPrestamo" class="text-danger"></span>
+                <span asp-validation-for="FechaPrestamo" class="text-danger small"></span>
             </div>
 
-            <div class="form-group mb-3">
-                <label asp-for="FechaDevolucion" class="control-label">Fecha de Devolución (Llenar para liberar equipo)</label>
+            <!-- Fecha de Devolución -->
+            <div class="mb-3">
+                <label asp-for="FechaDevolucion" class="form-label text-success fw-bold">
+                    <i class="bi bi-calendar2-check-fill text-success me-1"></i> Fecha de Devolución
+                </label>
                 <input asp-for="FechaDevolucion" class="form-control" type="datetime-local" />
-                <span asp-validation-for="FechaDevolucion" class="text-danger"></span>
+                <span asp-validation-for="FechaDevolucion" class="text-danger small"></span>
+                <small class="text-secondary d-block mt-1">Al ingresar la fecha de entrega, el sistema reintegrará la máquina como <strong>Disponible</strong>.</small>
             </div>
 
-            <div class="form-group mb-3">
-                <label asp-for="CostoAlquiler" class="control-label">Costo Total ($)</label>
-                <input asp-for="CostoAlquiler" class="form-control" type="number" step="0.01" />
-                <span asp-validation-for="CostoAlquiler" class="text-danger"></span>
+            <!-- Costo del Alquiler -->
+            <div class="mb-4">
+                <label asp-for="CostoAlquiler" class="form-label">
+                    <i class="bi bi-currency-dollar text-warning me-1"></i> Canon Total Liquidado ($)
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input asp-for="CostoAlquiler" class="form-control" type="number" step="0.01" />
+                </div>
+                <span asp-validation-for="CostoAlquiler" class="text-danger small"></span>
             </div>
 
-            <div class="form-group">
-                <input type="submit" value="Guardar Cambios" class="btn btn-success" />
+            <hr class="my-4" />
+
+            <div class="d-flex justify-content-end gap-2">
                 <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-primary px-4 fw-bold">
+                    <i class="bi bi-check-lg me-1"></i> Guardar y Procesar
+                </button>
             </div>
         </form>
     </div>

@@ -1,127 +1,185 @@
-﻿@model SaaSBarberia.Models.AdminDashboardViewModel
+@model SaaSBarberia.Models.AdminDashboardViewModel
 
 @{
     ViewData["Title"] = "Administración de Sede";
 }
 
 <div class="container-fluid my-4 px-4">
-    <div class="p-4 bg-white border-0 shadow-sm rounded-4 mb-4 d-flex justify-content-between align-items-center">
+    <!-- Header Banner -->
+    <div class="card p-4 mb-4 d-flex flex-row justify-content-between align-items-center flex-wrap gap-3">
         <div>
-            <h2 class="fw-black text-dark mb-1"><i class="fas fa-chart-pie me-2 text-dark"></i>Panel de Administración</h2>
-            <p class="text-muted mb-0">Control operativo y financiero en tiempo real exclusivo para tu sucursal.</p>
+            <h2 class="fw-bold text-white mb-1 d-flex align-items-center gap-2">
+                <i class="bi bi-speedometer2 text-warning"></i> Panel de Administración
+            </h2>
+            <p class="text-secondary mb-0 small">Control operativo y financiero en tiempo real exclusivo para tu sucursal.</p>
         </div>
-        <div class="badge bg-dark p-3 fs-6 rounded-3">
-            <i class="fas fa-calendar-alt me-2"></i>@DateTime.Now.ToString("dd MMMM yyyy")
+        <div class="badge bg-secondary p-2 px-3 fs-7">
+            <i class="bi bi-calendar3 me-2 text-warning"></i>@DateTime.Now.ToString("dd MMMM yyyy")
         </div>
     </div>
 
-    <h4 class="fw-bold text-secondary mb-3"><i class="fas fa-bolt text-warning me-2"></i>Actividad de Hoy</h4>
+    <!-- ⚡ ACTIVIDAD DE HOY (KPIS REDISEÑADOS) -->
+    <h4 class="fw-bold text-white mb-3 d-flex align-items-center gap-2">
+        <i class="bi bi-lightning-charge-fill text-warning"></i> Actividad de Hoy
+    </h4>
     <div class="row g-3 mb-4">
+        <!-- Ventas Hoy -->
         <div class="col-6 col-lg-3">
-            <div class="card border-0 shadow-sm rounded-3 p-3 bg-white border-start border-primary border-4">
-                <p class="text-muted small text-uppercase fw-bold mb-1">Ventas Hoy</p>
-                <h3 class="fw-bold mb-0 text-dark">$@Model.IngresosHoy.ToString("N0")</h3>
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <span class="kpi-title">Ventas Hoy</span>
+                    <div class="kpi-icon-wrapper kpi-icon-amber">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                </div>
+                <div class="kpi-value">$@Model.IngresosHoy.ToString("N0")</div>
+                <div class="kpi-subtitle">
+                    <span class="text-secondary">Caja generada hoy</span>
+                </div>
             </div>
         </div>
+
+        <!-- Clientes Atendidos -->
         <div class="col-6 col-lg-3">
-            <div class="card border-0 shadow-sm rounded-3 p-3 bg-white border-start border-success border-4">
-                <p class="text-muted small text-uppercase fw-bold mb-1">Atendidos</p>
-                <h3 class="fw-bold mb-0 text-success">@Model.ClientesAtendidosHoy <span class="fs-6 text-muted">unds</span></h3>
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <span class="kpi-title">Atendidos</span>
+                    <div class="kpi-icon-wrapper kpi-icon-emerald">
+                        <i class="bi bi-scissors"></i>
+                    </div>
+                </div>
+                <div class="kpi-value text-white">@Model.ClientesAtendidosHoy</div>
+                <div class="kpi-subtitle">
+                    <span class="text-success"><i class="bi bi-check2-all me-1"></i>Cortes completados</span>
+                </div>
             </div>
         </div>
+
+        <!-- Citas Pendientes -->
         <div class="col-6 col-lg-3">
-            <div class="card border-0 shadow-sm rounded-3 p-3 bg-white border-start border-warning border-4">
-                <p class="text-muted small text-uppercase fw-bold mb-1">Citas Pendientes</p>
-                <h3 class="fw-bold mb-0 text-warning">@Model.CitasPendientesHoy</h3>
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <span class="kpi-title">Citas Pendientes</span>
+                    <div class="kpi-icon-wrapper kpi-icon-blue">
+                        <i class="bi bi-hourglass-split"></i>
+                    </div>
+                </div>
+                <div class="kpi-value text-white">@Model.CitasPendientesHoy</div>
+                <div class="kpi-subtitle">
+                    <span class="text-secondary">Por atender en la jornada</span>
+                </div>
             </div>
         </div>
+
+        <!-- Citas Canceladas -->
         <div class="col-6 col-lg-3">
-            <div class="card border-0 shadow-sm rounded-3 p-3 bg-white border-start border-danger border-4">
-                <p class="text-muted small text-uppercase fw-bold mb-1">Citas Canceladas</p>
-                <h3 class="fw-bold mb-0 text-danger">@Model.CitasCanceladasHoy</h3>
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <span class="kpi-title">Citas Canceladas</span>
+                    <div class="kpi-icon-wrapper kpi-icon-rose">
+                        <i class="bi bi-x-circle-fill"></i>
+                    </div>
+                </div>
+                <div class="kpi-value text-white">@Model.CitasCanceladasHoy</div>
+                <div class="kpi-subtitle">
+                    <span class="text-secondary">Turnos cancelados hoy</span>
+                </div>
             </div>
         </div>
     </div>
 
-    <h4 class="fw-bold text-secondary mb-3"><i class="fas fa-calendar-check text-info me-2"></i>Rendimiento del Mes</h4>
+    <!-- 📊 RENDIMIENTO DEL MES -->
+    <h4 class="fw-bold text-white mb-3 d-flex align-items-center gap-2">
+        <i class="bi bi-graph-up-arrow text-info"></i> Rendimiento del Mes
+    </h4>
     <div class="row g-4 mb-4">
+        <!-- Ingresos Mensuales -->
         <div class="col-12 col-md-5">
-            <div class="card border-0 shadow-sm rounded-4 bg-dark text-white p-4 h-100">
-                <span class="text-muted text-uppercase small fw-bold">Ingresos Mensuales</span>
-                <h1 class="display-5 fw-bold my-2 text-white">$@Model.IngresosMes.ToString("N0")</h1>
+            <div class="card p-4 h-100">
+                <span class="text-secondary text-uppercase small fw-bold">Ingresos Acumulados Mes</span>
+                <div class="kpi-value my-2">$@Model.IngresosMes.ToString("N0")</div>
                 <div class="d-flex align-items-center mt-2">
-                    <span class="badge p-2 @(Model.EsIngresoMayorMesAnterior ? "bg-success" : "bg-danger") me-2">
-                        <i class="fas @(Model.EsIngresoMayorMesAnterior ? "fa-arrow-up" : "fa-arrow-down") me-1"></i>
+                    <span class="badge @(Model.EsIngresoMayorMesAnterior ? "bg-success" : "bg-danger") me-2">
+                        <i class="bi @(Model.EsIngresoMayorMesAnterior ? "bi-arrow-up" : "bi-arrow-down") me-1"></i>
                         @Math.Abs(Model.PorcentajeComparacionMesAnterior).ToString("N1")%
                     </span>
-                    <span class="text-muted small">vs mes anterior</span>
+                    <span class="text-secondary small">vs mes anterior</span>
                 </div>
             </div>
         </div>
 
+        <!-- Líderes de Sede -->
         <div class="col-12 col-md-7">
-            <div class="card border-0 shadow-sm rounded-4 bg-white p-4 h-100">
-                <h5 class="fw-bold text-dark mb-3"><i class="fas fa-trophy text-warning me-2"></i>Líderes de Sede</h5>
+            <div class="card p-4 h-100">
+                <h5 class="fw-bold text-white mb-3 d-flex align-items-center gap-2">
+                    <i class="bi bi-trophy-fill text-warning"></i> Cuadro de Honor Sede
+                </h5>
                 <div class="row g-3 text-center">
-                    <div class="col-6 col-sm-4 border-end border-light">
-                        <p class="text-muted small mb-1">Servicio Más Vendido</p>
-                        <h6 class="fw-bold text-dark">@Model.ServicioMasVendido</h6>
-                        <span class="badge bg-info bg-opacity-10 text-info">@Model.CantidadServicioMasVendido cortes</span>
+                    <div class="col-6 col-sm-4 border-end" style="border-color: rgba(255,255,255,0.08) !important;">
+                        <p class="text-secondary small mb-1">Servicio Top</p>
+                        <h6 class="fw-bold text-white text-truncate px-1">@Model.ServicioMasVendido</h6>
+                        <span class="badge bg-info">@Model.CantidadServicioMasVendido cortes</span>
                     </div>
-                    <div class="col-6 col-sm-4 border-end border-light">
-                        <p class="text-muted small mb-1">Barbero Estrella</p>
-                        <h6 class="fw-bold text-dark">@Model.BarberoEstrella</h6>
-                        <span class="badge bg-success bg-opacity-10 text-success">$@Model.GananciaBarberoEstrella.ToString("N0")</span>
+                    <div class="col-6 col-sm-4 border-end" style="border-color: rgba(255,255,255,0.08) !important;">
+                        <p class="text-secondary small mb-1">Barbero Estrella</p>
+                        <h6 class="fw-bold text-white text-truncate px-1">@Model.BarberoEstrella</h6>
+                        <span class="badge bg-success">$@Model.GananciaBarberoEstrella.ToString("N0")</span>
                     </div>
                     <div class="col-12 col-sm-4">
-                        <p class="text-muted small mb-1">Eficiencia Operativa</p>
-                        <h6 class="fw-bold text-dark">Barberos Sede</h6>
-                        <span class="badge bg-dark">@Model.TotalBarberos Activos</span>
+                        <p class="text-secondary small mb-1">Equipo Activo</p>
+                        <h6 class="fw-bold text-white">Staff Sede</h6>
+                        <span class="badge bg-secondary">@Model.TotalBarberos Barberos</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <h4 class="fw-bold text-secondary mb-3"><i class="fas fa-directions text-primary me-2"></i>Accesos Directos</h4>
+    <!-- ⚡ ACCESOS DIRECTOS -->
+    <h4 class="fw-bold text-white mb-3 d-flex align-items-center gap-2">
+        <i class="bi bi-grid-fill text-warning"></i> Accesos Directos
+    </h4>
     <div class="row g-3 mb-4">
         <div class="col-md-4">
-            <div class="card shadow-sm border-0 rounded-3 p-3 bg-white d-flex flex-row align-items-center justify-content-between">
+            <div class="card p-3 d-flex flex-row align-items-center justify-content-between">
                 <div>
-                    <h6 class="fw-bold mb-0">Caja y Facturas</h6>
-                    <small class="text-muted">Movimientos financieros</small>
+                    <h6 class="fw-bold text-white mb-0">Caja y Facturación</h6>
+                    <small class="text-secondary">Movimientos diarios y cierres</small>
                 </div>
-                <a asp-controller="Facturas" asp-action="Index" class="btn btn-sm btn-dark px-3 rounded-pill">Ver</a>
+                <a asp-controller="Caja" asp-action="Index" class="btn btn-sm btn-outline-secondary">Abrir</a>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card shadow-sm border-0 rounded-3 p-3 bg-white d-flex flex-row align-items-center justify-content-between">
+            <div class="card p-3 d-flex flex-row align-items-center justify-content-between">
                 <div>
-                    <h6 class="fw-bold mb-0">Servicios Ofrecidos</h6>
-                    <small class="text-muted">Gestión de catálogo</small>
+                    <h6 class="fw-bold text-white mb-0">Catálogo de Servicios</h6>
+                    <small class="text-secondary">Tarifas y duraciones</small>
                 </div>
-                <a asp-controller="Servicios" asp-action="Index" class="btn btn-sm btn-dark px-3 rounded-pill">Ajustar</a>
+                <a asp-controller="Servicios" asp-action="Index" class="btn btn-sm btn-outline-secondary">Ajustar</a>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card shadow-sm border-0 rounded-3 p-3 bg-white d-flex flex-row align-items-center justify-content-between">
+            <div class="card p-3 d-flex flex-row align-items-center justify-content-between">
                 <div>
-                    <h6 class="fw-bold mb-0">Citas de la Sede</h6>
-                    <small class="text-muted">Turnos y calendario</small>
+                    <h6 class="fw-bold text-white mb-0">Agenda de Citas</h6>
+                    <small class="text-secondary">Turnos y calendario de hoy</small>
                 </div>
-                <a asp-controller="Citas" asp-action="Index" class="btn btn-sm btn-dark px-3 rounded-pill">Monitorear</a>
+                <a asp-controller="Citas" asp-action="Index" class="btn btn-sm btn-outline-secondary">Monitorear</a>
             </div>
         </div>
     </div>
 
-    <div class="card border-0 shadow-sm rounded-4 bg-white p-4">
-        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-            <h4 class="fw-bold text-dark mb-0"><i class="fas fa-crown text-warning me-2"></i>Top 10 Clientes de la Sucursal</h4>
-            <span class="badge bg-primary rounded-pill">Por volumen de compra</span>
+    <!-- 🏆 TABLA TOP 10 CLIENTES -->
+    <div class="card p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom flex-wrap gap-2">
+            <h4 class="fw-bold text-white mb-0 d-flex align-items-center gap-2">
+                <i class="bi bi-award-fill text-warning"></i> Top 10 Clientes de la Sucursal
+            </h4>
+            <span class="badge bg-secondary">Por inversión acumulada</span>
         </div>
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-dark">
+            <table class="table align-middle mb-0">
+                <thead>
                     <tr>
                         <th style="width: 70px;">Pos</th>
                         <th>Cliente</th>
@@ -133,7 +191,15 @@
                     @if (!Model.Top10Clientes.Any())
                     {
                         <tr>
-                            <td colspan="4" class="text-center py-3 text-muted">No se registran facturas pagadas de clientes este mes, care verga.</td>
+                            <td colspan="4" class="text-center py-5">
+                                <div class="empty-state border-0 my-0 py-3">
+                                    <div class="empty-state-icon">
+                                        <i class="bi bi-people"></i>
+                                    </div>
+                                    <h5 class="empty-state-title">Sin historial de clientes aún</h5>
+                                    <p class="empty-state-desc">No se registran facturas pagadas este mes para generar el ranking.</p>
+                                </div>
+                            </td>
                         </tr>
                     }
                     else
@@ -143,12 +209,14 @@
                         {
                             <tr>
                                 <td>
-                                    <span class="badge rounded-circle p-2 d-inline-flex align-items-center justify-content-center @(puesto == 1 ? "bg-warning text-dark fw-bold" : puesto == 2 ? "bg-secondary" : puesto == 3 ? "bg-danger" : "bg-light text-dark border")" style="width:30px; height:30px;">
+                                    <span class="badge @(puesto == 1 ? "bg-warning" : puesto == 2 ? "bg-secondary" : puesto == 3 ? "bg-danger" : "bg-dark")" style="width:28px; height:28px; border-radius:50%; justify-content:center; display:inline-flex;">
                                         @puesto
                                     </span>
                                 </td>
-                                <td><strong>@cliente.NombreCliente</strong></td>
-                                <td class="text-center"><span class="badge bg-light text-dark border">@cliente.TotalCitas servicios</span></td>
+                                <td class="fw-bold text-white">@cliente.NombreCliente</td>
+                                <td class="text-center">
+                                    <span class="badge bg-secondary">@cliente.TotalCitas servicios</span>
+                                </td>
                                 <td class="text-end fw-bold text-success">$@cliente.TotalGastado.ToString("N0")</td>
                             </tr>
                             puesto++;
@@ -159,11 +227,3 @@
         </div>
     </div>
 </div>
-
-<style>
-    .fw-black {
-        font-weight: 900;
-    }
-</style>
-
-@* 👇 AQUÍ ABAJO PUEDES COLOCAR TUS CANVAS E INICIALIZADORES DE CHART.JS EXISTENTES EN TU VISTA VIEJA *@

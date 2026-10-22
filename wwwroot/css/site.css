@@ -1,25 +1,60 @@
 /* ==========================================================================
-   GLOBAL SAAS CORE STYLES & SUPERADMIN THEME
+   SAAS BARBERIA - UNIFIED DARK LUXURY DESIGN SYSTEM
+   Theme: Executive Dark Luxury & Warm Amber / Emerald
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
 :root {
+    /* Base Color Tokens */
     --font-family-base: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    --saas-bg-dark: #090d16;
-    --saas-sidebar-bg: #0f172a;
-    --saas-border-dark: #1e293b;
-    --saas-card-bg: #111827;
-    --saas-cyan: #06b6d4;
-    --saas-blue: #3b82f6;
-    --saas-glow: rgba(59, 130, 246, 0.25);
+    
+    --saas-bg-body: #0B0F17;           /* Main Deep Dark Navy/Slate */
+    --saas-bg-sidebar: #111827;        /* Solid Slate 900 */
+    --saas-bg-card: #1F2937;           /* Card & Container Slate 800 */
+    --saas-bg-card-hover: #253346;     /* Subtle row & card hover */
+    --saas-bg-input: #111827;          /* Inputs & Form background */
+    --saas-bg-header: #111827;         /* Table headers & Navbars */
+
+    /* Accent & Brand Colors */
+    --saas-gold: #F59E0B;              /* Primary Warm Gold / Amber */
+    --saas-gold-hover: #D97706;        /* Deep Gold Hover */
+    --saas-gold-soft: rgba(245, 158, 11, 0.15);
+    --saas-emerald: #10B981;           /* Emerald Success / Active */
+    --saas-emerald-soft: rgba(16, 185, 129, 0.15);
+    --saas-rose: #EF4444;              /* Rose / Red Danger */
+    --saas-rose-soft: rgba(239, 68, 68, 0.15);
+    --saas-blue: #3B82F6;              /* Executive Blue / Info */
+    --saas-blue-soft: rgba(59, 130, 246, 0.15);
+
+    /* Text Hierarchy */
+    --bs-body-color: #E2E8F0;
+    --bs-body-color-rgb: 226, 232, 240;
+    --saas-text-title: #FFFFFF;        /* Pure White for Headings & KPIs */
+    --saas-text-body: #E2E8F0;         /* Clean Readable Light Slate (Blanco Ahumado) */
+    --saas-text-secondary: #9CA3AF;    /* Subtitles, labels, secondary info */
+    --saas-text-muted: #9CA3AF;        /* Subtle hints, small timestamps */
+
+    /* Borders & Shadows */
+    --saas-border-subtle: rgba(255, 255, 255, 0.08);
+    --saas-border-medium: #374151;
+    --saas-border-gold: rgba(245, 158, 11, 0.35);
+    --saas-radius-lg: 12px;
+    --saas-radius-md: 8px;
+    --saas-shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.45);
+    --saas-shadow-gold: 0 4px 14px rgba(245, 158, 11, 0.3);
 }
+
+/* ==========================================================================
+   1. GLOBAL RESET & BASE FOUNDATION
+   ========================================================================== */
 
 html {
     font-size: 14px;
     font-family: var(--font-family-base);
     position: relative;
     min-height: 100%;
+    background-color: var(--saas-bg-body) !important;
 }
 
 @media (min-width: 768px) {
@@ -28,35 +63,638 @@ html {
     }
 }
 
-body {
+body,
+.bg-superadmin,
+.saas-dark-luxury {
+    background-color: var(--saas-bg-body) !important;
+    color: var(--saas-text-body) !important;
     font-family: var(--font-family-base);
-    color: #334155;
-    transition: background-color 0.3s ease;
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.04) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.03) 0px, transparent 50%) !important;
+    background-attachment: fixed !important;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
 }
 
 /* ==========================================================================
-   MODO SUPERADMIN (ESTILOS OSCUROS FUTURISTAS)
+   2. STRICT CONTRAST & TYPOGRAPHY SYSTEM
    ========================================================================== */
 
-.bg-superadmin {
-    background-color: var(--saas-bg-dark) !important;
-    color: #f1f5f9 !important;
-    background-image: radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.08) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(147, 51, 234, 0.05) 0px, transparent 50%);
-    background-attachment: fixed;
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6,
+.card-title,
+.modal-title {
+    color: var(--saas-text-title) !important;
+    font-weight: 600;
+    letter-spacing: -0.015em;
 }
 
-.theme-superadmin h1,
-.theme-superadmin h2,
-.theme-superadmin h3,
-.theme-superadmin h4,
-.theme-superadmin h5,
-.theme-superadmin h6 {
-    color: #f8fafc !important;
-    font-weight: 700;
+/* Override any stray Bootstrap text-dark classes inside our dark theme */
+.text-dark {
+    color: var(--saas-text-title) !important;
+}
+
+.text-secondary,
+.text-muted,
+.text-white-50,
+.text-dark-50 {
+    color: var(--saas-text-secondary) !important;
+}
+
+.text-light {
+    color: var(--saas-text-body) !important;
+}
+
+.text-primary,
+.text-warning,
+.text-amber {
+    color: var(--saas-gold) !important;
+}
+
+.text-success {
+    color: var(--saas-emerald) !important;
+}
+
+.text-danger {
+    color: var(--saas-rose) !important;
+}
+
+.text-info {
+    color: #60A5FA !important;
+}
+
+/* Links */
+a {
+    color: var(--saas-gold);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+a:hover {
+    color: var(--saas-gold-hover);
+}
+
+hr {
+    border-color: var(--saas-border-subtle) !important;
+    opacity: 1 !important;
+}
+
+code {
+    background-color: #111827 !important;
+    color: var(--saas-gold) !important;
+    border: 1px solid var(--saas-border-subtle) !important;
+    padding: 0.2rem 0.45rem !important;
+    border-radius: 6px !important;
+    font-size: 0.82rem !important;
 }
 
 /* ==========================================================================
-   ESTRUCTURA DE SIDEBAR & WRAPPER
+   3. CARDS, CONTAINERS & GLOBAL OVERRIDES (ELIMINATING ORPHAN WHITE BOXES)
+   ========================================================================== */
+
+/* Automatically convert white/light boxes into sleek dark luxury cards */
+.card,
+.bg-white,
+.bg-light {
+    background-color: var(--saas-bg-card) !important;
+    border: 1px solid var(--saas-border-subtle) !important;
+    border-radius: var(--saas-radius-lg) !important;
+    color: var(--saas-text-body) !important;
+}
+
+.card {
+    box-shadow: var(--saas-shadow-card) !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.card:hover {
+    border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+.card-header {
+    background-color: var(--saas-bg-header) !important;
+    border-bottom: 1px solid var(--saas-border-medium) !important;
+    color: var(--saas-text-title) !important;
+    font-weight: 600;
+    padding: 1rem 1.25rem;
+    border-top-left-radius: var(--saas-radius-lg) !important;
+    border-top-right-radius: var(--saas-radius-lg) !important;
+}
+
+.card-footer {
+    background-color: rgba(17, 24, 39, 0.75) !important;
+    border-top: 1px solid var(--saas-border-subtle) !important;
+    padding: 0.85rem 1.25rem;
+    border-bottom-left-radius: var(--saas-radius-lg) !important;
+    border-bottom-right-radius: var(--saas-radius-lg) !important;
+}
+
+/* Border accents override */
+.border-light,
+.border-top,
+.border-bottom,
+.border-start,
+.border-end {
+    border-color: var(--saas-border-subtle) !important;
+}
+
+/* ==========================================================================
+   4. BUTTONS SYSTEM (PRIMARY GOLD, SECONDARY GLASS, TINTED OUTLINES)
+   ========================================================================== */
+
+/* Primary Button (Gold/Amber with bold black text) */
+.btn-primary,
+.btn-gold {
+    background-color: var(--saas-gold) !important;
+    border: 1px solid var(--saas-gold) !important;
+    color: #000000 !important;
+    font-weight: 700 !important;
+    border-radius: var(--saas-radius-md) !important;
+    box-shadow: var(--saas-shadow-gold) !important;
+    padding: 0.55rem 1.25rem;
+    transition: all 0.2s ease !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+}
+
+.btn-primary:hover,
+.btn-gold:hover,
+.btn-primary:focus,
+.btn-gold:focus {
+    background-color: var(--saas-gold-hover) !important;
+    border-color: var(--saas-gold-hover) !important;
+    color: #000000 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(245, 158, 11, 0.45) !important;
+}
+
+/* Secondary Button (Semi-transparent luxury glass) */
+.btn-secondary,
+.btn-dark {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    color: #FFFFFF !important;
+    font-weight: 600 !important;
+    border-radius: var(--saas-radius-md) !important;
+    padding: 0.55rem 1.25rem;
+    transition: all 0.2s ease !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+}
+
+.btn-secondary:hover,
+.btn-dark:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+    color: #FFFFFF !important;
+    transform: translateY(-1px);
+}
+
+/* Outline Buttons */
+.btn-outline-primary {
+    background: transparent !important;
+    border: 1px solid var(--saas-gold) !important;
+    color: var(--saas-gold) !important;
+    font-weight: 600 !important;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--saas-gold) !important;
+    color: #000000 !important;
+}
+
+.btn-outline-secondary,
+.btn-outline-dark {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    color: var(--saas-text-body) !important;
+    font-weight: 500 !important;
+}
+
+.btn-outline-secondary:hover,
+.btn-outline-dark:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.35) !important;
+    color: #FFFFFF !important;
+}
+
+.btn-outline-warning {
+    background: rgba(245, 158, 11, 0.08) !important;
+    border: 1px solid rgba(245, 158, 11, 0.35) !important;
+    color: var(--saas-gold) !important;
+}
+
+.btn-outline-warning:hover {
+    background-color: var(--saas-gold) !important;
+    color: #000000 !important;
+}
+
+.btn-outline-danger {
+    background: rgba(239, 68, 68, 0.08) !important;
+    border: 1px solid rgba(239, 68, 68, 0.35) !important;
+    color: var(--saas-rose) !important;
+}
+
+.btn-outline-danger:hover {
+    background-color: var(--saas-rose) !important;
+    color: #FFFFFF !important;
+}
+
+.btn-outline-success {
+    background: rgba(16, 185, 129, 0.08) !important;
+    border: 1px solid rgba(16, 185, 129, 0.35) !important;
+    color: var(--saas-emerald) !important;
+}
+
+.btn-outline-success:hover {
+    background-color: var(--saas-emerald) !important;
+    color: #000000 !important;
+}
+
+.btn-outline-info {
+    background: rgba(59, 130, 246, 0.08) !important;
+    border: 1px solid rgba(59, 130, 246, 0.35) !important;
+    color: #60A5FA !important;
+}
+
+.btn-outline-info:hover {
+    background-color: var(--saas-blue) !important;
+    color: #FFFFFF !important;
+}
+
+/* ==========================================================================
+   5. FORM INPUTS & SELECTS (CRISP CONTRAST)
+   ========================================================================== */
+
+.form-control,
+.form-select {
+    background-color: var(--saas-bg-input) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: #F3F4F6 !important;
+    border-radius: var(--saas-radius-md) !important;
+    padding: 0.65rem 0.9rem !important;
+    font-size: 0.92rem;
+    transition: all 0.2s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+    background-color: var(--saas-bg-input) !important;
+    border-color: var(--saas-gold) !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.22) !important;
+    outline: none !important;
+}
+
+.form-control::placeholder {
+    color: var(--saas-text-muted) !important;
+}
+
+.form-label {
+    color: var(--saas-text-secondary) !important;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 0.4rem;
+    letter-spacing: 0.01em;
+}
+
+.input-group-text {
+    background-color: var(--saas-bg-card) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: var(--saas-text-secondary) !important;
+    border-radius: var(--saas-radius-md);
+}
+
+select option {
+    background-color: #111827 !important;
+    color: #F3F4F6 !important;
+}
+
+/* ==========================================================================
+   6. REDISEÑO TOTAL DE KPIS Y TARJETAS MÉTRICAS
+   ========================================================================== */
+
+/* Overrides for legacy metric cards using loud flat Bootstrap colors */
+.card.bg-primary,
+.card.bg-success,
+.card.bg-warning,
+.card.bg-info,
+.card.bg-dark {
+    background-color: var(--saas-bg-card) !important;
+    border: 1px solid var(--saas-border-subtle) !important;
+    border-radius: var(--saas-radius-lg) !important;
+    padding: 1.5rem !important;
+    color: var(--saas-text-body) !important;
+}
+
+/* Giant, bright white metric number (28px - 32px) */
+.card .display-5,
+.card .display-6,
+.kpi-value {
+    color: #FFFFFF !important;
+    font-size: 2rem !important; /* 32px */
+    font-weight: 700 !important;
+    letter-spacing: -0.02em !important;
+    line-height: 1.2 !important;
+    margin: 0.5rem 0 !important;
+}
+
+/* KPI Custom Component Styles */
+.kpi-card {
+    background-color: var(--saas-bg-card) !important;
+    border: 1px solid var(--saas-border-subtle) !important;
+    border-radius: var(--saas-radius-lg) !important;
+    padding: 1.5rem !important;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.5) !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.kpi-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.kpi-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--saas-text-secondary) !important;
+    margin: 0;
+}
+
+.kpi-subtitle {
+    font-size: 0.8rem;
+    color: var(--saas-text-secondary);
+    margin: 0;
+}
+
+/* Circular Icon Container with Opacity */
+.kpi-icon-wrapper {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.kpi-icon-amber {
+    background: rgba(245, 158, 11, 0.15) !important;
+    color: var(--saas-gold) !important;
+    border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.kpi-icon-emerald {
+    background: rgba(16, 185, 129, 0.15) !important;
+    color: var(--saas-emerald) !important;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.kpi-icon-blue {
+    background: rgba(59, 130, 246, 0.15) !important;
+    color: #60A5FA !important;
+    border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+.kpi-icon-rose {
+    background: rgba(239, 68, 68, 0.15) !important;
+    color: var(--saas-rose) !important;
+    border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.kpi-icon-purple {
+    background: rgba(168, 85, 247, 0.15) !important;
+    color: #C084FC !important;
+    border: 1px solid rgba(168, 85, 247, 0.25);
+}
+
+/* ==========================================================================
+   7. TABLES & LISTADOS (DARK LUXURY DATA GRID)
+   ========================================================================== */
+
+.table-responsive {
+    border-radius: var(--saas-radius-lg);
+    background-color: var(--saas-bg-card);
+}
+
+.table {
+    --bs-table-bg: transparent !important;
+    --bs-table-color: #E2E8F0 !important;
+    --bs-table-striped-bg: rgba(255, 255, 255, 0.02) !important;
+    --bs-table-hover-bg: var(--saas-bg-card-hover) !important;
+    --bs-table-border-color: var(--saas-border-medium) !important;
+    color: #E2E8F0 !important;
+    border-color: var(--saas-border-medium) !important;
+    margin-bottom: 0 !important;
+    width: 100%;
+}
+
+.table thead,
+.table thead.table-light,
+.table thead.table-dark {
+    background-color: var(--saas-bg-header) !important;
+    border-bottom: 2px solid var(--saas-border-medium) !important;
+}
+
+.table thead th {
+    background-color: var(--saas-bg-header) !important;
+    color: var(--saas-text-secondary) !important;
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.07em !important;
+    text-transform: uppercase !important;
+    padding: 0.9rem 1.1rem !important;
+    border-color: var(--saas-border-medium) !important;
+    white-space: nowrap;
+}
+
+.table tbody tr {
+    background-color: var(--saas-bg-card) !important;
+    border-bottom: 1px solid var(--saas-border-medium) !important;
+    transition: background-color 0.15s ease !important;
+}
+
+.table tbody tr:hover,
+.table-hover tbody tr:hover {
+    background-color: var(--saas-bg-card-hover) !important;
+}
+
+/* ── CORE FIX: Todo texto dentro de <td> en tono claro de alto contraste ── */
+.table tbody td {
+    background-color: transparent !important;
+    color: #E2E8F0 !important;
+    border-color: var(--saas-border-medium) !important;
+    padding: 1rem 1.1rem !important;
+    vertical-align: middle !important;
+}
+
+/* Forzar herencia en TODOS los elementos hijos de td (divs, spans, p, etc.) */
+.table tbody td > *,
+.table tbody td .text-wrap,
+.table tbody td .text-body {
+    color: inherit !important;
+}
+
+/* Neutralizar clases Bootstrap de texto oscuro/apagado dentro de las celdas */
+.table tbody td .fw-semibold,
+.table tbody td .fw-bold,
+.table tbody td span:not(.badge):not([class*="text-"]) {
+    color: #E2E8F0 !important;
+}
+
+/* ── Textos secundarios / metadatos / IDs dentro de td ── */
+/* Aplica a: small, .text-secondary, timestamps y subtextos de celda */
+.table tbody td small,
+.table tbody td .text-secondary,
+.table tbody td .text-muted {
+    color: #9CA3AF !important;
+}
+
+/* ── Timestamps / Fecha y hora (text-secondary en td) ── */
+/* Permite leer fechas con contraste suficiente sin ser tan brillantes como el body */
+.table tbody td.fw-semibold {
+    color: #E2E8F0 !important;
+}
+
+/* Iconos muted dentro de las celdas: levemente más visibles */
+.table tbody td .text-muted.bi,
+.table tbody td i.text-muted {
+    color: #9CA3AF !important;
+    opacity: 1 !important;
+}
+
+.table tbody tr:last-child {
+    border-bottom: none !important;
+}
+
+/* ==========================================================================
+   8. STATUS BADGES (PILL BADGE SYSTEM CON 15% OPACIDAD)
+   ========================================================================== */
+
+.badge {
+    font-weight: 600 !important;
+    letter-spacing: 0.03em !important;
+    padding: 0.38em 0.8em !important;
+    border-radius: 9999px !important;
+    font-size: 0.75rem !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+/* Active / Created / Success / Completed */
+.badge.bg-success,
+.badge.bg-success-subtle,
+.badge-active {
+    background: rgba(16, 185, 129, 0.15) !important;
+    color: #10B981 !important;
+    border: 1px solid rgba(16, 185, 129, 0.35) !important;
+}
+
+/* Inactive / Error / Delete / Cancelled */
+.badge.bg-danger,
+.badge.bg-danger-subtle,
+.badge-inactive {
+    background: rgba(239, 68, 68, 0.15) !important;
+    color: #EF4444 !important;
+    border: 1px solid rgba(239, 68, 68, 0.35) !important;
+}
+
+/* Pending / Warning / Edit */
+.badge.bg-warning,
+.badge.bg-warning-subtle,
+.badge-pending {
+    background: rgba(245, 158, 11, 0.15) !important;
+    color: #F59E0B !important;
+    border: 1px solid rgba(245, 158, 11, 0.35) !important;
+}
+
+/* Info / Roles / Tenant Plans */
+.badge.bg-info,
+.badge.bg-info-subtle,
+.badge-info {
+    background: rgba(59, 130, 246, 0.15) !important;
+    color: #60A5FA !important;
+    border: 1px solid rgba(59, 130, 246, 0.35) !important;
+}
+
+/* Secondary / Dark / General */
+.badge.bg-secondary,
+.badge.bg-dark {
+    background: rgba(156, 163, 175, 0.15) !important;
+    color: #D1D5DB !important;
+    border: 1px solid rgba(156, 163, 175, 0.25) !important;
+}
+
+.badge.bg-light {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #FFFFFF !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+/* ==========================================================================
+   9. EMPTY STATES ELEGANTES ("NO HAY DATOS")
+   ========================================================================== */
+
+.empty-state {
+    background: rgba(31, 41, 55, 0.4) !important;
+    border: 1px dashed var(--saas-border-medium) !important;
+    border-radius: var(--saas-radius-lg) !important;
+    padding: 3.5rem 2rem !important;
+    text-align: center !important;
+    margin: 1.5rem 0 !important;
+}
+
+.empty-state-icon {
+    font-size: 3rem !important;
+    color: #6B7280 !important;
+    opacity: 0.75;
+    margin-bottom: 1rem;
+    display: inline-block;
+}
+
+.empty-state-title {
+    font-size: 1.2rem !important;
+    font-weight: 600 !important;
+    color: #FFFFFF !important;
+    margin-bottom: 0.4rem !important;
+}
+
+.empty-state-desc {
+    color: var(--saas-text-secondary) !important;
+    font-size: 0.92rem !important;
+    max-width: 450px;
+    margin: 0 auto !important;
+}
+
+/* Table empty state fallback */
+.table td.text-center.py-4,
+.table td.text-center.py-3 {
+    background-color: rgba(31, 41, 55, 0.3) !important;
+    color: var(--saas-text-secondary) !important;
+    font-style: normal !important;
+    padding: 2.75rem 1.5rem !important;
+}
+
+/* ==========================================================================
+   10. SIDEBAR & NAVIGATION STRUCTURE
    ========================================================================== */
 
 .saas-wrapper {
@@ -75,12 +713,14 @@ body {
     height: 100vh;
     z-index: 1040;
     overflow-y: auto;
+    background-color: var(--saas-bg-sidebar) !important;
+    border-right: 1px solid var(--saas-border-subtle);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sidebar-dark {
-    background-color: var(--saas-sidebar-bg) !important;
-    border-right: 1px solid var(--saas-border-dark);
+    background-color: var(--saas-bg-sidebar) !important;
+    border-right: 1px solid var(--saas-border-subtle);
 }
 
 .saas-content {
@@ -88,6 +728,7 @@ body {
     width: 100%;
     min-height: 100vh;
     transition: padding 0.3s ease;
+    background-color: var(--saas-bg-body);
 }
 
 .has-sidebar {
@@ -96,23 +737,19 @@ body {
 
 .sidebar-divider {
     height: 1px;
-    background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0) 100%);
+    background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0) 100%);
 }
-
-/* ==========================================================================
-   COMPONENTES DEL MENÚ LATERAL
-   ========================================================================== */
 
 .brand-card {
     background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--saas-border-subtle);
     transition: all 0.3s ease;
 }
 
-    .brand-card:hover {
-        border-color: var(--saas-blue);
-        box-shadow: 0 0 15px var(--saas-glow);
-    }
+.brand-card:hover {
+    border-color: var(--saas-gold);
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
+}
 
 .brand-icon-wrapper {
     width: 38px;
@@ -122,17 +759,19 @@ body {
     align-items: center;
     justify-content: center;
     font-size: 1.2rem;
+    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%) !important;
+    color: #000000 !important;
 }
 
 .nav-header {
     font-size: 0.68rem;
     font-weight: 800;
     letter-spacing: 0.08em;
-    color: #64748b;
+    color: var(--saas-text-muted);
 }
 
 .custom-nav-list .nav-link {
-    color: #94a3b8;
+    color: var(--saas-text-secondary);
     font-weight: 600;
     font-size: 0.92rem;
     padding: 0.65rem 1rem;
@@ -140,43 +779,40 @@ body {
     transition: all 0.2s ease;
 }
 
-    .custom-nav-list .nav-link i {
-        font-size: 1.1rem;
-        transition: transform 0.2s ease;
-    }
+.custom-nav-list .nav-link i {
+    font-size: 1.1rem;
+    transition: transform 0.2s ease;
+}
 
-    .custom-nav-list .nav-link:hover {
-        color: #ffffff;
-        background: rgba(255, 255, 255, 0.06);
-        transform: translateX(4px);
-    }
+.custom-nav-list .nav-link:hover {
+    color: #FFFFFF;
+    background: rgba(255, 255, 255, 0.06);
+    transform: translateX(4px);
+}
 
-        .custom-nav-list .nav-link:hover i {
-            transform: scale(1.15);
-        }
+.custom-nav-list .nav-link:hover i {
+    transform: scale(1.15);
+}
 
-    .custom-nav-list .nav-link.active {
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-        color: #ffffff !important;
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
-    }
-
-.nav-super-link:hover {
-    background: rgba(59, 130, 246, 0.12) !important;
+.custom-nav-list .nav-link.active {
+    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%) !important;
+    color: #000000 !important;
+    font-weight: 700;
+    box-shadow: var(--saas-shadow-gold);
 }
 
 /* User Card Bottom Sidebar */
 .user-card-sidebar {
-    background: rgba(15, 23, 42, 0.8);
-    border: 1px solid var(--saas-border-dark);
+    background: rgba(31, 41, 55, 0.6);
+    border: 1px solid var(--saas-border-subtle);
 }
 
 .avatar-circle {
     width: 34px;
     height: 34px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-    color: white;
+    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+    color: #000000;
     font-weight: 800;
     display: flex;
     align-items: center;
@@ -184,55 +820,111 @@ body {
     font-size: 0.85rem;
 }
 
+/* Top Navbar (For Superior Layout) */
+.navbar-dark {
+    background-color: var(--saas-bg-sidebar) !important;
+    border-bottom: 1px solid var(--saas-border-subtle) !important;
+}
+
 /* ==========================================================================
-   FOOTER & NOTIFICACIONES
+   11. MODALES, DROPDOWNS & ALERTS
+   ========================================================================== */
+
+.modal-content {
+    background-color: var(--saas-bg-card) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: var(--saas-radius-lg) !important;
+    color: var(--saas-text-body) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7) !important;
+}
+
+.modal-header {
+    background-color: var(--saas-bg-header) !important;
+    border-bottom: 1px solid var(--saas-border-medium) !important;
+    color: #FFFFFF !important;
+}
+
+.modal-footer {
+    background-color: var(--saas-bg-header) !important;
+    border-top: 1px solid var(--saas-border-medium) !important;
+}
+
+.dropdown-menu {
+    background-color: var(--saas-bg-card) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: var(--saas-radius-md) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
+}
+
+.dropdown-item {
+    color: var(--saas-text-body) !important;
+    padding: 0.55rem 1rem !important;
+    font-size: 0.9rem;
+    transition: background 0.15s ease;
+}
+
+.dropdown-item:hover {
+    background-color: var(--saas-bg-card-hover) !important;
+    color: #FFFFFF !important;
+}
+
+/* Elegant Soft Alerts */
+.alert {
+    border-radius: var(--saas-radius-md);
+    padding: 1rem 1.25rem;
+    font-weight: 500;
+}
+
+.alert-danger {
+    background-color: rgba(239, 68, 68, 0.12) !important;
+    border: 1px solid rgba(239, 68, 68, 0.3) !important;
+    color: #FCA5A5 !important;
+}
+
+.alert-success {
+    background-color: rgba(16, 185, 129, 0.12) !important;
+    border: 1px solid rgba(16, 185, 129, 0.3) !important;
+    color: #6EE7B7 !important;
+}
+
+.alert-warning {
+    background-color: rgba(245, 158, 11, 0.12) !important;
+    border: 1px solid rgba(245, 158, 11, 0.3) !important;
+    color: #FCD34D !important;
+}
+
+.alert-info {
+    background-color: rgba(59, 130, 246, 0.12) !important;
+    border: 1px solid rgba(59, 130, 246, 0.3) !important;
+    color: #93C5FD !important;
+}
+
+/* ==========================================================================
+   12. FOOTER & NOTIFICACIONES
    ========================================================================== */
 
 .footer-saas {
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(12px);
+    background: rgba(11, 15, 23, 0.85) !important;
+    border-top: 1px solid var(--saas-border-subtle) !important;
 }
 
 .footer-dark {
-    background: rgba(9, 13, 22, 0.85) !important;
-    border-top: 1px solid var(--saas-border-dark) !important;
+    background: rgba(11, 15, 23, 0.85) !important;
+    border-top: 1px solid var(--saas-border-subtle) !important;
 }
 
 .btn-dark-glass {
-    background: rgba(15, 23, 42, 0.75);
-    border: 1px solid var(--saas-border-dark);
+    background: rgba(31, 41, 55, 0.75);
+    border: 1px solid var(--saas-border-subtle);
     backdrop-filter: blur(10px);
     transition: all 0.3s ease;
 }
 
-    .btn-dark-glass:hover {
-        background: rgba(30, 41, 59, 0.9);
-        border-color: var(--saas-blue);
-        transform: translateY(-2px);
-    }
-
-/* ==========================================================================
-   UTILIDADES VISUALES Y TEXTOS
-   ========================================================================== */
-
-.text-primary-glow {
-    color: #60a5fa;
-    text-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
-}
-
-.text-cyan {
-    color: var(--saas-cyan) !important;
-}
-
-.fw-extrabold {
-    font-weight: 800;
-}
-
-.fs-7 {
-    font-size: 0.82rem;
-}
-
-.fs-8 {
-    font-size: 0.72rem;
+.btn-dark-glass:hover {
+    background: rgba(37, 51, 70, 0.9);
+    border-color: var(--saas-gold);
+    transform: translateY(-2px);
 }
 
 /* Scrollbar Personalizada */
@@ -242,20 +934,20 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-    background: #090d16;
+    background: #0B0F17;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #1e293b;
+    background: #1F2937;
     border-radius: 4px;
 }
 
-    ::-webkit-scrollbar-thumb:hover {
-        background: #334155;
-    }
+::-webkit-scrollbar-thumb:hover {
+    background: #374151;
+}
 
 /* ==========================================================================
-   ADAPTATIVO / RESPONSIVE (MÓVILES)
+   13. ADAPTATIVO / RESPONSIVE (MÓVILES)
    ========================================================================== */
 
 @media (max-width: 768px) {
@@ -278,4 +970,40 @@ body {
     .footer-saas {
         padding-left: 0 !important;
     }
+}
+
+/* ==========================================================================
+   14. LIST GROUPS & INTERACTIVE COMPONENTS
+   ========================================================================== */
+
+.list-group {
+    border-radius: var(--saas-radius-lg);
+    background-color: var(--saas-bg-card);
+}
+
+.list-group-item {
+    background-color: var(--saas-bg-card) !important;
+    color: var(--saas-text-body) !important;
+    border-color: var(--saas-border-medium) !important;
+    padding: 1rem 1.25rem !important;
+    transition: background-color 0.15s ease;
+}
+
+.list-group-item:hover {
+    background-color: var(--saas-bg-card-hover) !important;
+}
+
+.list-group-item.active {
+    background-color: var(--saas-gold) !important;
+    border-color: var(--saas-gold) !important;
+    color: #000000 !important;
+}
+
+.btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+    opacity: 0.7;
+}
+
+.btn-close:hover {
+    opacity: 1;
 }

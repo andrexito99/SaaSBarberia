@@ -7,15 +7,22 @@
 }
 
 <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="fw-bold text-dark">📅 Agenda de Citas</h2>
-        <a asp-action="Create" class="btn btn-primary px-4 fw-semibold">⚡ Agendar Nueva Cita</a>
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold text-white m-0 d-flex align-items-center gap-2">
+                <i class="bi bi-calendar-event text-warning"></i> Agenda de Citas
+            </h2>
+            <p class="text-secondary small mb-0 mt-1">Control de turnos, horarios y estados de atención</p>
+        </div>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle-fill"></i> Agendar Nueva Cita
+        </a>
     </div>
 
-    <div class="card shadow-sm border-0 p-3" data-listing>
+    <div class="card p-3" data-listing>
         <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
+            <table class="table align-middle mb-0">
+                <thead>
                     <tr>
                         <th>Cliente</th>
                         <th>Barbería</th>
@@ -37,78 +44,105 @@
                     @if (!Model.Any())
                     {
                         <tr>
-                            <td colspan="8" class="text-center text-muted py-4">No hay citas agendadas todavía.</td>
+                            <td colspan="8" class="text-center py-5">
+                                <div class="empty-state border-0 my-0 py-3">
+                                    <div class="empty-state-icon">
+                                        <i class="bi bi-calendar-x"></i>
+                                    </div>
+                                    <h5 class="empty-state-title">No hay citas agendadas</h5>
+                                    <p class="empty-state-desc">Actualmente no existen turnos programados en el calendario.</p>
+                                </div>
+                            </td>
                         </tr>
                     }
-                    @foreach (var item in Model)
+                    else
                     {
-                        <tr>
-                            <td class="fw-bold">@item.Cliente?.Nombre</td>
-                            <td>@item.Tenant?.NombreNegocio</td>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="fw-bold text-white">@item.Cliente?.Nombre</td>
+                                <td>@item.Tenant?.NombreNegocio</td>
 
-                            <td>
-                                @if (item.Barbero?.Usuario != null)
-                                {
-                                    <span class="fw-semibold text-dark">✨ @item.Barbero.Usuario.Nombre</span>
-                                }
-                                else
-                                {
-                                    <span class="text-muted small">No asignado</span>
-                                }
-                            </td>
-
-                            <td>@item.Servicio?.Nombre</td>
-                            <td>@item.FechaHora.ToString("dd/MM/yyyy hh:mm tt")</td>
-                            <td>
-                                @if (item.Estado == "Pendiente")
-                                {
-                                    <span class="badge bg-warning text-dark">Pendiente</span>
-                                }
-                                else if (item.Estado == "Completada")
-                                {
-                                    <span class="badge bg-success">Completada</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-danger">Cancelada</span>
-                                }
-                            </td>
-
-                            @* 🌟 BOTÓN DE AUTOGESTIÓN PARA CLIENTES (Solo si está Pendiente) *@
-                            @if (User.IsInRole("Cliente"))
-                            {
-                                <td class="text-center">
-                                    @if (item.Estado == "Pendiente")
+                                <td>
+                                    @if (item.Barbero?.Usuario != null)
                                     {
-                                        <form asp-action="Cancelar" asp-route-id="@item.Id" method="post" onsubmit="return confirm('¿En serio vas a cancelar esta monda de cita?');" style="display:inline;">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger fw-semibold py-1 px-2" style="font-size: 0.8rem;">
-                                                ❌ Cancelar
-                                            </button>
-                                        </form>
+                                        <span class="fw-semibold text-white">
+                                            <i class="bi bi-person-badge text-warning me-1"></i>@item.Barbero.Usuario.Nombre
+                                        </span>
                                     }
                                     else
                                     {
-                                        <span class="text-muted small">-</span>
+                                        <span class="text-secondary small">No asignado</span>
                                     }
                                 </td>
-                            }
 
-                            @if (User.IsInRole("SuperAdmin") || User.IsInRole("Administrador") || User.IsInRole("Barbero"))
-                            {
-                                <td class="text-center">
-                                    <div class="btn-group btn-group-sm">
-                                        @if (User.IsInRole("Barbero") && item.Barbero?.UsuarioId == usuarioActualId && item.Estado == "Pendiente")
+                                <td class="text-white">@item.Servicio?.Nombre</td>
+                                <td class="text-secondary">
+                                    <i class="bi bi-clock me-1 text-muted"></i>@item.FechaHora.ToString("dd/MM/yyyy hh:mm tt")
+                                </td>
+                                <td>
+                                    @if (item.Estado == "Pendiente")
+                                    {
+                                        <span class="badge bg-warning">
+                                            <i class="bi bi-hourglass-split"></i> Pendiente
+                                        </span>
+                                    }
+                                    else if (item.Estado == "Completada")
+                                    {
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check-circle-fill"></i> Completada
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-x-circle-fill"></i> Cancelada
+                                        </span>
+                                    }
+                                </td>
+
+                                @* 🌟 BOTÓN DE AUTOGESTIÓN PARA CLIENTES *@
+                                @if (User.IsInRole("Cliente"))
+                                {
+                                    <td class="text-center">
+                                        @if (item.Estado == "Pendiente")
                                         {
-                                            <form asp-action="Completar" asp-route-id="@item.Id" method="post" class="d-inline">
-                                                <button type="submit" class="btn btn-success" title="Completar cita">Completar</button>
+                                            <form asp-action="Cancelar" asp-route-id="@item.Id" method="post" onsubmit="return confirm('¿Está seguro de cancelar esta cita agendada?');" style="display:inline;">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    <i class="bi bi-x-lg"></i> Cancelar
+                                                </button>
                                             </form>
                                         }
-                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-light border text-primary">✏️</a>
-                                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-light border text-danger">🗑️</a>
-                                    </div>
-                                </td>
-                            }
-                        </tr>
+                                        else
+                                        {
+                                            <span class="text-secondary small">-</span>
+                                        }
+                                    </td>
+                                }
+
+                                @if (User.IsInRole("SuperAdmin") || User.IsInRole("Administrador") || User.IsInRole("Barbero"))
+                                {
+                                    <td class="text-center">
+                                        <div class="d-inline-flex gap-1">
+                                            @if (User.IsInRole("Barbero") && item.Barbero?.UsuarioId == usuarioActualId && item.Estado == "Pendiente")
+                                            {
+                                                <form asp-action="Completar" asp-route-id="@item.Id" method="post" class="d-inline">
+                                                    <button type="submit" class="btn btn-sm btn-outline-success" title="Completar cita">
+                                                        <i class="bi bi-check2"></i> Completar
+                                                    </button>
+                                                </form>
+                                            }
+                                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-warning" title="Editar">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                }
+                            </tr>
+                        }
                     }
                 </tbody>
             </table>

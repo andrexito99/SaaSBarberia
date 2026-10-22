@@ -1,65 +1,120 @@
-﻿@model SaaSBarberia.Models.SuperAdminDashboardViewModel
+@model SaaSBarberia.Models.SuperAdminDashboardViewModel
 
 @{
     ViewData["Title"] = "Panel de Control Global";
 }
 
 <div class="container-fluid mt-3">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold text-dark m-0">👑 Panel de Control Global (SuperAdmin)</h2>
-        <span class="badge bg-dark px-3 py-2 fs-6">Consolidado General</span>
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold text-white m-0 d-flex align-items-center gap-2">
+                <span>👑 Panel de Control Global</span>
+            </h2>
+            <p class="text-secondary small mb-0 mt-1">Supervisión centralizada y analítica en tiempo real de todas las sedes del SaaS</p>
+        </div>
+        <span class="badge bg-secondary px-3 py-2 fs-7">
+            <i class="bi bi-shield-check me-1 text-warning"></i> Modo SuperAdmin
+        </span>
     </div>
 
+    <!-- ⚡ KPIS MÉTRICOS UNIFICADOS (DARK LUXURY) -->
     <div class="row g-3 mb-4">
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm bg-primary text-white p-3 h-100">
-                <small class="text-white-50 uppercase fw-bold">Total Barberías</small>
-                <h1 class="fw-bold display-5 my-2">@Model.TotalTenants</h1>
-                <small>Registradas en total</small>
+        <!-- Total Barberías -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <span class="kpi-title">Total Barberías</span>
+                    <div class="kpi-icon-wrapper kpi-icon-blue">
+                        <i class="bi bi-shop"></i>
+                    </div>
+                </div>
+                <div class="kpi-value">@Model.TotalTenants</div>
+                <div class="kpi-subtitle">
+                    <span class="text-secondary">Sedes registradas en el sistema</span>
+                </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm bg-success text-white p-3 h-100">
-                <small class="text-white-50 uppercase fw-bold">Sedes Activas</small>
-                <h1 class="fw-bold display-5 my-2">@Model.TenantsActivos</h1>
-                <small>Operando actualmente</small>
+
+        <!-- Sedes Activas -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <span class="kpi-title">Sedes Activas</span>
+                    <div class="kpi-icon-wrapper kpi-icon-emerald">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                </div>
+                <div class="kpi-value text-white">@Model.TenantsActivos</div>
+                <div class="kpi-subtitle">
+                    <span class="text-success"><i class="bi bi-broadcast me-1"></i>Operando en línea</span>
+                </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm bg-warning text-dark p-3 h-100">
-                <small class="text-dark-50 uppercase fw-bold">Usuarios Totales</small>
-                <h1 class="fw-bold display-5 my-2">@Model.TotalUsuarios</h1>
-                <small>Cuentas en el sistema</small>
+
+        <!-- Usuarios Totales -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <span class="kpi-title">Usuarios Totales</span>
+                    <div class="kpi-icon-wrapper kpi-icon-amber">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                </div>
+                <div class="kpi-value text-white">@Model.TotalUsuarios</div>
+                <div class="kpi-subtitle">
+                    <span class="text-secondary">Cuentas activas registradas</span>
+                </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm bg-dark text-white p-3 h-100">
-                <small class="text-white-50 uppercase fw-bold">Suscripción Mensual Est.</small>
-                <h1 class="fw-bold fs-2 my-2">$@Model.RecaudacionEstimada.ToString("N0")</h1>
-                <small>COP mensual proyectado</small>
+
+        <!-- Suscripción Mensual Est. -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <span class="kpi-title">Recaudación Proyectada</span>
+                    <div class="kpi-icon-wrapper kpi-icon-emerald">
+                        <i class="bi bi-cash-stack"></i>
+                    </div>
+                </div>
+                <div class="kpi-value text-white">$@Model.RecaudacionEstimada.ToString("N0")</div>
+                <div class="kpi-subtitle">
+                    <span class="text-secondary">COP mensual recurrente (MRR)</span>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- 📊 GRÁFICOS Y TABLA DE ÚLTIMAS BARBERÍAS -->
     <div class="row g-4">
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm p-3 h-100">
-                <h5 class="fw-bold text-dark mb-3">📦 Distribución de Planes</h5>
-                <div style="position: relative; height:250px; width:100%">
+        <!-- Distribución de Planes -->
+        <div class="col-12 col-lg-4">
+            <div class="card h-100 p-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold text-white mb-0 d-flex align-items-center gap-2">
+                        <i class="bi bi-pie-chart-fill text-warning"></i> Distribución de Planes
+                    </h5>
+                    <span class="badge bg-secondary">Global</span>
+                </div>
+                <div style="position: relative; height:260px; width:100%" class="d-flex align-items-center justify-content-center">
                     <canvas id="chartPlanes"></canvas>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-8">
-            <div class="card border-0 shadow-sm p-3 h-100">
+        <!-- Tabla Últimas Barberías -->
+        <div class="col-12 col-lg-8">
+            <div class="card h-100 p-3">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="fw-bold text-dark m-0">🏢 Últimas Barberías Registradas</h5>
-                    <a asp-action="Index" class="btn btn-sm btn-outline-dark fw-semibold">Ver todas</a>
+                    <h5 class="fw-bold text-white m-0 d-flex align-items-center gap-2">
+                        <i class="bi bi-building-fill-gear text-info"></i> Últimas Barberías Registradas
+                    </h5>
+                    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+                        Ver todas <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
+                    <table class="table align-middle">
+                        <thead>
                             <tr>
                                 <th>Negocio</th>
                                 <th>Subdominio</th>
@@ -69,19 +124,32 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var tenant in Model.UltimosTenants)
+                            @if (Model.UltimosTenants == null || !Model.UltimosTenants.Any())
                             {
                                 <tr>
-                                    <td class="fw-bold">@tenant.NombreNegocio</td>
-                                    <td><code>@tenant.Subdominio</code></td>
-                                    <td><span class="badge bg-info text-dark">@tenant.PlanSuscripcion</span></td>
-                                    <td>
-                                        <span class="badge @(tenant.Activo == true ? "bg-success" : "bg-danger")">
-                                            @(tenant.Activo == true ? "Activo" : "Inactivo")
-                                        </span>
+                                    <td colspan="5" class="text-center py-4 text-secondary">
+                                        <i class="bi bi-inbox fs-3 d-block mb-2 text-muted"></i>
+                                        No hay barberías registradas aún.
                                     </td>
-                                    <td class="text-muted small">@tenant.FechaRegistro?.ToString("dd/MM/yyyy")</td>
                                 </tr>
+                            }
+                            else
+                            {
+                                @foreach (var tenant in Model.UltimosTenants)
+                                {
+                                    <tr>
+                                        <td class="fw-bold text-white">@tenant.NombreNegocio</td>
+                                        <td><code>@tenant.Subdominio</code></td>
+                                        <td><span class="badge bg-info">@tenant.PlanSuscripcion</span></td>
+                                        <td>
+                                            <span class="badge @(tenant.Activo == true ? "bg-success" : "bg-danger")">
+                                                <i class="bi @(tenant.Activo == true ? "bi-check-circle" : "bi-x-circle")"></i>
+                                                @(tenant.Activo == true ? "Activo" : "Inactivo")
+                                            </span>
+                                        </td>
+                                        <td class="text-secondary small">@tenant.FechaRegistro?.ToString("dd/MM/yyyy")</td>
+                                    </tr>
+                                }
                             }
                         </tbody>
                     </table>
@@ -94,30 +162,38 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Serializamos los datos dictados por C# a formato JSON nativo de JS
         const datosPlanes = @Html.Raw(Json.Serialize(Model.DatosPlanes));
-
         const labels = Object.keys(datosPlanes);
         const dataValues = Object.values(datosPlanes);
 
         const ctx = document.getElementById('chartPlanes').getContext('2d');
         new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-        labels: labels,
-        datasets: [{
-        data: dataValues,
-        backgroundColor: ['#ffc107', '#0dc6fd', '#198754', '#6c757d'],
-        borderWidth: 2
-        }]
-        },
-        options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-        legend: { position: 'bottom' }
-        }
-        }
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: dataValues,
+                    backgroundColor: ['#F59E0B', '#3B82F6', '#10B981', '#8B5CF6'],
+                    borderColor: '#1F2937',
+                    borderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#9CA3AF',
+                            font: { family: "'Plus Jakarta Sans', sans-serif", size: 12 },
+                            padding: 16,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    }
+                }
+            }
         });
     </script>
 }

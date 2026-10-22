@@ -69,7 +69,13 @@ namespace SaaSBarberia.Controllers
             var herramientas = await _alquileresService.GetHerramientasDisponiblesAsync(CurrentTenantId);
             var barberos = await _alquileresService.GetBarberosAsync(CurrentTenantId);
 
-            ViewData["HerramientaId"] = new SelectList(herramientas, "Id", "Nombre");
+            var herramientasSelect = herramientas.Select(h => new {
+                Id = h.Id,
+                Nombre = string.IsNullOrEmpty(h.NumeroSerie) 
+                    ? $"{h.Nombre} ({(string.IsNullOrEmpty(h.Marca) ? "General" : h.Marca)})" 
+                    : $"{h.Nombre} ({(string.IsNullOrEmpty(h.Marca) ? "General" : h.Marca)}) - #{h.NumeroSerie}"
+            });
+            ViewData["HerramientaId"] = new SelectList(herramientasSelect, "Id", "Nombre");
 
             var barberosSelect = barberos.Select(b => new {
                 Id = b.Id,
@@ -96,7 +102,13 @@ namespace SaaSBarberia.Controllers
             var herramientas = await _alquileresService.GetHerramientasDisponiblesAsync(CurrentTenantId);
             var barberos = await _alquileresService.GetBarberosAsync(CurrentTenantId);
 
-            ViewData["HerramientaId"] = new SelectList(herramientas, "Id", "Nombre", alquiler.HerramientaId);
+            var herramientasSelect = herramientas.Select(h => new {
+                Id = h.Id,
+                Nombre = string.IsNullOrEmpty(h.NumeroSerie) 
+                    ? $"{h.Nombre} ({(string.IsNullOrEmpty(h.Marca) ? "General" : h.Marca)})" 
+                    : $"{h.Nombre} ({(string.IsNullOrEmpty(h.Marca) ? "General" : h.Marca)}) - #{h.NumeroSerie}"
+            });
+            ViewData["HerramientaId"] = new SelectList(herramientasSelect, "Id", "Nombre", alquiler.HerramientaId);
 
             var barberosSelect = barberos.Select(b => new {
                 Id = b.Id,
@@ -119,7 +131,13 @@ namespace SaaSBarberia.Controllers
             var herramientas = await _alquileresService.GetHerramientasDisponiblesAsync(CurrentTenantId, alquiler.HerramientaId);
             var barberos = await _alquileresService.GetBarberosAsync(CurrentTenantId);
 
-            ViewData["HerramientaId"] = new SelectList(herramientas, "Id", "Nombre", alquiler.HerramientaId);
+            var herramientasEditSelect = herramientas.Select(h => new {
+                Id = h.Id,
+                Nombre = string.IsNullOrEmpty(h.NumeroSerie) 
+                    ? $"{h.Nombre} ({(string.IsNullOrEmpty(h.Marca) ? "General" : h.Marca)})" 
+                    : $"{h.Nombre} ({(string.IsNullOrEmpty(h.Marca) ? "General" : h.Marca)}) - #{h.NumeroSerie}"
+            });
+            ViewData["HerramientaId"] = new SelectList(herramientasEditSelect, "Id", "Nombre", alquiler.HerramientaId);
 
             var barberosSelect = barberos.Select(b => new {
                 Id = b.Id,
@@ -155,7 +173,13 @@ namespace SaaSBarberia.Controllers
             var herramientas = await _alquileresService.GetHerramientasDisponiblesAsync(CurrentTenantId, alquiler.HerramientaId);
             var barberos = await _alquileresService.GetBarberosAsync(CurrentTenantId);
 
-            ViewData["HerramientaId"] = new SelectList(herramientas, "Id", "Nombre", alquiler.HerramientaId);
+            var herramientasPostSelect = herramientas.Select(h => new {
+                Id = h.Id,
+                Nombre = string.IsNullOrEmpty(h.NumeroSerie) 
+                    ? $"{h.Nombre} ({(string.IsNullOrEmpty(h.Marca) ? "General" : h.Marca)})" 
+                    : $"{h.Nombre} ({(string.IsNullOrEmpty(h.Marca) ? "General" : h.Marca)}) - #{h.NumeroSerie}"
+            });
+            ViewData["HerramientaId"] = new SelectList(herramientasPostSelect, "Id", "Nombre", alquiler.HerramientaId);
 
             var barberosSelect = barberos.Select(b => new {
                 Id = b.Id,

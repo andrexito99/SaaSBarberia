@@ -4,46 +4,73 @@
     ViewData["Title"] = "Editar Herramienta";
 }
 
-<h1>Editar Herramienta</h1>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+<div class="container mt-4" style="max-width: 650px;">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold text-white m-0 d-flex align-items-center gap-2">
+                <i class="bi bi-pencil-square text-warning"></i> Editar Herramienta
+            </h2>
+            <p class="text-secondary small mb-0 mt-1">Actualiza los datos de la máquina #@Model.Id en el inventario</p>
+        </div>
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Volver al listado
+        </a>
+    </div>
+
+    <div class="card p-4 p-md-5">
+        <form asp-action="Edit" method="post" autocomplete="off">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger small p-2 mb-3"></div>
             <input type="hidden" asp-for="Id" />
 
-            <div class="form-group mb-3">
-                <label asp-for="Nombre" class="control-label"></label>
-                <input asp-for="Nombre" class="form-control" />
-                <span asp-validation-for="Nombre" class="text-danger"></span>
+            <!-- Nombre -->
+            <div class="mb-3">
+                <label asp-for="Nombre" class="form-label">
+                    <i class="bi bi-tag-fill me-1 text-warning"></i> Nombre del Equipo *
+                </label>
+                <input asp-for="Nombre" class="form-control" required />
+                <span asp-validation-for="Nombre" class="text-danger small"></span>
             </div>
 
-            <div class="form-group mb-3">
-                <label asp-for="Marca" class="control-label"></label>
+            <!-- Marca -->
+            <div class="mb-3">
+                <label asp-for="Marca" class="form-label">
+                    <i class="bi bi-award me-1 text-warning"></i> Marca / Fabricante
+                </label>
                 <input asp-for="Marca" class="form-control" />
-                <span asp-validation-for="Marca" class="text-danger"></span>
+                <span asp-validation-for="Marca" class="text-danger small"></span>
             </div>
 
-            <div class="form-group mb-3">
-                <label asp-for="NumeroSerie" class="control-label">Número de Serie</label>
+            <!-- Número de Serie -->
+            <div class="mb-3">
+                <label asp-for="NumeroSerie" class="form-label">
+                    <i class="bi bi-upc-scan me-1 text-warning"></i> Número de Serie o Código Interno
+                </label>
                 <input asp-for="NumeroSerie" class="form-control" />
-                <span asp-validation-for="NumeroSerie" class="text-danger"></span>
+                <span asp-validation-for="NumeroSerie" class="text-danger small"></span>
             </div>
 
-            <div class="form-group mb-3">
-                <label asp-for="Estado" class="control-label"></label>
+            <!-- Estado -->
+            <div class="mb-4">
+                <label asp-for="Estado" class="form-label">
+                    <i class="bi bi-toggles me-1 text-warning"></i> Estado Operativo
+                </label>
                 <select asp-for="Estado" class="form-select">
-                    <option value="Disponible">Disponible</option>
-                    <option value="Alquilado">Alquilado</option>
-                    <option value="Mantenimiento">Mantenimiento</option>
-                    <option value="Dañado">Dañado</option>
+                    <option value="Disponible">🟢 Disponible (Para Alquiler)</option>
+                    <option value="Alquilado">🔵 Alquilado (En uso)</option>
+                    <option value="Mantenimiento">🟡 En Mantenimiento</option>
+                    <option value="Dañado">🔴 Dañado / Fuera de Servicio</option>
                 </select>
-                <span asp-validation-for="Estado" class="text-danger"></span>
+                <span asp-validation-for="Estado" class="text-danger small"></span>
             </div>
 
-            <div class="form-group">
-                <input type="submit" value="Actualizar" class="btn btn-success" />
+            <hr class="my-4" />
+
+            <div class="d-flex justify-content-end gap-2">
                 <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-primary px-4 fw-bold">
+                    <i class="bi bi-check-lg me-1"></i> Guardar Cambios
+                </button>
             </div>
         </form>
     </div>

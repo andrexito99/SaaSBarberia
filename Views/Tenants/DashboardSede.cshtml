@@ -6,36 +6,40 @@
 }
 
 <div class="container mt-4">
-    <div class="card shadow-sm border-0 mb-4 bg-white">
+    <div class="card mb-4">
         <div class="card-body text-center p-5">
-            <h2 class="fw-bold text-dark">💈 Panel de Control — @Model.NombreNegocio</h2>
-            <p class="text-muted">¿Pasó algún chicharrón? Desde aquí puedes bloquear o desbloquear las reservas automáticas de hoy.</p>
+            <h2 class="fw-bold text-white mb-2 d-flex align-items-center justify-content-center gap-2">
+                <span>💈 Panel de Control — @Model.NombreNegocio</span>
+            </h2>
+            <p class="text-secondary mb-4">Gestiona bloqueos de agenda y medidas operativas de emergencia para tu sucursal.</p>
             <hr class="my-4" />
 
             @if (Model.CerradoPorEmergencia)
             {
-                <div class="alert alert-danger d-inline-block px-4 py-3 fw-bold rounded-pill mb-3 animate__animated animate__flash" role="alert">
-                    🛑 ATENCIÓN: LA AGENDA DE HOY ESTÁ BLOQUEADA POR EMERGENCIA
+                <div class="alert alert-danger d-inline-flex align-items-center gap-2 px-4 py-3 fw-bold rounded-pill mb-4" role="alert">
+                    <i class="bi bi-exclamation-octagon-fill fs-5"></i>
+                    <span>ATENCIÓN: LA AGENDA DE HOY ESTÁ BLOQUEADA POR EMERGENCIA</span>
                 </div>
                 <form asp-action="CambiarEstadoEmergencia" method="post">
                     <input type="hidden" name="id" value="@Model.Id" />
                     <input type="hidden" name="estadoCierre" value="false" />
-                    <button type="submit" class="btn btn-success btn-lg px-5 shadow rounded-pill fw-bold">
-                        🟢 REABRIR AGENDA Y LOCAL
+                    <button type="submit" class="btn btn-outline-success btn-lg px-5 fw-bold">
+                        <i class="bi bi-door-open-fill me-2"></i> REABRIR AGENDA Y LOCAL
                     </button>
                 </form>
             }
             else
             {
-                <div class="alert alert-light border d-inline-block px-4 py-3 fw-bold rounded-pill mb-3" role="alert">
-                    ✅ Sede operando con normalidad. Los clientes pueden reservar turnos.
+                <div class="alert alert-success d-inline-flex align-items-center gap-2 px-4 py-3 fw-bold rounded-pill mb-4" role="alert">
+                    <i class="bi bi-check-circle-fill fs-5"></i>
+                    <span>Sede operando con normalidad. Los clientes pueden reservar turnos.</span>
                 </div>
                 <form asp-action="CambiarEstadoEmergencia" method="post">
                     <input type="hidden" name="id" value="@Model.Id" />
                     <input type="hidden" name="estadoCierre" value="true" />
-                    <button type="submit" class="btn btn-danger btn-lg px-5 shadow rounded-pill fw-bold"
+                    <button type="submit" class="btn btn-outline-danger btn-lg px-5 fw-bold"
                             onclick="return confirm('¿Está seguro de activar el cierre de emergencia? Esto bloqueará los horarios de hoy en la app.');">
-                        ⚠️ BOTÓN DE PÁNICO: CERRAR HOY
+                        <i class="bi bi-shield-slash-fill me-2"></i> BOTÓN DE PÁNICO: CERRAR HOY
                     </button>
                 </form>
             }
@@ -44,23 +48,25 @@
 
     @if (Model.CerradoPorEmergencia)
     {
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center p-3 fw-bold">
-                <span>📱 Clientes Afectados Hoy (Avisarles por WhatsApp ya mismo)</span>
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center p-3 flex-wrap gap-2">
+                <span class="fw-bold text-white d-flex align-items-center gap-2">
+                    <i class="bi bi-whatsapp text-success"></i> Clientes Afectados Hoy (Notificación vía WhatsApp)
+                </span>
                 @if (citasAfectadas != null && citasAfectadas.Any())
                 {
-                    <button onclick="iniciarEnvioMasivo()" class="btn btn-warning btn-sm fw-bold rounded-pill shadow-sm px-3">
-                        🚀 Despachar todas las alertas en cola
+                    <button onclick="iniciarEnvioMasivo()" class="btn btn-primary btn-sm">
+                        <i class="bi bi-send-fill me-1"></i> Despachar todas las alertas en cola
                     </button>
                 }
             </div>
-            <div class="card-body">
+            <div class="card-body p-4">
                 @if (citasAfectadas != null && citasAfectadas.Any())
                 {
-                    <p class="text-muted small">Haz clic en el botón de cada cliente para abrir su chat individual, o usa el botón de arriba para cargarlos uno tras otro en ráfaga.</p>
+                    <p class="text-secondary small mb-3">Haz clic en el botón de cada cliente para abrir su chat individual, o usa el botón superior para despacharlos en secuencia.</p>
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead class="table-light">
+                        <table class="table align-middle">
+                            <thead>
                                 <tr>
                                     <th>Cliente</th>
                                     <th>Teléfono</th>
@@ -79,13 +85,13 @@
                                     string urlWhatsapp = $"https://api.whatsapp.com/send?phone=57{clienteTel}&text={Uri.EscapeDataString(mensajeText)}";
 
                                     <tr class="fila-cliente" data-url="@urlWhatsapp">
-                                        <td class="fw-bold text-dark nombre-cliente">@clienteNombre</td>
+                                        <td class="fw-bold text-white nombre-cliente">@clienteNombre</td>
                                         <td>@clienteTel</td>
                                         <td class="text-danger fw-bold">@cita.FechaHora.ToString("hh:mm tt")</td>
-                                        <td>@barberoNombre</td>
+                                        <td class="text-white">@barberoNombre</td>
                                         <td>
-                                            <a href="@urlWhatsapp" target="_blank" class="btn btn-sm btn-success px-3 rounded-pill btn-alerta-individual">
-                                                💬 Enviar Alerta
+                                            <a href="@urlWhatsapp" target="_blank" class="btn btn-sm btn-outline-success btn-alerta-individual">
+                                                <i class="bi bi-chat-dots-fill me-1"></i> Enviar Alerta
                                             </a>
                                         </td>
                                     </tr>
@@ -96,8 +102,12 @@
                 }
                 else
                 {
-                    <div class="text-center py-4 text-muted font-italic">
-                        😎 Menos mal... No había ningún turno agendado para el resto del día de hoy. ¡Cierre limpio!
+                    <div class="empty-state border-0 my-0 py-4">
+                        <div class="empty-state-icon">
+                            <i class="bi bi-emoji-smile"></i>
+                        </div>
+                        <h5 class="empty-state-title">No hay turnos afectados</h5>
+                        <p class="empty-state-desc">No se encontraron turnos agendados pendientes para el resto del día.</p>
                     </div>
                 }
             </div>
@@ -118,31 +128,27 @@
                 const url = filaActual.getAttribute('data-url');
                 const nombre = filaActual.querySelector('.nombre-cliente').innerText;
 
-                // Destacamos visualmente la fila que se está procesando
-                filaActual.style.backgroundColor = '#fff3cd';
+                filaActual.style.backgroundColor = 'rgba(245, 158, 11, 0.15)';
 
-                // Abrimos el chat personal de esta persona en una pestaña nueva
                 window.open(url, '_blank');
 
-                // Cambiamos el diseño de la fila para marcar que ya se le abrió el chat
                 setTimeout(() => {
                     filaActual.style.opacity = '0.5';
-                    filaActual.style.backgroundColor = '#f8f9fa';
+                    filaActual.style.backgroundColor = 'transparent';
                     index++;
 
                     if (index < filas.length) {
-                        // Saltamos al siguiente chat individual pidiendo confirmación al barbero
-                        if (confirm(`Chat de ${nombre} enviado. ¿Pasamos al chat del siguiente cliente?`)) {
+                        if (confirm(`Chat de ${nombre} abierto. ¿Pasar al siguiente cliente en cola?`)) {
                             procesarSiguiente();
                         }
                     } else {
-                        alert("¡Listo papá! Todos los chats individuales de hoy han sido abiertos. Cierre completado. 🎉");
+                        alert("Notificaciones despachadas a los clientes afectados.");
                     }
                 }, 500);
             }
         }
 
-        if (confirm("Se van a ir abriendo las ventanas de WhatsApp una a una para cada cliente. ¿Arrancamos?")) {
+        if (confirm("Se abrirán las ventanas de WhatsApp una a una para cada cliente. ¿Iniciar proceso?")) {
             procesarSiguiente();
         }
     }

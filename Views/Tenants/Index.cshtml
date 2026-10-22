@@ -5,60 +5,92 @@
 }
 
 <div class="container mt-4" data-listing>
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="text-dark fw-bold">💈 Barberías Registradas (SaaS)</h2>
-        <a asp-action="Create" class="btn btn-primary px-4 py-2 shadow-sm">+ Registrar Nueva Barbería</a>
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="text-white fw-bold m-0 d-flex align-items-center gap-2">
+                <i class="bi bi-building-fill-gear text-warning"></i> Barberías Registradas (SaaS)
+            </h2>
+            <p class="text-secondary small mb-0 mt-1">Directorio de sedes, suscripciones activas y dominios asignados</p>
+        </div>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle-fill"></i> Registrar Nueva Barbería
+        </a>
     </div>
 
-    <div class="row row-cols-1 row-cols-md-3 g-4" data-listing-grid>
-        @foreach (var item in Model)
-        {
-            <div class="col">
-                <div class="card h-100 shadow-sm border-0 position-relative">
-                    <span class="position-absolute top-0 end-0 m-3 badge @(item.Activo == true ? "bg-success" : "bg-danger")">
-                        @(item.Activo == true ? "Activo" : "Inactivo")
-                    </span>
+    @if (!Model.Any())
+    {
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="bi bi-shop"></i>
+            </div>
+            <h4 class="empty-state-title">No hay sedes registradas</h4>
+            <p class="empty-state-desc">Comienza registrando la primera barbería en la plataforma SaaS.</p>
+            <a asp-action="Create" class="btn btn-primary mt-3">
+                <i class="bi bi-plus-lg"></i> Registrar Barbería
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" data-listing-grid>
+            @foreach (var item in Model)
+            {
+                <div class="col">
+                    <div class="card h-100 position-relative overflow-hidden">
+                        <span class="position-absolute top-0 end-0 m-3 badge @(item.Activo == true ? "bg-success" : "bg-danger")">
+                            <i class="bi @(item.Activo == true ? "bi-check-circle" : "bi-x-circle")"></i>
+                            @(item.Activo == true ? "Activo" : "Inactivo")
+                        </span>
 
-                    <div class="card-body pt-4">
-                        <!-- 📸 NUEVO: Header con Logo de la Barbería si existe -->
-                        <div class="d-flex align-items-center gap-3 mb-3">
-                            @if (!string.IsNullOrEmpty(item.RutaLogo))
-                            {
-                                <img src="@item.RutaLogo" class="rounded border p-1" style="width: 50px; height: 50px; object-fit: contain;" alt="Logo" />
-                            }
-                            else
-                            {
-                                <div class="bg-secondary-subtle border rounded d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; font-size: 1.3rem;">
-                                    🏬
+                        <div class="card-body p-4 pt-4">
+                            <!-- Header con Logo de la Barbería si existe -->
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                @if (!string.IsNullOrEmpty(item.RutaLogo))
+                                {
+                                    <img src="@item.RutaLogo" class="rounded p-1" style="width: 52px; height: 52px; object-fit: contain; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);" alt="Logo" />
+                                }
+                                else
+                                {
+                                    <div class="kpi-icon-wrapper kpi-icon-amber" style="width: 52px; height: 52px; font-size: 1.4rem;">
+                                        🏬
+                                    </div>
+                                }
+                                <div class="text-truncate" style="max-width: 65%;">
+                                    <h4 class="card-title fw-bold mb-0 text-truncate text-white">@item.NombreNegocio</h4>
+                                    <h6 class="text-secondary small mb-0 mt-1">🔗 <code>@(item.Subdominio)</code></h6>
                                 </div>
-                            }
-                            <div class="text-truncate" style="max-width: 70%;">
-                                <h4 class="card-title fw-bold mb-0 text-truncate text-primary">@item.NombreNegocio</h4>
-                                <h6 class="text-muted small mb-0">🔗 <code>@(item.Subdominio)</code></h6>
+                            </div>
+
+                            <hr />
+
+                            <div class="mb-2">
+                                <span class="text-secondary small d-block">Plan de Suscripción:</span>
+                                <span class="badge bg-info mt-1">@item.PlanSuscripcion</span>
+                            </div>
+
+                            <div>
+                                <span class="text-secondary small d-block">Miembro desde:</span>
+                                <small class="text-white fw-semibold">@(item.FechaRegistro?.ToString("dd MMM yyyy") ?? "N/A")</small>
                             </div>
                         </div>
 
-                        <hr />
-
-                        <div class="mb-2">
-                            <span class="text-secondary small d-block">Plan Actual:</span>
-                            <span class="badge bg-dark">@item.PlanSuscripcion</span>
+                        <div class="card-footer d-flex flex-wrap gap-2 justify-content-between">
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-warning flex-fill">
+                                <i class="bi bi-pencil me-1"></i>Editar
+                            </a>
+                            <a asp-action="EditarHorarios" asp-route-tenantId="@item.Id" class="btn btn-sm btn-outline-success flex-fill">
+                                <i class="bi bi-clock me-1"></i>Horarios
+                            </a>
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info flex-fill">
+                                <i class="bi bi-eye me-1"></i>Detalles
+                            </a>
+                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger flex-fill">
+                                <i class="bi bi-trash me-1"></i>Borrar
+                            </a>
                         </div>
-
-                        <div>
-                            <span class="text-secondary small d-block">Miembro desde:</span>
-                            <small class="text-muted">@(item.FechaRegistro?.ToString("dd MMM yyyy") ?? "N/A")</small>
-                        </div>
-                    </div>
-
-                    <div class="card-footer bg-light border-0 d-flex flex-wrap gap-2 justify-content-around py-3">
-                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-warning">Editar</a>
-                        <a asp-action="EditarHorarios" asp-route-tenantId="@item.Id" class="btn btn-sm btn-outline-success">Horarios</a>
-                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info">Detalles</a>
-                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Borrar</a>
                     </div>
                 </div>
-            </div>
-        }
-    </div>
+            }
+        </div>
+    }
 </div>

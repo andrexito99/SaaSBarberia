@@ -5,114 +5,155 @@
 }
 
 <div class="container mt-4">
-    <!-- Banner de Bienvenida -->
-    <div class="p-5 mb-4 bg-dark text-white rounded-3 shadow-sm text-center position-relative overflow-hidden">
-        <div class="position-absolute top-0 start-0 w-100 h-100 bg-gradient" style="opacity: 0.1; background: linear-gradient(45deg, #ff0000, #0000ff);"></div>
-        <h1 class="display-4 fw-bold mb-2">Hola, Administrador 💈😂</h1>
-        <p class="fs-5 text-muted">Bienvenido al núcleo operacional de tu SaaS de Barberías. Todo está sincronizado y listo para camellar.</p>
+    <!-- Banner de Bienvenida Ejecutivo -->
+    <div class="card p-4 p-md-5 mb-4 text-center position-relative overflow-hidden" 
+         style="background: linear-gradient(135deg, rgba(31, 41, 55, 0.9) 0%, rgba(17, 24, 39, 0.95) 100%) !important;">
+        <div class="position-absolute top-0 start-0 w-100 h-100" 
+             style="opacity: 0.05; background: radial-gradient(circle at 50% 50%, #F59E0B 0%, transparent 70%); pointer-events: none;"></div>
+        <div class="position-relative z-1">
+            <span class="badge bg-warning mb-2 px-3 py-1 text-uppercase" style="letter-spacing: 0.1em; font-size: 0.7rem;">SaaS Barbería Core</span>
+            <h1 class="display-5 fw-bold text-white mb-2">Panel Operativo & Ejecutivo</h1>
+            <p class="fs-6 text-secondary mb-0 max-w-xl mx-auto" style="max-width: 600px;">Bienvenido al núcleo de control. Administra tus sedes, supervisa citas en tiempo real y maximiza tus ingresos.</p>
+        </div>
     </div>
 
     @* 📊 ======================================================== *@
-    @* 🌟 SECCIÓN OPERATIVA DEL DASHBOARD PARA ADMINISTRADOR DE BARBERIA        *@
+    @* 🌟 SECCIÓN OPERATIVA DEL DASHBOARD PARA ADMINISTRADOR       *@
     @* ========================================================== *@
     @if (User.IsInRole("Administrador") && Model != null)
     {
         <div class="mb-5">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h3 class="fw-bold text-dark m-0">📊 Dashboard de Operaciones Sede</h3>
-                <span class="badge bg-success px-3 py-2 fs-6">Datos en Tiempo Real</span>
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                <h3 class="fw-bold text-white m-0 d-flex align-items-center gap-2">
+                    <i class="bi bi-speedometer2 text-warning"></i> Operaciones de la Sede
+                </h3>
+                <span class="badge bg-success">
+                    <i class="bi bi-broadcast me-1"></i> Tiempo Real
+                </span>
             </div>
 
-            <!-- ⚡ NUEVO: BLOQUE DE KPIs DE HOY -->
+            <!-- ⚡ BLOQUE DE KPIs DE HOY (DARK LUXURY) -->
             <div class="row g-3 mb-4">
                 <div class="col-6 col-md-3">
-                    <div class="card border-0 shadow-sm bg-white p-3 border-start border-4 border-primary h-100 transition-card">
-                        <small class="text-secondary text-uppercase fw-bold small" style="font-size: 0.75rem;">Ventas Hoy</small>
-                        <h3 class="fw-bold text-dark my-1">$@Model.IngresosHoy.ToString("N0")</h3>
-                        <small class="text-muted">Caja del día</small>
+                    <div class="kpi-card h-100">
+                        <div class="kpi-header">
+                            <span class="kpi-title">Ventas Hoy</span>
+                            <div class="kpi-icon-wrapper kpi-icon-amber">
+                                <i class="bi bi-currency-dollar"></i>
+                            </div>
+                        </div>
+                        <div class="kpi-value text-white">$@Model.IngresosHoy.ToString("N0")</div>
+                        <div class="kpi-subtitle">
+                            <span class="text-secondary">Caja generada hoy</span>
+                        </div>
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
-                    <div class="card border-0 shadow-sm bg-white p-3 border-start border-4 border-success h-100 transition-card">
-                        <small class="text-secondary text-uppercase fw-bold small" style="font-size: 0.75rem;">Clientes Atendidos</small>
-                        <h3 class="fw-bold text-success my-1">✂️ @Model.ClientesAtendidosHoy</h3>
-                        <small class="text-muted">Cortes realizados</small>
+                    <div class="kpi-card h-100">
+                        <div class="kpi-header">
+                            <span class="kpi-title">Atendidos</span>
+                            <div class="kpi-icon-wrapper kpi-icon-emerald">
+                                <i class="bi bi-scissors"></i>
+                            </div>
+                        </div>
+                        <div class="kpi-value text-white">@Model.ClientesAtendidosHoy</div>
+                        <div class="kpi-subtitle">
+                            <span class="text-success"><i class="bi bi-check2-all me-1"></i>Cortes realizados</span>
+                        </div>
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
-                    <div class="card border-0 shadow-sm bg-white p-3 border-start border-4 border-warning h-100 transition-card">
-                        <small class="text-secondary text-uppercase fw-bold small" style="font-size: 0.75rem;">Citas Pendientes</small>
-                        <h3 class="fw-bold text-warning my-1">⏳ @Model.CitasPendientesHoy</h3>
-                        <small class="text-muted">Por atender hoy</small>
+                    <div class="kpi-card h-100">
+                        <div class="kpi-header">
+                            <span class="kpi-title">Citas Pendientes</span>
+                            <div class="kpi-icon-wrapper kpi-icon-blue">
+                                <i class="bi bi-hourglass-split"></i>
+                            </div>
+                        </div>
+                        <div class="kpi-value text-white">@Model.CitasPendientesHoy</div>
+                        <div class="kpi-subtitle">
+                            <span class="text-secondary">Por atender hoy</span>
+                        </div>
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
-                    <div class="card border-0 shadow-sm bg-white p-3 border-start border-4 border-danger h-100 transition-card">
-                        <small class="text-secondary text-uppercase fw-bold small" style="font-size: 0.75rem;">Citas Canceladas</small>
-                        <h3 class="fw-bold text-danger my-1">❌ @Model.CitasCanceladasHoy</h3>
-                        <small class="text-muted">Turnos caídos hoy</small>
+                    <div class="kpi-card h-100">
+                        <div class="kpi-header">
+                            <span class="kpi-title">Citas Canceladas</span>
+                            <div class="kpi-icon-wrapper kpi-icon-rose">
+                                <i class="bi bi-x-circle-fill"></i>
+                            </div>
+                        </div>
+                        <div class="kpi-value text-white">@Model.CitasCanceladasHoy</div>
+                        <div class="kpi-subtitle">
+                            <span class="text-secondary">Turnos caídos hoy</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 💰 NUEVO: RENDIMIENTO DEL MES COMPARATIVO Y HITOS -->
+            <!-- 💰 RENDIMIENTO DEL MES COMPARATIVO Y CUADRO DE HONOR -->
             <div class="row g-4 mb-4">
                 <!-- Tarjeta Financiera Mensual -->
                 <div class="col-12 col-md-5">
-                    <div class="card border-0 shadow-sm rounded-3 bg-dark text-white p-4 h-100 transition-card">
-                        <span class="text-white-50 text-uppercase small fw-bold">Ingresos Mensuales</span>
-                        <h1 class="display-6 fw-bold my-2 text-white">$@Model.IngresosMes.ToString("N0")</h1>
+                    <div class="card p-4 h-100">
+                        <span class="text-secondary text-uppercase small fw-bold">Ingresos Mensuales</span>
+                        <div class="kpi-value my-2">$@Model.IngresosMes.ToString("N0")</div>
                         <div class="d-flex align-items-center mt-2">
-                            <span class="badge p-2 @(Model.EsIngresoMayorMesAnterior ? "bg-success" : "bg-danger") me-2">
-                                <i class="fas @(Model.EsIngresoMayorMesAnterior ? "fa-arrow-up" : "fa-arrow-down") me-1"></i>
+                            <span class="badge @(Model.EsIngresoMayorMesAnterior ? "bg-success" : "bg-danger") me-2">
+                                <i class="bi @(Model.EsIngresoMayorMesAnterior ? "bi-arrow-up" : "bi-arrow-down") me-1"></i>
                                 @Math.Abs(Model.PorcentajeComparacionMesAnterior).ToString("N1")%
                             </span>
-                            <span class="text-white-50 small">vs mes anterior</span>
+                            <span class="text-secondary small">vs mes anterior</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Líderes y Estadísticas Generales -->
                 <div class="col-12 col-md-7">
-                    <div class="card border-0 shadow-sm rounded-3 bg-white p-4 h-100">
-                        <h5 class="fw-bold text-dark mb-3">🏆 Líderes de la Sucursal</h5>
+                    <div class="card p-4 h-100">
+                        <h5 class="fw-bold text-white mb-3 d-flex align-items-center gap-2">
+                            <i class="bi bi-trophy-fill text-warning"></i> Líderes de la Sucursal
+                        </h5>
                         <div class="row g-3 text-center">
-                            <div class="col-6 col-sm-4 border-end border-light">
-                                <p class="text-muted small mb-1">Servicio Más Vendido</p>
-                                <h6 class="fw-bold text-dark text-truncate px-1">@Model.ServicioMasVendido</h6>
-                                <span class="badge bg-info bg-opacity-10 text-info">@Model.CantidadServicioMasVendido unds</span>
+                            <div class="col-6 col-sm-4 border-end" style="border-color: rgba(255,255,255,0.08) !important;">
+                                <p class="text-secondary small mb-1">Servicio Top</p>
+                                <h6 class="fw-bold text-white text-truncate px-1">@Model.ServicioMasVendido</h6>
+                                <span class="badge bg-info">@Model.CantidadServicioMasVendido cortes</span>
                             </div>
-                            <div class="col-6 col-sm-4 border-end border-light">
-                                <p class="text-muted small mb-1">Barbero Estrella</p>
-                                <h6 class="fw-bold text-dark text-truncate px-1">@Model.BarberoEstrella</h6>
-                                <span class="badge bg-success bg-opacity-10 text-success">@Model.CortesBarberoEstrella turnos</span>
+                            <div class="col-6 col-sm-4 border-end" style="border-color: rgba(255,255,255,0.08) !important;">
+                                <p class="text-secondary small mb-1">Barbero Estrella</p>
+                                <h6 class="fw-bold text-white text-truncate px-1">@Model.BarberoEstrella</h6>
+                                <span class="badge bg-success">@Model.CortesBarberoEstrella turnos</span>
                             </div>
                             <div class="col-12 col-sm-4">
-                                <p class="text-muted small mb-1">Capacidad Operativa</p>
-                                <h6 class="fw-bold text-dark">Staff Base</h6>
-                                <span class="badge bg-dark">@Model.TotalBarberos Barberos</span>
+                                <p class="text-secondary small mb-1">Capacidad Operativa</p>
+                                <h6 class="fw-bold text-white">Staff Base</h6>
+                                <span class="badge bg-secondary">@Model.TotalBarberos Barberos</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Gráficos Existentes de Chart.js -->
+            <!-- Gráficos de Chart.js -->
             <div class="row g-4 mb-4">
-                @* Gráfico de Citas por Barbero *@
                 <div class="col-md-7">
-                    <div class="card border-0 shadow-sm p-3 h-100">
-                        <h5 class="fw-bold text-dark mb-3">💇‍♂️ Citas Asignadas por Barbero</h5>
+                    <div class="card p-3 h-100">
+                        <h5 class="fw-bold text-white mb-3 d-flex align-items-center gap-2">
+                            <i class="bi bi-person-lines-fill text-info"></i> Citas Asignadas por Barbero
+                        </h5>
                         <div style="position: relative; height:260px; width:100%">
                             <canvas id="chartBarberosSede"></canvas>
                         </div>
                     </div>
                 </div>
 
-                @* Gráfico del Estado de las Citas *@
                 <div class="col-md-5">
-                    <div class="card border-0 shadow-sm p-3 h-100">
-                        <h5 class="fw-bold text-dark mb-3">📈 Estado de las Citas del Mes</h5>
+                    <div class="card p-3 h-100">
+                        <h5 class="fw-bold text-white mb-3 d-flex align-items-center gap-2">
+                            <i class="bi bi-pie-chart text-warning"></i> Estado de las Citas del Mes
+                        </h5>
                         <div style="position: relative; height:260px; width:100%">
                             <canvas id="chartEstadosCitas"></canvas>
                         </div>
@@ -120,15 +161,17 @@
                 </div>
             </div>
 
-            <!-- 🏆 NUEVO: TABLA TOP 10 CLIENTES -->
-            <div class="card border-0 shadow-sm rounded-3 bg-white p-4 mb-4">
-                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                    <h5 class="fw-bold text-dark mb-0">👑 Top 10 Clientes Frecuentes</h5>
-                    <span class="badge bg-dark rounded-pill">Por inversión total</span>
+            <!-- 🏆 TABLA TOP 10 CLIENTES -->
+            <div class="card p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom flex-wrap gap-2">
+                    <h5 class="fw-bold text-white mb-0 d-flex align-items-center gap-2">
+                        <i class="bi bi-award-fill text-warning"></i> Top 10 Clientes Frecuentes
+                    </h5>
+                    <span class="badge bg-secondary">Por inversión acumulada</span>
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-dark">
+                    <table class="table align-middle mb-0">
+                        <thead>
                             <tr>
                                 <th style="width: 60px;">Pos</th>
                                 <th>Nombre Cliente</th>
@@ -140,7 +183,15 @@
                             @if (!Model.Top10Clientes.Any())
                             {
                                 <tr>
-                                    <td colspan="4" class="text-center py-3 text-muted">No se registran datos suficientes de facturas este mes.</td>
+                                    <td colspan="4" class="text-center py-5">
+                                        <div class="empty-state border-0 my-0 py-3">
+                                            <div class="empty-state-icon">
+                                                <i class="bi bi-people"></i>
+                                            </div>
+                                            <h5 class="empty-state-title">Sin datos registrados este mes</h5>
+                                            <p class="empty-state-desc">A medida que se completen servicios, verás aquí el ranking de clientes.</p>
+                                        </div>
+                                    </td>
                                 </tr>
                             }
                             else
@@ -150,12 +201,12 @@
                                 {
                                     <tr>
                                         <td>
-                                            <span class="badge rounded-circle p-2 d-inline-flex align-items-center justify-content-center @(puesto == 1 ? "bg-warning text-dark fw-bold" : puesto == 2 ? "bg-secondary text-white" : puesto == 3 ? "bg-danger text-white" : "bg-light text-dark border")" style="width:28px; height:28px;">
+                                            <span class="badge @(puesto == 1 ? "bg-warning" : puesto == 2 ? "bg-secondary" : puesto == 3 ? "bg-danger" : "bg-dark")" style="width:28px; height:28px; border-radius:50%; justify-content:center; display:inline-flex;">
                                                 @puesto
                                             </span>
                                         </td>
-                                        <td><strong>@cliente.NombreCliente</strong></td>
-                                        <td class="text-center"><span class="badge bg-light text-dark border">@cliente.TotalCitas citas</span></td>
+                                        <td><strong class="text-white">@cliente.NombreCliente</strong></td>
+                                        <td class="text-center"><span class="badge bg-secondary">@cliente.TotalCitas citas</span></td>
                                         <td class="text-end fw-bold text-success">$@cliente.TotalGastado.ToString("N0")</td>
                                     </tr>
                                     puesto++;
@@ -166,7 +217,6 @@
                 </div>
             </div>
         </div>
-        <hr class="my-5" />
     }
 
     @* 📅 ======================================================== *@
@@ -174,40 +224,57 @@
     @* ========================================================== *@
     @if (User.IsInRole("Cliente"))
     {
-        <h3 class="text-secondary fw-bold mb-3">📅 Tu Espacio Personal</h3>
+        <h3 class="text-white fw-bold mb-3 d-flex align-items-center gap-2">
+            <i class="bi bi-person-circle text-warning"></i> Tu Espacio Personal
+        </h3>
         <div class="row row-cols-1 row-cols-md-3 g-4 mb-4">
             <div class="col">
-                <div class="card h-100 shadow-sm border-0 border-top border-primary border-4 transition-card">
-                    <div class="card-body">
-                        <h5 class="card-title fw-bold text-dark">⚡ Agendar Nueva Cita</h5>
-                        <p class="card-text text-muted small">Elige tu servicio favorito, selecciona tu barbero de confianza y aparta tu cupo en un segundo.</p>
+                <div class="card h-100 p-4 d-flex flex-column">
+                    <div class="mb-3">
+                        <div class="kpi-icon-wrapper kpi-icon-amber mb-3">
+                            <i class="bi bi-lightning-charge-fill"></i>
+                        </div>
+                        <h5 class="fw-bold text-white">Agendar Nueva Cita</h5>
+                        <p class="text-secondary small">Elige tu servicio favorito, selecciona tu barbero de confianza y aparta tu cupo en un instante.</p>
                     </div>
-                    <div class="card-footer bg-white border-0 pb-3">
-                        <a asp-controller="Citas" asp-action="Create" class="btn btn-primary w-100 fw-bold">Reservar Turno Ahora →</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col">
-                <div class="card h-100 shadow-sm border-0 border-top border-success border-4 transition-card">
-                    <div class="card-body">
-                        <h5 class="card-title fw-bold text-dark">✂️ Ver Cortes y Precios</h5>
-                        <p class="card-text text-muted small">Explora nuestro catálogo completo de servicios disponibles, tarifas bases y tiempos de atención.</p>
-                    </div>
-                    <div class="card-footer bg-white border-0 pb-3">
-                        <a asp-controller="Servicios" asp-action="Index" class="btn btn-outline-success w-100 fw-semibold">Consultar Servicios →</a>
+                    <div class="mt-auto pt-3">
+                        <a asp-controller="Citas" asp-action="Create" class="btn btn-primary w-100">
+                            Reservar Turno Ahora <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
                     </div>
                 </div>
             </div>
 
             <div class="col">
-                <div class="card h-100 shadow-sm border-0 border-top border-info border-4 transition-card">
-                    <div class="card-body">
-                        <h5 class="card-title fw-bold text-dark">📋 Mis Citas Programadas</h5>
-                        <p class="card-text text-muted small">Consulta el historial de tus turnos, revisa cuáles están pendientes y verifica tus horarios.</p>
+                <div class="card h-100 p-4 d-flex flex-column">
+                    <div class="mb-3">
+                        <div class="kpi-icon-wrapper kpi-icon-emerald mb-3">
+                            <i class="bi bi-scissors"></i>
+                        </div>
+                        <h5 class="fw-bold text-white">Ver Cortes y Precios</h5>
+                        <p class="text-secondary small">Explora nuestro catálogo completo de servicios disponibles, tarifas bases y tiempos de atención.</p>
                     </div>
-                    <div class="card-footer bg-white border-0 pb-3">
-                        <a asp-controller="Citas" asp-action="Index" class="btn btn-outline-info w-100 fw-semibold">Ver Historial de Citas →</a>
+                    <div class="mt-auto pt-3">
+                        <a asp-controller="Servicios" asp-action="Index" class="btn btn-outline-success w-100">
+                            Consultar Servicios <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="card h-100 p-4 d-flex flex-column">
+                    <div class="mb-3">
+                        <div class="kpi-icon-wrapper kpi-icon-blue mb-3">
+                            <i class="bi bi-calendar2-check"></i>
+                        </div>
+                        <h5 class="fw-bold text-white">Mis Citas Programadas</h5>
+                        <p class="text-secondary small">Consulta el historial de tus turnos, revisa cuáles están pendientes y verifica tus horarios.</p>
+                    </div>
+                    <div class="mt-auto pt-3">
+                        <a asp-controller="Citas" asp-action="Index" class="btn btn-outline-info w-100">
+                            Ver Historial de Citas <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -215,58 +282,64 @@
     }
     else if (!User.IsInRole("Administrador"))
     {
-        @* 👨‍💼 VISTA GENERAL DE ACCESOS RÁPIDOS (SUPERADMINS U OTROS ROLES QUE NO SEAN ADMINISTRADOR DE BARBERIA) *@
-        <h3 class="text-secondary fw-bold mb-3">🛠️ Accesos Rápidos del Sistema</h3>
-        <div class="row row-cols-1 row-cols-md-3 g-4">
+        @* 👨‍💼 VISTA GENERAL DE ACCESOS RÁPIDOS *@
+        <h3 class="text-white fw-bold mb-3 d-flex align-items-center gap-2">
+            <i class="bi bi-grid-fill text-warning"></i> Accesos Rápidos del Sistema
+        </h3>
+        <div class="row row-cols-1 row-cols-md-3 g-4 mb-4">
             <div class="col">
-                <div class="card h-100 shadow-sm border-0 border-top border-primary border-4 transition-card">
-                    <div class="card-body">
-                        <h5 class="card-title fw-bold text-dark">✂️ Catálogo de Servicios</h5>
-                        <p class="card-text text-muted small">Configura los cortes, lavados, tinturas y las tarifas bases por sucursal.</p>
+                <div class="card h-100 p-4 d-flex flex-column">
+                    <div class="mb-3">
+                        <div class="kpi-icon-wrapper kpi-icon-amber mb-3">
+                            <i class="bi bi-scissors"></i>
+                        </div>
+                        <h5 class="fw-bold text-white">Catálogo de Servicios</h5>
+                        <p class="text-secondary small">Configura los cortes, lavados, tinturas y las tarifas bases por sucursal.</p>
                     </div>
-                    <div class="card-footer bg-white border-0 pb-3">
-                        <a asp-controller="Servicios" asp-action="Index" class="btn btn-outline-primary btn-sm w-100 fw-semibold">Administrar Servicios →</a>
+                    <div class="mt-auto pt-3">
+                        <a asp-controller="Servicios" asp-action="Index" class="btn btn-outline-warning w-100">
+                            Administrar Servicios <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
                     </div>
                 </div>
             </div>
 
             <div class="col">
-                <div class="card h-100 shadow-sm border-0 border-top border-warning border-4 transition-card">
-                    <div class="card-body">
-                        <h5 class="card-title fw-bold text-dark">💈 Staff de Barberos</h5>
-                        <p class="card-text text-muted small">Gestiona el equipo de colaboradores, sus especialidades y los porcentajes de comisión.</p>
+                <div class="card h-100 p-4 d-flex flex-column">
+                    <div class="mb-3">
+                        <div class="kpi-icon-wrapper kpi-icon-blue mb-3">
+                            <i class="bi bi-people-fill"></i>
+                        </div>
+                        <h5 class="fw-bold text-white">Staff de Barberos</h5>
+                        <p class="text-secondary small">Gestiona el equipo de colaboradores, sus especialidades y comisiones.</p>
                     </div>
-                    <div class="card-footer bg-white border-0 pb-3">
-                        <a asp-controller="Barberos" asp-action="Index" class="btn btn-outline-warning btn-sm w-100 fw-semibold text-dark">Ver Equipo de Barberos →</a>
+                    <div class="mt-auto pt-3">
+                        <a asp-controller="Barberos" asp-action="Index" class="btn btn-outline-info w-100">
+                            Ver Equipo de Barberos <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
                     </div>
                 </div>
             </div>
 
             <div class="col">
-                <div class="card h-100 shadow-sm border-0 border-top border-success border-4 transition-card">
-                    <div class="card-body">
-                        <h5 class="card-title fw-bold text-dark">💵 Caja y Facturación</h5>
-                        <p class="card-text text-muted small">Revisa el historial de cobros, procesa nuevos pagos y mantén las cuentas melas.</p>
+                <div class="card h-100 p-4 d-flex flex-column">
+                    <div class="mb-3">
+                        <div class="kpi-icon-wrapper kpi-icon-emerald mb-3">
+                            <i class="bi bi-cash-coin"></i>
+                        </div>
+                        <h5 class="fw-bold text-white">Caja y Facturación</h5>
+                        <p class="text-secondary small">Revisa el historial de cobros, procesa nuevos pagos y arqueos.</p>
                     </div>
-                    <div class="card-footer bg-white border-0 pb-3">
-                        <a asp-controller="Facturas" asp-action="Index" class="btn btn-outline-success btn-sm w-100 fw-semibold">Revisar Finanzas →</a>
+                    <div class="mt-auto pt-3">
+                        <a asp-controller="Facturas" asp-action="Index" class="btn btn-outline-success w-100">
+                            Revisar Finanzas <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
     }
 </div>
-
-<style>
-    .transition-card {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-        .transition-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 15px rgba(0,0,0,0.1) !important;
-        }
-</style>
 
 @* 🛠️ SCRIPTS DE CHART.JS *@
 @if (User.IsInRole("Administrador") && Model != null)
@@ -281,44 +354,69 @@
 
             const ctxBarberos = document.getElementById('chartBarberosSede').getContext('2d');
             new Chart(ctxBarberos, {
-            type: 'bar',
-            data: {
-            labels: labelsBarberos,
-            datasets: [{
-            label: 'Número de Citas',
-            data: valoresBarberos,
-            backgroundColor: '#0d6efd',
-            borderRadius: 5
-            }]
-            },
-            options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-            y: {
-            beginAtZero: true,
-            ticks: { stepSize: 1 }
-            }
-            }
-            }
+                type: 'bar',
+                data: {
+                    labels: labelsBarberos,
+                    datasets: [{
+                        label: 'Número de Citas',
+                        data: valoresBarberos,
+                        backgroundColor: '#F59E0B',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#9CA3AF', font: { family: "'Plus Jakarta Sans', sans-serif" } },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1, color: '#9CA3AF' },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                        }
+                    }
+                }
             });
 
-            // 2. Gráfico de Resumen de Citas por Estado (Torta)
+            // 2. Gráfico de Resumen de Citas por Estado (Doughnut)
             const datosEstados = @Html.Raw(Json.Serialize(Model.ResumenCitasPorEstado));
             const labelsEstados = Object.keys(datosEstados).length ? Object.keys(datosEstados) : ["Sin estados"];
             const valoresEstados = Object.values(datosEstados).length ? Object.values(datosEstados) : [0];
 
             const ctxEstados = document.getElementById('chartEstadosCitas').getContext('2d');
             new Chart(ctxEstados, {
-            type: 'pie',
-            data: {
-            labels: labelsEstados,
-            datasets: [{
-            data: valoresEstados,
-            backgroundColor: ['#ffc107', '#198754', '#dc3545'] // Amarillo (Pendiente), Verde (Completada), Rojo (Cancelada)
-            }]
-            },
-            options: { responsive: true, maintainAspectRatio: false }
+                type: 'doughnut',
+                data: {
+                    labels: labelsEstados,
+                    datasets: [{
+                        data: valoresEstados,
+                        backgroundColor: ['#F59E0B', '#10B981', '#EF4444'],
+                        borderColor: '#1F2937',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#9CA3AF',
+                                font: { family: "'Plus Jakarta Sans', sans-serif", size: 12 },
+                                padding: 12,
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        }
+                    }
+                }
             });
         </script>
     }

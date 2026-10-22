@@ -1,50 +1,180 @@
 @model IEnumerable<SaaSBarberia.Models.AlquilerHerramienta>
 
 @{
-    ViewData["Title"] = "Historial de Alquileres";
+    ViewData["Title"] = "Control de Alquiler de Máquinas";
+    var totalAlquileres = Model.Count();
+    var activos = Model.Count(a => !a.FechaDevolucion.HasValue);
+    var devueltos = Model.Count(a => a.FechaDevolucion.HasValue);
 }
 
-<h1>Control de Alquiler de Máquinas</h1>
+<div class="container-fluid mt-4" data-listing>
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold text-white m-0 d-flex align-items-center gap-2">
+                <i class="bi bi-clock-history text-warning"></i> Control de Alquiler de Máquinas
+            </h2>
+            <p class="text-secondary small mb-0 mt-1">Registro de préstamos diarios, devoluciones y cobro de cánones a barberos</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-controller="Herramientas" asp-action="Index" class="btn btn-secondary">
+                <i class="bi bi-tools me-1"></i> Inventario de Máquinas
+            </a>
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="bi bi-plus-circle-fill me-1"></i> Registrar Préstamo
+            </a>
+        </div>
+    </div>
 
-<p>
-    <a asp-action="Create" class="btn btn-primary">Registrar Préstamo / Alquiler</a>
-</p>
-<table class="table table-striped table-hover">
-    <thead>
-        <tr>
-            <th>Herramienta / Máquina</th>
-            <th>Barbero Responsable</th>
-            <th>Fecha Préstamo</th>
-            <th>Fecha Devolución</th>
-            <th>Costo Alquiler</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td><strong>@item.Herramienta?.Nombre</strong></td>
-            <td>@item.Barbero?.Usuario?.Nombre</td>
-            <td>@item.FechaPrestamo.ToString("dd/MM/yyyy hh:mm tt")</td>
-            <td>@(item.FechaDevolucion.HasValue ? item.FechaDevolucion.Value.ToString("dd/MM/yyyy hh:mm tt") : "Pendiente")</td>
-            <td>$@item.CostoAlquiler.ToString("N2")</td>
-            <td>
-                @if (item.FechaDevolucion.HasValue)
-                {
-                    <span class="badge bg-success">Devuelto ✔️</span>
-                }
-                else
-                {
-                    <span class="badge bg-danger">En Uso 🔴</span>
-                }
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Procesar / Editar</a> |
-                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-secondary">Detalles</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Eliminar</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+    <!-- ⚡ RESUMEN KPIS DE PRÉSTAMOS -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-4">
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <span class="kpi-title">Historial Préstamos</span>
+                    <div class="kpi-icon-wrapper kpi-icon-blue">
+                        <i class="bi bi-journal-text"></i>
+                    </div>
+                </div>
+                <div class="kpi-value text-white">@totalAlquileres</div>
+                <div class="kpi-subtitle"><span class="text-secondary">Préstamos procesados</span></div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4">
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <span class="kpi-title">En Uso Actualmente</span>
+                    <div class="kpi-icon-wrapper kpi-icon-rose">
+                        <i class="bi bi-person-workspace"></i>
+                    </div>
+                </div>
+                <div class="kpi-value text-white">@activos</div>
+                <div class="kpi-subtitle"><span class="text-danger"><i class="bi bi-hourglass-split me-1"></i>Pendientes por devolución</span></div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <span class="kpi-title">Devueltos / Cerrados</span>
+                    <div class="kpi-icon-wrapper kpi-icon-emerald">
+                        <i class="bi bi-check2-circle"></i>
+                    </div>
+                </div>
+                <div class="kpi-value text-white">@devueltos</div>
+                <div class="kpi-subtitle"><span class="text-success"><i class="bi bi-check-all me-1"></i>Reintegrados al inventario</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABLA DE ALQUILERES -->
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Máquina / Equipo</th>
+                        <th>Barbero Responsable</th>
+                        <th>Fecha de Préstamo</th>
+                        <th>Fecha de Devolución</th>
+                        <th>Canon / Costo</th>
+                        <th>Estado</th>
+                        <th class="text-end pe-4">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-5">
+                                <div class="empty-state border-0 my-0 py-3">
+                                    <div class="empty-state-icon">
+                                        <i class="bi bi-inbox"></i>
+                                    </div>
+                                    <h5 class="empty-state-title">No hay préstamos registrados aún</h5>
+                                    <p class="empty-state-desc">Comienza asignando una herramienta disponible a un barbero de tu equipo.</p>
+                                    <div class="d-flex justify-content-center gap-2 mt-3">
+                                        <a asp-controller="Herramientas" asp-action="Index" class="btn btn-secondary">
+                                            <i class="bi bi-tools me-1"></i> Ver Inventario
+                                        </a>
+                                        <a asp-action="Create" class="btn btn-primary">
+                                            <i class="bi bi-plus-lg me-1"></i> Nuevo Préstamo
+                                        </a>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="avatar-circle" style="width: 36px; height: 36px; font-size: 1rem;">
+                                            ✂️
+                                        </div>
+                                        <div>
+                                            <strong class="text-white d-block">@item.Herramienta?.Nombre</strong>
+                                            <small class="text-secondary">@(string.IsNullOrEmpty(item.Herramienta?.NumeroSerie) ? "Sin SN" : $"SN: {item.Herramienta.NumeroSerie}")</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="text-white fw-semibold">
+                                        <i class="bi bi-person text-warning me-1"></i>@(item.Barbero?.Usuario?.Nombre ?? "Barbero Desconocido")
+                                    </span>
+                                </td>
+                                <td class="text-secondary small">
+                                    <i class="bi bi-clock me-1 text-muted"></i>@item.FechaPrestamo.ToString("dd/MM/yyyy hh:mm tt")
+                                </td>
+                                <td>
+                                    @if (item.FechaDevolucion.HasValue)
+                                    {
+                                        <span class="text-secondary small">
+                                            <i class="bi bi-check2 me-1 text-success"></i>@item.FechaDevolucion.Value.ToString("dd/MM/yyyy hh:mm tt")
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning">Pendiente</span>
+                                    }
+                                </td>
+                                <td class="fw-bold text-success fs-6">
+                                    $@item.CostoAlquiler.ToString("N0")
+                                </td>
+                                <td>
+                                    @if (item.FechaDevolucion.HasValue)
+                                    {
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check-circle-fill me-1"></i> Devuelto
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-hourglass-split me-1"></i> En Uso
+                                        </span>
+                                    }
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="d-inline-flex gap-1">
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-warning" title="Procesar / Devolver">
+                                            <i class="bi bi-arrow-return-left me-1"></i>Procesar
+                                        </a>
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info" title="Detalles">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

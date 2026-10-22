@@ -1,41 +1,223 @@
 @model IEnumerable<SaaSBarberia.Models.Herramienta>
 
 @{
-    ViewData["Title"] = "Inventario de Herramientas";
+    ViewData["Title"] = "Inventario de Máquinas";
+    var totalHerramientas = Model.Count();
+    var disponibles = Model.Count(h => h.Estado == "Disponible");
+    var alquiladas = Model.Count(h => h.Estado == "Alquilado");
+    var mantenimiento = Model.Count(h => h.Estado == "Mantenimiento" || h.Estado == "Dañado");
 }
 
-<h1>Gestión de Herramientas</h1>
+<div class="container-fluid mt-4" data-listing>
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold text-white m-0 d-flex align-items-center gap-2">
+                <i class="bi bi-tools text-warning"></i> Inventario de Máquinas & Herramientas
+            </h2>
+            <p class="text-secondary small mb-0 mt-1">Gestión de patilleras, clippers, tijeras y equipos de la sede</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-controller="AlquileresHerramientas" asp-action="Index" class="btn btn-secondary">
+                <i class="bi bi-clock-history me-1"></i> Control de Alquileres
+            </a>
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="bi bi-plus-circle-fill me-1"></i> Registrar Herramienta
+            </a>
+        </div>
+    </div>
 
-<p>
-    <a asp-action="Create" class="btn btn-primary">Agregar Nueva Herramienta</a>
-</p>
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>@Html.DisplayNameFor(model => model.Nombre)</th>
-            <th>@Html.DisplayNameFor(model => model.Marca)</th>
-            <th>Número de Serie</th>
-            <th>@Html.DisplayNameFor(model => model.Estado)</th>
-            <th>Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>@Html.DisplayFor(model => item.Nombre)</td>
-            <td>@Html.DisplayFor(model => item.Marca)</td>
-            <td>@Html.DisplayFor(model => item.NumeroSerie)</td>
-            <td>
-                <span class="badge @(item.Estado == "Disponible" ? "bg-success" : item.Estado == "Alquilado" ? "bg-warning" : "bg-danger")">
-                    @Html.DisplayFor(model => item.Estado)
-                </span>
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-info">Editar</a> |
-                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-secondary">Detalles</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Eliminar</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+    <!-- ⚡ KPIS DE INVENTARIO -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <span class="kpi-title">Total Equipos</span>
+                    <div class="kpi-icon-wrapper kpi-icon-blue">
+                        <i class="bi bi-tools"></i>
+                    </div>
+                </div>
+                <div class="kpi-value text-white">@totalHerramientas</div>
+                <div class="kpi-subtitle"><span class="text-secondary">En inventario sede</span></div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <span class="kpi-title">Disponibles</span>
+                    <div class="kpi-icon-wrapper kpi-icon-emerald">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                </div>
+                <div class="kpi-value text-white">@disponibles</div>
+                <div class="kpi-subtitle"><span class="text-success"><i class="bi bi-check2 me-1"></i>Listas para préstamo</span></div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <span class="kpi-title">En Préstamo</span>
+                    <div class="kpi-icon-wrapper kpi-icon-amber">
+                        <i class="bi bi-person-workspace"></i>
+                    </div>
+                </div>
+                <div class="kpi-value text-white">@alquiladas</div>
+                <div class="kpi-subtitle"><span class="text-warning"><i class="bi bi-hourglass-split me-1"></i>En uso por barberos</span></div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="kpi-card h-100">
+                <div class="kpi-header">
+                    <span class="kpi-title">Taller / Dañadas</span>
+                    <div class="kpi-icon-wrapper kpi-icon-rose">
+                        <i class="bi bi-wrench"></i>
+                    </div>
+                </div>
+                <div class="kpi-value text-white">@mantenimiento</div>
+                <div class="kpi-subtitle"><span class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>No operativas</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABLA DE HERRAMIENTAS -->
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Máquina / Herramienta</th>
+                        <th style="width: 15%;">Marca</th>
+                        <th style="width: 18%;">Serial / Código</th>
+                        <th style="width: 17%;">Estado Operativo</th>
+                        <th style="width: 25%;" class="text-end pe-4">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center py-5">
+                                <div class="empty-state border-0 my-0 py-3">
+                                    <div class="empty-state-icon">
+                                        <i class="bi bi-tools"></i>
+                                    </div>
+                                    <h5 class="empty-state-title">No hay máquinas registradas en el inventario</h5>
+                                    <p class="empty-state-desc">Registra las herramientas para que los barberos puedan solicitarlas en el módulo de alquileres.</p>
+                                    <a asp-action="Create" class="btn btn-primary mt-3">
+                                        <i class="bi bi-plus-lg me-1"></i> Registrar Primera Herramienta
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model)
+                        {
+                            string badgeClass = item.Estado switch
+                            {
+                                "Disponible" => "bg-success",
+                                "Alquilado" => "bg-info",
+                                "Mantenimiento" => "bg-warning",
+                                "Dañado" => "bg-danger",
+                                _ => "bg-secondary"
+                            };
+
+                            string iconClass = item.Estado switch
+                            {
+                                "Disponible" => "bi-check-circle-fill",
+                                "Alquilado" => "bi-person-workspace",
+                                "Mantenimiento" => "bi-tools",
+                                "Dañado" => "bi-x-circle-fill",
+                                _ => "bi-circle"
+                            };
+
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="avatar-circle" style="width: 40px; height: 40px; font-size: 1.1rem;">
+                                            ⚙️
+                                        </div>
+                                        <div>
+                                            <span class="fw-bold text-white d-block">@item.Nombre</span>
+                                            <small class="text-secondary">ID: #@item.Id</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="text-white">@(string.IsNullOrEmpty(item.Marca) ? "Sin marca" : item.Marca)</span>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(item.NumeroSerie))
+                                    {
+                                        <code>@item.NumeroSerie</code>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-secondary small">Sin serial</span>
+                                    }
+                                </td>
+                                <td>
+                                    <!-- Pill Badge con Estado Actual -->
+                                    <div class="dropdown d-inline-block">
+                                        <button class="badge @badgeClass border-0 dropdown-toggle text-start" type="button" data-bs-toggle="dropdown" title="Clic para cambiar estado">
+                                            <i class="bi @iconClass me-1"></i> @item.Estado
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-dark shadow">
+                                            <li><h6 class="dropdown-header text-uppercase small text-secondary">Cambiar Estado a:</h6></li>
+                                            <li>
+                                                <form asp-action="CambiarEstado" method="post" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="id" value="@item.Id" />
+                                                    <input type="hidden" name="nuevoEstado" value="Disponible" />
+                                                    <button type="submit" class="dropdown-item text-success"><i class="bi bi-check-circle me-2"></i>Disponible</button>
+                                                </form>
+                                            </li>
+                                            <li>
+                                                <form asp-action="CambiarEstado" method="post" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="id" value="@item.Id" />
+                                                    <input type="hidden" name="nuevoEstado" value="Alquilado" />
+                                                    <button type="submit" class="dropdown-item text-info"><i class="bi bi-person-workspace me-2"></i>Alquilado</button>
+                                                </form>
+                                            </li>
+                                            <li>
+                                                <form asp-action="CambiarEstado" method="post" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="id" value="@item.Id" />
+                                                    <input type="hidden" name="nuevoEstado" value="Mantenimiento" />
+                                                    <button type="submit" class="dropdown-item text-warning"><i class="bi bi-tools me-2"></i>Mantenimiento</button>
+                                                </form>
+                                            </li>
+                                            <li>
+                                                <form asp-action="CambiarEstado" method="post" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="id" value="@item.Id" />
+                                                    <input type="hidden" name="nuevoEstado" value="Dañado" />
+                                                    <button type="submit" class="dropdown-item text-danger"><i class="bi bi-x-circle me-2"></i>Dañado</button>
+                                                </form>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="d-inline-flex gap-1">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-info" title="Detalles">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-warning" title="Editar">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

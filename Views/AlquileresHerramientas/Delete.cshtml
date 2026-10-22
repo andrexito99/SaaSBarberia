@@ -1,25 +1,61 @@
 @model SaaSBarberia.Models.AlquilerHerramienta
 
 @{
-    ViewData["Title"] = "Eliminar Registro de Alquiler";
+    ViewData["Title"] = "Eliminar Registro de Préstamo";
 }
 
-<h1>Anular Operación</h1>
-<h3>¿Estás seguro de que quieres eliminar este registro? La máquina volverá a marcarse como disponible.</h3>
-<div>
-    <hr />
-    <dl class="row">
-        <dt class="col-sm-3">Máquina</dt>
-        <dd class="col-sm-9">@Model.Herramienta?.Nombre</dd>
-        <dt class="col-sm-3">Barbero</dt>
-        <dd class="col-sm-9">@Model.Barbero?.Usuario?.Nombre</dd>
-        <dt class="col-sm-3">Fecha Prestamo</dt>
-        <dd class="col-sm-9">@Model.FechaPrestamo</dd>
-    </dl>
-    
-    <form asp-action="Delete">
-        <input type="hidden" asp-for="Id" />
-        <input type="submit" value="Anular de una" class="btn btn-danger" /> |
-        <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
-    </form>
+<div class="container mt-4" style="max-width: 600px;">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold text-white m-0 d-flex align-items-center gap-2">
+                <i class="bi bi-trash-fill text-danger"></i> Anular Préstamo de Equipo
+            </h2>
+            <p class="text-secondary small mb-0 mt-1">La máquina volverá a marcarse como disponible en el inventario.</p>
+        </div>
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Cancelar
+        </a>
+    </div>
+
+    <div class="card p-4 p-md-5">
+        <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+            <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+            <div>
+                <strong>¿Confirmas la anulación de este registro de alquiler?</strong>
+                <div class="small">El registro del préstamo será eliminado y el equipo quedará liberado.</div>
+            </div>
+        </div>
+
+        <div class="p-3 rounded-3 mb-4" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);">
+            <div class="row g-2 small">
+                <div class="col-sm-6">
+                    <span class="text-secondary d-block">Máquina:</span>
+                    <strong class="text-white">@Model.Herramienta?.Nombre</strong>
+                </div>
+                <div class="col-sm-6">
+                    <span class="text-secondary d-block">Barbero Responsable:</span>
+                    <span class="text-white">@(Model.Barbero?.Usuario?.Nombre ?? "No asignado")</span>
+                </div>
+                <div class="col-sm-6">
+                    <span class="text-secondary d-block">Fecha de Préstamo:</span>
+                    <span class="text-white">@Model.FechaPrestamo.ToString("dd/MM/yyyy hh:mm tt")</span>
+                </div>
+                <div class="col-sm-6">
+                    <span class="text-secondary d-block">Costo / Canon:</span>
+                    <span class="text-success fw-bold">$@Model.CostoAlquiler.ToString("N0")</span>
+                </div>
+            </div>
+        </div>
+
+        <form asp-action="Delete" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+            <div class="d-flex justify-content-end gap-2">
+                <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-danger fw-bold px-4">
+                    <i class="bi bi-trash me-1"></i> Confirmar Anulación
+                </button>
+            </div>
+        </form>
+    </div>
 </div>

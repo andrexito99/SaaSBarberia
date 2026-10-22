@@ -1,4 +1,4 @@
-﻿@{
+@{
     Layout = null;
 }
 <!DOCTYPE html>
@@ -6,35 +6,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - SaaSBarberia</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-</head>
-<body class="bg-light d-flex align-items-center justify-content-center" style="height: 100vh;">
+    <title>Acceso al Sistema - SaaS Barbería</title>
 
-    <div class="card shadow border-0 p-4" style="width: 100%; max-width: 400px;">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- CSS Frameworks & Icons -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="saas-dark-luxury d-flex align-items-center justify-content-center min-vh-100 p-3">
+
+    <div class="card shadow-lg p-4 p-md-5" style="width: 100%; max-width: 440px; border: 1px solid rgba(255, 255, 255, 0.12) !important;">
+        <!-- Brand Header -->
         <div class="text-center mb-4">
-            <h2 class="fw-bold text-dark">💈 SaaS Barbería</h2>
-            <p class="text-muted">Ingresa al sistema administrativo</p>
+            <div class="kpi-icon-wrapper kpi-icon-amber mx-auto mb-3" style="width: 56px; height: 56px; font-size: 1.6rem;">
+                💈
+            </div>
+            <h3 class="fw-bold text-white mb-1">SaaS Barbería</h3>
+            <p class="text-secondary small mb-0">Portal de Acceso Administrativo & Operativo</p>
         </div>
 
-        @* 🌟 SEGURIDAD EXTRA: Autocomplete="off" global para el formulario *@
+        <!-- Formulario -->
         <form asp-controller="Account" asp-action="Login" method="post" autocomplete="off">
-            @Html.ValidationSummary(true, "", new { @class = "text-danger small mb-3" })
+            @Html.AntiForgeryToken()
+            @Html.ValidationSummary(true, "", new { @class = "alert alert-danger small p-2 mb-3 d-block" })
 
             <div class="mb-3">
-                <label class="form-label fw-semibold">Correo Electrónico</label>
-                @* 🌟 Desactivamos explícitamente el autocompletado en este campo *@
-                <input type="email" name="email" class="form-control" placeholder="nombre@correo.com" autocomplete="off" required />
+                <label class="form-label">
+                    <i class="bi bi-envelope-at me-1 text-warning"></i> Correo Electrónico
+                </label>
+                <input type="email" name="email" class="form-control" placeholder="admin@barberia.com" autocomplete="off" required />
             </div>
 
-            <div class="mb-3">
-                <label class="form-label fw-semibold">Contraseña</label>
-                @* 🌟 Usamos 'new-password' para obligar al navegador a no sugerir claves guardadas *@
-                <input type="password" name="password" class="form-control" placeholder="••••••••" autocomplete="new-password" required />
+            <div class="mb-4">
+                <label class="form-label">
+                    <i class="bi bi-key-fill me-1 text-warning"></i> Contraseña
+                </label>
+                <input type="password" name="password" class="form-control" placeholder="••••••••••••" autocomplete="new-password" required />
             </div>
 
-            <button type="submit" class="btn btn-primary w-100 py-2 fw-bold mt-2">Entrar al Sistema</button>
+            <button type="submit" class="btn btn-primary w-100 py-2 fs-6 fw-bold">
+                <i class="bi bi-box-arrow-in-right me-1"></i> Entrar al Sistema
+            </button>
         </form>
+
+        <div class="text-center mt-4 pt-3 border-top" style="border-color: rgba(255, 255, 255, 0.08) !important;">
+            <span class="text-secondary small">&copy; 2026 SaaS Barbería. Todos los derechos reservados.</span>
+        </div>
     </div>
 
 </body>

@@ -4,27 +4,82 @@
     ViewData["Title"] = "Detalle del Alquiler";
 }
 
-<h1>Información del Préstamo</h1>
-<div>
-    <hr />
-    <dl class="row">
-        <dt class="col-sm-3">Equipo Alquilado</dt>
-        <dd class="col-sm-9">@Model.Herramienta?.Nombre (Serie: @Model.Herramienta?.NumeroSerie)</dd>
+<div class="container mt-4" style="max-width: 650px;">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold text-white m-0 d-flex align-items-center gap-2">
+                <i class="bi bi-info-circle-fill text-warning"></i> Detalle de Préstamo #@Model.Id
+            </h2>
+            <p class="text-secondary small mb-0 mt-1">Información de salida, responsable y entrega de equipo</p>
+        </div>
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Volver
+        </a>
+    </div>
 
-        <dt class="col-sm-3">Barbero a Cargo</dt>
-        <dd class="col-sm-9">@Model.Barbero?.Usuario?.Nombre</dd>
+    <div class="card p-4 p-md-5">
+        <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-3">
+                <div class="avatar-circle" style="width: 50px; height: 50px; font-size: 1.3rem;">
+                    ✂️
+                </div>
+                <div>
+                    <h4 class="fw-bold text-white mb-0">@Model.Herramienta?.Nombre</h4>
+                    <span class="text-secondary small">@(string.IsNullOrEmpty(Model.Herramienta?.NumeroSerie) ? "Sin serial" : $"SN: {Model.Herramienta?.NumeroSerie}")</span>
+                </div>
+            </div>
+            <div>
+                @if (Model.FechaDevolucion.HasValue)
+                {
+                    <span class="badge bg-success fs-7">
+                        <i class="bi bi-check-circle-fill me-1"></i> Devuelto
+                    </span>
+                }
+                else
+                {
+                    <span class="badge bg-danger fs-7">
+                        <i class="bi bi-hourglass-split me-1"></i> En Posesión del Barbero
+                    </span>
+                }
+            </div>
+        </div>
 
-        <dt class="col-sm-3">Fecha de Salida</dt>
-        <dd class="col-sm-9">@Model.FechaPrestamo.ToString("dd/MM/yyyy hh:mm tt")</dd>
+        <hr class="mb-4" />
 
-        <dt class="col-sm-3">Fecha de Retorno</dt>
-        <dd class="col-sm-9">@(Model.FechaDevolucion.HasValue ? Model.FechaDevolucion.Value.ToString("dd/MM/yyyy hh:mm tt") : "Aún en posesión del barbero")</dd>
+        <div class="row g-3">
+            <div class="col-sm-6">
+                <label class="text-secondary small d-block">Barbero a Cargo:</label>
+                <strong class="text-white fs-6">
+                    <i class="bi bi-person-fill text-warning me-1"></i>@(Model.Barbero?.Usuario?.Nombre ?? "No asignado")
+                </strong>
+            </div>
+            <div class="col-sm-6">
+                <label class="text-secondary small d-block">Canon de Alquiler:</label>
+                <span class="fw-bold text-success fs-5">$@Model.CostoAlquiler.ToString("N0")</span>
+            </div>
+            <div class="col-sm-6">
+                <label class="text-secondary small d-block">Fecha de Salida:</label>
+                <span class="text-white">
+                    <i class="bi bi-clock me-1 text-muted"></i>@Model.FechaPrestamo.ToString("dd/MM/yyyy hh:mm tt")
+                </span>
+            </div>
+            <div class="col-sm-6">
+                <label class="text-secondary small d-block">Fecha de Retorno:</label>
+                <span class="text-white">
+                    @(Model.FechaDevolucion.HasValue ? Model.FechaDevolucion.Value.ToString("dd/MM/yyyy hh:mm tt") : "Pendiente de devolución")
+                </span>
+            </div>
+        </div>
 
-        <dt class="col-sm-3">Costo de Operación</dt>
-        <dd class="col-sm-9">$@Model.CostoAlquiler.ToString("N2")</dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-warning">Procesar Estado</a> |
-    <a asp-action="Index" class="btn btn-secondary">Regresar al Registro</a>
+        <hr class="my-4" />
+
+        <div class="d-flex justify-content-end gap-2">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-warning">
+                <i class="bi bi-pencil me-1"></i> Procesar Estado / Editar
+            </a>
+            <a asp-action="Index" class="btn btn-secondary">
+                Regresar
+            </a>
+        </div>
+    </div>
 </div>

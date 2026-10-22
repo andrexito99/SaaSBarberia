@@ -1,5 +1,108 @@
 @model IEnumerable<SaaSBarberia.Models.WhatsAppMensajeHistorial>
-@{ ViewData["Title"] = "Historial WhatsApp"; var tipos = ViewBag.Tipos as IEnumerable<string> ?? Array.Empty<string>(); }
-<div class="mt-4"><h3>📨 Historial de mensajes WhatsApp</h3>
-<form method="get" class="card card-body border-0 shadow-sm mt-3"><div class="row g-2"><div class="col-md-3"><label class="form-label">Desde</label><input type="date" name="fechaDesde" value="@ViewBag.FechaDesde" class="form-control" /></div><div class="col-md-3"><label class="form-label">Hasta</label><input type="date" name="fechaHasta" value="@ViewBag.FechaHasta" class="form-control" /></div><div class="col-md-3"><label class="form-label">Tipo</label><select name="tipo" class="form-select"><option value="">Todos</option>@foreach (var tipo in tipos) { <option value="@tipo" selected="@(tipo == ViewBag.Tipo)">@tipo</option> }</select></div><div class="col-md-3 d-flex align-items-end gap-2"><button class="btn btn-primary">Filtrar</button><a asp-action="Index" class="btn btn-light border">Limpiar</a></div></div></form>
-<div class="card shadow-sm border-0 mt-3"><div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th>Fecha</th><th>Cliente</th><th>Teléfono</th><th>Tipo</th><th>Mensaje</th><th>Estado</th><th>Error</th><th>MetaMessageId</th></tr></thead><tbody>@foreach(var item in Model) { <tr><td>@item.Fecha.ToString("dd/MM/yyyy HH:mm")</td><td>@item.Cliente?.Nombre</td><td>@item.Telefono</td><td>@item.Tipo</td><td style="max-width:360px">@item.Mensaje</td><td><span class="badge @(item.Estado == "Enviado" ? "bg-success" : item.Estado == "Error" ? "bg-danger" : "bg-secondary")">@item.Estado</span></td><td class="text-danger" style="max-width:260px">@item.Error</td><td class="small">@item.MetaMessageId</td></tr> }</tbody></table></div></div></div>
+@{ 
+    ViewData["Title"] = "Historial WhatsApp"; 
+    var tipos = ViewBag.Tipos as IEnumerable<string> ?? Array.Empty<string>(); 
+}
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold text-white m-0 d-flex align-items-center gap-2">
+                <i class="bi bi-clock-history text-warning"></i> Historial de Mensajes WhatsApp
+            </h2>
+            <p class="text-secondary small mb-0 mt-1">Bitácora completa de notificaciones y recordatorios salientes</p>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <form method="get" class="card mb-4">
+        <div class="card-body p-4">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">Desde</label>
+                    <input type="date" name="fechaDesde" value="@ViewBag.FechaDesde" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Hasta</label>
+                    <input type="date" name="fechaHasta" value="@ViewBag.FechaHasta" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Tipo de Plantilla</label>
+                    <select name="tipo" class="form-select">
+                        <option value="">-- Todos los tipos --</option>
+                        @foreach (var tipo in tipos) 
+                        { 
+                            <option value="@tipo" selected="@(tipo == ViewBag.Tipo)">@tipo</option> 
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-funnel"></i> Filtrar
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary w-100">Limpiar</a>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- Tabla -->
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Fecha y Hora</th>
+                        <th>Cliente</th>
+                        <th>Teléfono</th>
+                        <th>Tipo</th>
+                        <th>Mensaje</th>
+                        <th>Estado</th>
+                        <th>Error</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-5">
+                                <div class="empty-state border-0 my-0 py-3">
+                                    <div class="empty-state-icon">
+                                        <i class="bi bi-inbox"></i>
+                                    </div>
+                                    <h5 class="empty-state-title">No hay mensajes en este rango</h5>
+                                    <p class="empty-state-desc">Intenta ajustar el filtro de fechas o tipos de mensaje.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach(var item in Model) 
+                        { 
+                            <tr>
+                                <td class="text-secondary small">
+                                    <i class="bi bi-clock me-1 text-muted"></i>@item.Fecha.ToString("dd/MM/yyyy HH:mm")
+                                </td>
+                                <td class="fw-bold text-white">@(item.Cliente?.Nombre ?? "Cliente")</td>
+                                <td><code>@item.Telefono</code></td>
+                                <td><span class="badge bg-info">@item.Tipo</span></td>
+                                <td style="max-width:340px">
+                                    <div class="text-wrap small text-body">@item.Mensaje</div>
+                                </td>
+                                <td>
+                                    <span class="badge @(item.Estado == "Enviado" || item.Estado == "Entregado" || item.Estado == "Leido" ? "bg-success" : item.Estado == "Error" ? "bg-danger" : "bg-secondary")">
+                                        @item.Estado
+                                    </span>
+                                </td>
+                                <td class="text-danger small" style="max-width:220px">
+                                    @(string.IsNullOrEmpty(item.Error) ? "-" : item.Error)
+                                </td>
+                            </tr> 
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

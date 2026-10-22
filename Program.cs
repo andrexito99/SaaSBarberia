@@ -4,26 +4,19 @@ using SaaSBarberia.Data;
 using SaaSBarberia.Services;
 using System.Globalization;
 using Microsoft.AspNetCore.Localization;
-using Supabase; // 👈 NECESARIO PARA SUPABASE
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Permitir el comportamiento heredado para DateTime (Local/Unspecified) en PostgreSQL
+// Permitir el comportamiento heredado para DateTime (Local/Unspecified) in PostgreSQL
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 builder.Services.AddDbContext<BarberSaaSDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("con")));
 
-// 🔥 CONFIGURACIÓN DE SUPABASE CLIENT Y STORAGE SERVICE
-var supabaseUrl = builder.Configuration["Supabase:Url"];
-var supabaseKey = builder.Configuration["Supabase:Key"];
-var supabaseOptions = new Supabase.SupabaseOptions { AutoConnectRealtime = false };
+// 🔥 REGISTRAMOS SUPABASE STORAGE SERVICE USANDO HTTPCLIENT PURO (Adiós al SDK fantasma)
+builder.Services.AddHttpClient<SupabaseStorageService>();
 
-var supabaseClient = new Supabase.Client(supabaseUrl, supabaseKey, supabaseOptions);
-builder.Services.AddSingleton(supabaseClient);
-builder.Services.AddScoped<SupabaseStorageService>();
 // ----------------------------------------------------
-
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -80,13 +73,10 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseDeveloperExceptionPage();
-
 app.UseHttpsRedirection();
 app.UseRouting();
-
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapStaticAssets();
 
 app.MapControllerRoute(

@@ -21,30 +21,34 @@ namespace SaaSBarberia.Controllers
         public ProductosController(IProductosService productosService, SupabaseStorageService storageService)
         {
             _productosService = productosService;
-            _storageService = storageService;
+            _storageService   = storageService;
         }
+
+        // ── Helpers ─────────────────────────────────────────────────────────────────
 
         private int CurrentTenantId
         {
             get
             {
-                var tenantClaim = User.FindFirst("TenantId")?.Value;
-                if (string.IsNullOrEmpty(tenantClaim) || !int.TryParse(tenantClaim, out int tenantId))
-                {
+                var val = User.FindFirst("TenantId")?.Value;
+                if (string.IsNullOrEmpty(val) || !int.TryParse(val, out int id))
                     throw new UnauthorizedAccessException("No se pudo identificar el Tenant.");
-                }
-                return tenantId;
+                return id;
             }
         }
 
-        private int CurrentUsuarioId => int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out int userId) ? userId : 0;
-        private string CurrentUserIp => HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+        private int    CurrentUsuarioId => int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out int uid) ? uid : 0;
+        private string CurrentUserIp    => HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+
+        // ── Index ────────────────────────────────────────────────────────────────────
 
         public async Task<IActionResult> Index()
         {
             var productos = await _productosService.GetAllAsync(CurrentTenantId);
             return View(productos);
         }
+
+        // ── Details ──────────────────────────────────────────────────────────────────
 
         public async Task<IActionResult> Details(int? id)
         {
@@ -54,62 +58,61 @@ namespace SaaSBarberia.Controllers
             return View(producto);
         }
 
+        // ── Create GET ───────────────────────────────────────────────────────────────
+
         [Authorize(Roles = "Administrador,SuperAdmin")]
-        public IActionResult Create() => View();
+        public IActionResult Create() => View(new Producto());
+
+        // ── Create POST ──────────────────────────────────────────────────────────────
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Administrador,SuperAdmin")]
-        public async Task<IActionResult> Create([Bind("Id,Nombre,Descripcion,PrecioVenta,Stock,RutaImagen")] Producto producto, IFormFile? productoArchivo)
+        public async Task<IActionResult> Create(
+            [Bind("Id,Nombre,Descripcion,PrecioVenta,Stock,RutaImagen")] Producto producto,
+            IFormFile? productoArchivo)   // ← name debe coincidir con el input[name="productoArchivo"]
         {
-            Console.WriteLine($"---> 🚨 1. ENTRO AL CREATE POST.");
-            Console.WriteLine($"---> 📦 ARCHIVO RECIBIDO: {(productoArchivo == null ? "NULO / NO LLEGÓ" : productoArchivo.FileName + " (" + productoArchivo.Length + " bytes)")}");
+            Console.WriteLine($"---> [Productos/Create POST] Archivo: " +
+                              $"{(productoArchivo == null ? "NO LLEGÓ" : $"{productoArchivo.FileName} ({productoArchivo.Length} bytes)")}");
 
-            // Asignamos TenantId y limpiamos navegaciones para evitar falsos negativos en el ModelState
+            // Asignar tenant y limpiar navegaciones del ModelState
             producto.TenantId = CurrentTenantId;
             ModelState.Remove(nameof(producto.Tenant));
-            ModelState.Remove(nameof(producto.RutaImagen)); // 👈 Removemos RutaImagen para que no marque error si viene vacía inicialmente
+            ModelState.Remove(nameof(producto.RutaImagen)); // No es requerida en Create
 
             if (!ModelState.IsValid)
             {
-                Console.WriteLine("---> ❌ ERRORES DE VALIDACIÓN EN MODELSTATE:");
-                foreach (var state in ModelState)
-                {
-                    foreach (var error in state.Value.Errors)
-                    {
-                        Console.WriteLine($"      Campo '{state.Key}': {error.ErrorMessage}");
-                    }
-                }
+                Console.WriteLine("---> [Productos/Create POST] ModelState INVÁLIDO:");
+                foreach (var kv in ModelState)
+                    foreach (var err in kv.Value.Errors)
+                        Console.WriteLine($"     Campo '{kv.Key}': {err.ErrorMessage}");
+                return View(producto);
             }
-            else
-            {
-                if (productoArchivo != null && productoArchivo.Length > 0)
-                {
-                    Console.WriteLine("---> ⏳ 2. LLAMANDO A SUPABASE STORAGE SERVICE...");
-                    string? urlImagen = await _storageService.SubirImagenAsync(productoArchivo, $"productos/tenant_{CurrentTenantId}");
 
-                    if (!string.IsNullOrEmpty(urlImagen))
-                    {
-                        producto.RutaImagen = urlImagen;
-                        Console.WriteLine($"---> ✅ 3. RUTA GUARDADA EN MODELO: {producto.RutaImagen}");
-                    }
-                    else
-                    {
-                        Console.WriteLine("---> ❌ 3. SUPABASE RETORNÓ NULL AL SUBIR LA IMAGEN.");
-                    }
+            // Subir imagen si se seleccionó una
+            if (productoArchivo != null && productoArchivo.Length > 0)
+            {
+                var url = await _storageService.SubirImagenAsync(
+                    productoArchivo,
+                    $"productos/tenant_{CurrentTenantId}");
+
+                if (!string.IsNullOrEmpty(url))
+                {
+                    producto.RutaImagen = url;
+                    Console.WriteLine($"---> [Productos/Create POST] RutaImagen asignada: {url}");
                 }
                 else
                 {
-                    Console.WriteLine("---> ⚠️ NO SE SELECCIONÓ NINGÚN ARCHIVO DE IMAGEN.");
+                    Console.WriteLine("---> [Productos/Create POST] Supabase devolvió null. El producto se guarda SIN imagen.");
                 }
-
-                await _productosService.CreateAsync(producto, CurrentTenantId, CurrentUsuarioId, CurrentUserIp);
-                Console.WriteLine("---> 🚀 4. PRODUCTO GUARDADO EN BD EXITOSAMENTE.");
-                return RedirectToAction(nameof(Index));
             }
 
-            return View(producto);
+            await _productosService.CreateAsync(producto, CurrentTenantId, CurrentUsuarioId, CurrentUserIp);
+            Console.WriteLine($"---> [Productos/Create POST] Producto ID={producto.Id} guardado en BD.");
+            return RedirectToAction(nameof(Index));
         }
+
+        // ── Edit GET ─────────────────────────────────────────────────────────────────
 
         [Authorize(Roles = "Administrador,SuperAdmin")]
         public async Task<IActionResult> Edit(int? id)
@@ -120,10 +123,15 @@ namespace SaaSBarberia.Controllers
             return View(producto);
         }
 
+        // ── Edit POST ────────────────────────────────────────────────────────────────
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Administrador,SuperAdmin")]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Nombre,Descripcion,PrecioVenta,Stock,RutaImagen")] Producto producto, IFormFile? productoArchivo)
+        public async Task<IActionResult> Edit(
+            int id,
+            [Bind("Id,Nombre,Descripcion,PrecioVenta,Stock,RutaImagen")] Producto producto,
+            IFormFile? productoArchivo)   // ← name debe coincidir con el input[name="productoArchivo"]
         {
             if (id != producto.Id) return NotFound();
 
@@ -131,34 +139,38 @@ namespace SaaSBarberia.Controllers
             ModelState.Remove(nameof(producto.Tenant));
             ModelState.Remove(nameof(producto.RutaImagen));
 
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    if (productoArchivo != null && productoArchivo.Length > 0)
-                    {
-                        string? urlImagen = await _storageService.SubirImagenAsync(productoArchivo, $"productos/tenant_{CurrentTenantId}");
-                        if (!string.IsNullOrEmpty(urlImagen))
-                        {
-                            producto.RutaImagen = urlImagen;
-                        }
-                    }
+            if (!ModelState.IsValid) return View(producto);
 
-                    await _productosService.UpdateAsync(producto, CurrentTenantId, CurrentUsuarioId, CurrentUserIp);
-                    return RedirectToAction(nameof(Index));
-                }
-                catch (DbUpdateConcurrencyException)
+            try
+            {
+                if (productoArchivo != null && productoArchivo.Length > 0)
                 {
-                    if (!_productosService.Exists(producto.Id, CurrentTenantId)) return NotFound();
-                    else throw;
+                    // Subir nueva imagen y reemplazar la URL
+                    var url = await _storageService.SubirImagenAsync(
+                        productoArchivo,
+                        $"productos/tenant_{CurrentTenantId}");
+
+                    if (!string.IsNullOrEmpty(url))
+                        producto.RutaImagen = url;
                 }
-                catch (UnauthorizedAccessException)
-                {
-                    return Forbid();
-                }
+                // Si productoArchivo es null/vacío, la vista ya envía la URL actual
+                // vía <input type="hidden" asp-for="RutaImagen">, así se preserva.
+
+                await _productosService.UpdateAsync(producto, CurrentTenantId, CurrentUsuarioId, CurrentUserIp);
+                return RedirectToAction(nameof(Index));
             }
-            return View(producto);
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!_productosService.Exists(producto.Id, CurrentTenantId)) return NotFound();
+                throw;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
         }
+
+        // ── Delete ───────────────────────────────────────────────────────────────────
 
         [Authorize(Roles = "Administrador,SuperAdmin")]
         public async Task<IActionResult> Delete(int? id)

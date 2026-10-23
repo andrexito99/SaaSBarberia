@@ -6,11 +6,15 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 
+/// <summary>
+/// Servicio para subir imágenes al bucket "uploads" de Supabase Storage
+/// usando HttpClient puro y la REST API de Supabase Storage.
+/// </summary>
 public class SupabaseStorageService
 {
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
-    private readonly string _bucketName = "uploads"; // Nombre del bucket en Supabase
+    private const string BucketName = "uploads";
 
     public SupabaseStorageService(HttpClient httpClient, IConfiguration configuration)
     {
@@ -19,79 +23,100 @@ public class SupabaseStorageService
     }
 
     /// <summary>
-    /// Sube un archivo (imagen) al bucket "uploads" de Supabase Storage usando la REST API pura.
-    /// Devuelve la URL pública del archivo subido, o null si falla.
+    /// Sube un IFormFile al bucket "uploads" de Supabase Storage.
+    /// Devuelve la URL pública permanente del archivo, o null si falla.
     /// </summary>
-    /// <param name="archivo">El IFormFile recibido desde el formulario.</param>
-    /// <param name="carpeta">Carpeta dentro del bucket (ej: "productos/tenant_5").</param>
+    /// <param name="archivo">Archivo recibido del formulario HTML (multipart/form-data).</param>
+    /// <param name="carpeta">Subcarpeta dentro del bucket. Ejemplo: "productos/tenant_3"</param>
     public async Task<string?> SubirImagenAsync(IFormFile archivo, string carpeta)
     {
-        if (archivo == null || archivo.Length == 0) return null;
+        if (archivo == null || archivo.Length == 0)
+        {
+            Console.WriteLine("---> ⚠️  [Storage] Archivo nulo o vacío, se omite la subida.");
+            return null;
+        }
 
         try
         {
-            // Leer la URL y la Key desde appsettings.json -> sección "Supabase"
-            var supabaseConfigUrl = _configuration["Supabase:Url"]?.TrimEnd('/');
-            var supabaseKey = _configuration["Supabase:Key"];
+            // ── 1. Leer credenciales desde appsettings.json ──────────────────────────
+            // Preferimos "Supabase:ProjectUrl" (URL limpia). Si no existe, la derivamos
+            // quitando el segmento "/rest/v1/" de "Supabase:Url".
+            var projectUrl = _configuration["Supabase:ProjectUrl"]?.TrimEnd('/');
 
-            if (string.IsNullOrEmpty(supabaseConfigUrl) || string.IsNullOrEmpty(supabaseKey))
+            if (string.IsNullOrEmpty(projectUrl))
             {
-                Console.WriteLine("---> ❌ ERROR: Faltan las credenciales de Supabase en appsettings.json (Supabase:Url o Supabase:Key)");
+                var rawUrl = _configuration["Supabase:Url"]?.TrimEnd('/') ?? string.Empty;
+                var restIdx = rawUrl.IndexOf("/rest/", StringComparison.OrdinalIgnoreCase);
+                projectUrl = restIdx > 0 ? rawUrl[..restIdx] : rawUrl;
+            }
+
+            // La clave que se envía en los headers debe ser la anon/service_role key.
+            // Intentamos primero "Supabase:AnonKey", luego "Supabase:Key".
+            var apiKey = _configuration["Supabase:AnonKey"]
+                      ?? _configuration["Supabase:Key"];
+
+            if (string.IsNullOrEmpty(projectUrl) || string.IsNullOrEmpty(apiKey))
+            {
+                Console.WriteLine("---> ❌ [Storage] FALTAN CREDENCIALES en appsettings.json. " +
+                                  "Revisa Supabase:ProjectUrl y Supabase:AnonKey.");
                 return null;
             }
 
-            // 🔥 CORRECCIÓN CRÍTICA: Derivar la URL base del proyecto Supabase.
-            // En appsettings.json el Url puede estar como "https://xxx.supabase.co/rest/v1/"
-            // Necesitamos solo "https://xxx.supabase.co" para construir la ruta de Storage.
-            var baseProjectUrl = supabaseConfigUrl;
-            var restIndex = baseProjectUrl.IndexOf("/rest/", StringComparison.OrdinalIgnoreCase);
-            if (restIndex > 0)
+            // ── 2. Construir la ruta y el endpoint ──────────────────────────────────
+            var extension = Path.GetExtension(archivo.FileName).ToLowerInvariant();
+            var objectPath = $"{carpeta.Trim('/')}/{Guid.NewGuid()}{extension}";
+            var endpoint   = $"{projectUrl}/storage/v1/object/{BucketName}/{objectPath}";
+
+            Console.WriteLine($"---> 📤 [Storage] Subiendo: {archivo.FileName} " +
+                              $"({archivo.Length / 1024.0:F1} KB) → {endpoint}");
+
+            // ── 3. Leer bytes del archivo ────────────────────────────────────────────
+            byte[] fileBytes;
+            using (var ms = new MemoryStream())
             {
-                baseProjectUrl = baseProjectUrl.Substring(0, restIndex);
+                await archivo.CopyToAsync(ms);
+                fileBytes = ms.ToArray();
             }
 
-            var extension = Path.GetExtension(archivo.FileName);
-            var fileName = $"{carpeta}/{Guid.NewGuid()}{extension}";
+            // ── 4. Construir y enviar la petición HTTP POST ─────────────────────────
+            using var request = new HttpRequestMessage(HttpMethod.Post, endpoint);
 
-            // Endpoint correcto de la REST API de Supabase Storage
-            var endpoint = $"{baseProjectUrl}/storage/v1/object/{_bucketName}/{fileName}";
+            // Headers requeridos por Supabase Storage REST API
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+            request.Headers.Add("apikey", apiKey);
+            // x-upsert: true → permite sobreescribir sin error 409 Conflict
+            request.Headers.Add("x-upsert", "true");
 
-            Console.WriteLine($"---> 📤 SUBIENDO IMAGEN a: {endpoint}");
+            using var body = new ByteArrayContent(fileBytes);
+            body.Headers.ContentType = new MediaTypeHeaderValue(
+                string.IsNullOrWhiteSpace(archivo.ContentType)
+                    ? "application/octet-stream"
+                    : archivo.ContentType);
+            request.Content = body;
 
-            using var memoryStream = new MemoryStream();
-            await archivo.CopyToAsync(memoryStream);
-            var fileBytes = memoryStream.ToArray();
+            var response = await _httpClient.SendAsync(request);
 
-            using var requestMessage = new HttpRequestMessage(HttpMethod.Post, endpoint);
-            // Autenticación con Bearer token + apikey (ambos requeridos por Supabase)
-            requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", supabaseKey);
-            requestMessage.Headers.Add("apikey", supabaseKey);
-            // 🔥 UPSERT: Permite sobrescribir archivos existentes sin error 409
-            requestMessage.Headers.Add("x-upsert", "true");
-
-            using var content = new ByteArrayContent(fileBytes);
-            content.Headers.ContentType = new MediaTypeHeaderValue(archivo.ContentType ?? "application/octet-stream");
-            requestMessage.Content = content;
-
-            var response = await _httpClient.SendAsync(requestMessage);
-
+            // ── 5. Evaluar la respuesta ──────────────────────────────────────────────
             if (response.IsSuccessStatusCode)
             {
-                // URL pública correcta para guardar en la BD y mostrar en la interfaz
-                var publicUrl = $"{baseProjectUrl}/storage/v1/object/public/{_bucketName}/{fileName}";
-                Console.WriteLine($"---> 🚀 IMAGEN SUBIDA EXITOSAMENTE: {publicUrl}");
+                var publicUrl = $"{projectUrl}/storage/v1/object/public/{BucketName}/{objectPath}";
+                Console.WriteLine($"---> ✅ [Storage] SUBIDA OK → {publicUrl}");
                 return publicUrl;
             }
             else
             {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"---> ❌ ERROR HTTP SUPABASE STORAGE ({response.StatusCode}): {errorContent}");
+                // Impresión OBLIGATORIA del error completo para depuración
+                var statusCode    = (int)response.StatusCode;
+                var errorBody     = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"---> ❌ [Storage] FALLÓ HTTP {statusCode} ({response.StatusCode})");
+                Console.WriteLine($"---> ❌ [Storage] Endpoint  : {endpoint}");
+                Console.WriteLine($"---> ❌ [Storage] Respuesta : {errorBody}");
                 return null;
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"---> ❌ EXCEPCIÓN AL SUBIR IMAGEN: {ex.Message}");
+            Console.WriteLine($"---> ❌ [Storage] EXCEPCIÓN: {ex.GetType().Name}: {ex.Message}");
             return null;
         }
     }

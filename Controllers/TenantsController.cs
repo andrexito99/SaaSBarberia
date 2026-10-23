@@ -52,35 +52,60 @@ namespace SaaSBarberia.Controllers
             return View(tenant);
         }
 
-        // POST: Tenants/Create (Paso 1: Guarda solo Tenant)
+        // POST: Tenants/Create (Paso 1: Guarda Tenant y sube logo)
         [HttpPost]
         [Authorize(Roles = "SuperAdmin")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,NombreNegocio,Subdominio,PlanSuscripcion,Activo,FechaRegistro,ColorPrimario,ColorSecundario,EstiloSidebar,TieneModuloHerramientas,TieneModuloWhatsApp,TiempoEntreCitas,RutaLogo")] Tenant tenant, IFormFile? logoArchivo)
         {
+            Console.WriteLine($"---> [Tenants/Create POST] Archivo: " +
+                              $"{(logoArchivo == null ? "NO LLEGÓ" : $"{logoArchivo.FileName} ({logoArchivo.Length} bytes)")}");
+
+            // Limpiar navegaciones y colecciones del ModelState para evitar falsos negativos
             ModelState.Remove("HorariosLaborales");
+            ModelState.Remove("Barberos");
+            ModelState.Remove("Cita");
+            ModelState.Remove("Facturas");
+            ModelState.Remove("Servicios");
+            ModelState.Remove("Usuarios");
+            ModelState.Remove("Modulos");
+            ModelState.Remove(nameof(tenant.RutaLogo));
 
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                tenant.FechaRegistro ??= DateTime.Now;
-
-                if (logoArchivo != null && logoArchivo.Length > 0)
-                {
-                    // ☁️ Subir logo a Supabase Storage (carpeta temporal, se re-organiza con el Id después)
-                    string? urlLogo = await _storageService.SubirImagenAsync(logoArchivo, "tenants/nuevos");
-                    if (!string.IsNullOrEmpty(urlLogo))
-                    {
-                        tenant.RutaLogo = urlLogo;
-                    }
-                }
-
-                // Guardamos el Tenant base
-                await _tenantService.GuardarAsync(tenant);
-
-                return RedirectToAction(nameof(ConfigurarHorarios), new { tenantId = tenant.Id });
+                Console.WriteLine("---> [Tenants/Create POST] ModelState INVÁLIDO:");
+                foreach (var kv in ModelState)
+                    foreach (var err in kv.Value.Errors)
+                        Console.WriteLine($"     Campo '{kv.Key}': {err.ErrorMessage}");
+                return View(tenant);
             }
 
-            return View(tenant);
+            tenant.FechaRegistro ??= DateTime.Now;
+
+            // 1️⃣ Guardar primero para obtener el Id asignado por la BD
+            await _tenantService.GuardarAsync(tenant);
+            Console.WriteLine($"---> [Tenants/Create POST] Tenant ID={tenant.Id} guardado.");
+
+            // 2️⃣ Ahora que tenemos el Id, subir el logo a la carpeta correcta
+            if (logoArchivo != null && logoArchivo.Length > 0)
+            {
+                string? urlLogo = await _storageService.SubirImagenAsync(
+                    logoArchivo, $"tenants/tenant_{tenant.Id}");
+
+                if (!string.IsNullOrEmpty(urlLogo))
+                {
+                    // Actualizar RutaLogo en la BD con la URL real
+                    var tenantDb = await _context.Tenants.FindAsync(tenant.Id);
+                    if (tenantDb != null)
+                    {
+                        tenantDb.RutaLogo = urlLogo;
+                        await _context.SaveChangesAsync();
+                        Console.WriteLine($"---> [Tenants/Create POST] Logo actualizado: {urlLogo}");
+                    }
+                }
+            }
+
+            return RedirectToAction(nameof(ConfigurarHorarios), new { tenantId = tenant.Id });
         }
 
         // GET: Tenants/ConfigurarHorarios?tenantId=5 (Paso 2)
@@ -215,30 +240,53 @@ namespace SaaSBarberia.Controllers
         {
             if (id != tenant.Id) return NotFound();
 
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    if (logoArchivo != null && logoArchivo.Length > 0)
-                    {
-                        // ☁️ Subir nuevo logo a Supabase Storage con aislamiento Multi-Tenant
-                        string? urlLogo = await _storageService.SubirImagenAsync(logoArchivo, $"tenants/tenant_{tenant.Id}");
-                        if (!string.IsNullOrEmpty(urlLogo))
-                        {
-                            tenant.RutaLogo = urlLogo;
-                        }
-                    }
+            Console.WriteLine($"---> [Tenants/Edit POST] id={id} | Archivo: " +
+                              $"{(logoArchivo == null ? "NO LLEGÓ" : $"{logoArchivo.FileName} ({logoArchivo.Length} bytes)")}");
 
-                    await _tenantService.GuardarAsync(tenant);
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!_tenantService.Existe(tenant.Id)) return NotFound();
-                    else throw;
-                }
-                return RedirectToAction(nameof(Index));
+            // Limpiar navegaciones del ModelState
+            ModelState.Remove("HorariosLaborales");
+            ModelState.Remove("Barberos");
+            ModelState.Remove("Cita");
+            ModelState.Remove("Facturas");
+            ModelState.Remove("Servicios");
+            ModelState.Remove("Usuarios");
+            ModelState.Remove("Modulos");
+            ModelState.Remove(nameof(tenant.RutaLogo));
+
+            if (!ModelState.IsValid)
+            {
+                Console.WriteLine("---> [Tenants/Edit POST] ModelState INVÁLIDO:");
+                foreach (var kv in ModelState)
+                    foreach (var err in kv.Value.Errors)
+                        Console.WriteLine($"     Campo '{kv.Key}': {err.ErrorMessage}");
+                return View(tenant);
             }
-            return View(tenant);
+
+            try
+            {
+                // Subir logo nuevo si se seleccionó uno
+                if (logoArchivo != null && logoArchivo.Length > 0)
+                {
+                    string? urlLogo = await _storageService.SubirImagenAsync(
+                        logoArchivo, $"tenants/tenant_{tenant.Id}");
+                    if (!string.IsNullOrEmpty(urlLogo))
+                    {
+                        tenant.RutaLogo = urlLogo;
+                        Console.WriteLine($"---> [Tenants/Edit POST] Logo actualizado: {urlLogo}");
+                    }
+                }
+                // Si logoArchivo es null, la vista envía la URL existente
+                // vía <input type="hidden" asp-for="RutaLogo">, TenantService la respeta.
+
+                await _tenantService.GuardarAsync(tenant);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!_tenantService.Existe(tenant.Id)) return NotFound();
+                throw;
+            }
+
+            return RedirectToAction(nameof(Index));
         }
 
         [Authorize(Roles = "SuperAdmin")]

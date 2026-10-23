@@ -15,33 +15,39 @@ public class BarberosController : Controller
 {
     private readonly BarberoService _barberoService;
     private readonly CitaService _citaService;
-    private readonly SupabaseStorageService _storageService; // 🚀 Reemplazado por Supabase Storage
+    private readonly SupabaseStorageService _storageService;
 
     public BarberosController(BarberoService barberoService, CitaService citaService, SupabaseStorageService storageService)
     {
         _barberoService = barberoService;
-        _citaService = citaService;
+        _citaService    = citaService;
         _storageService = storageService;
     }
 
-    private int CurrentUsuarioId => int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out int userId) ? userId : 0;
-    private string CurrentUserIp => HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+    // ── Helpers ──────────────────────────────────────────────────────────────────────
+
+    private int    CurrentUsuarioId => int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out int uid) ? uid : 0;
+    private string CurrentUserIp    => HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+
+    // ── Index ─────────────────────────────────────────────────────────────────────────
 
     public async Task<IActionResult> Index()
     {
         if (CurrentUsuarioId == 0) return RedirectToAction("Login", "Account");
+
         var barberos = await _barberoService.ObtenerTodosConRelacionesAsync();
 
+        // Filtro Multi-Tenant: Administrador y Barbero solo ven los de su sede
         if (User.IsInRole("Administrador") || User.IsInRole("Barbero") || User.IsInRole("Cliente"))
         {
             var cuenta = await _citaService.ObtenerClientePorIdAsync(CurrentUsuarioId);
-            if (cuenta != null && cuenta.TenantId != null)
-            {
+            if (cuenta?.TenantId != null)
                 barberos = barberos.Where(b => b.TenantId == cuenta.TenantId.Value).ToList();
-            }
         }
         return View(barberos);
     }
+
+    // ── Details ───────────────────────────────────────────────────────────────────────
 
     public async Task<IActionResult> Details(int? id)
     {
@@ -51,57 +57,81 @@ public class BarberosController : Controller
         return View(barbero);
     }
 
+    // ── Create GET ────────────────────────────────────────────────────────────────────
+
     public async Task<IActionResult> Create()
     {
         if (CurrentUsuarioId == 0) return RedirectToAction("Login", "Account");
+
         var usuarios = await _barberoService.ObtenerUsuariosDisponiblesAsync();
-        var tenants = await _barberoService.ObtenerTenantsAsync();
+        var tenants  = await _barberoService.ObtenerTenantsAsync();
 
         if (User.IsInRole("Administrador"))
         {
             var adminDb = await _citaService.ObtenerClientePorIdAsync(CurrentUsuarioId);
-            if (adminDb != null && adminDb.TenantId != null)
+            if (adminDb?.TenantId != null)
             {
                 int miTenantId = adminDb.TenantId.Value;
                 ViewBag.UsuarioId = new SelectList(usuarios.Where(u => u.TenantId == miTenantId), "Id", "Nombre");
-                ViewBag.TenantId = new SelectList(tenants.Where(t => t.Id == miTenantId), "Id", "NombreNegocio", miTenantId);
+                ViewBag.TenantId  = new SelectList(tenants.Where(t => t.Id == miTenantId), "Id", "NombreNegocio", miTenantId);
             }
         }
         else
         {
             ViewBag.UsuarioId = new SelectList(usuarios, "Id", "Nombre");
-            ViewBag.TenantId = new SelectList(tenants, "Id", "NombreNegocio");
+            ViewBag.TenantId  = new SelectList(tenants, "Id", "NombreNegocio");
         }
         return View(new Barbero());
     }
 
+    // ── Create POST ───────────────────────────────────────────────────────────────────
+
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("Id,TenantId,UsuarioId,Especialidad,ComisionPorcentaje,RutaFoto")] Barbero barbero, IFormFile? fotoArchivo)
+    public async Task<IActionResult> Create(
+        [Bind("Id,TenantId,UsuarioId,Especialidad,ComisionPorcentaje,RutaFoto")] Barbero barbero,
+        IFormFile? fotoArchivo)   // ← name debe coincidir con el input[name="fotoArchivo"]
     {
+        Console.WriteLine($"---> [Barberos/Create POST] Archivo: " +
+                          $"{(fotoArchivo == null ? "NO LLEGÓ" : $"{fotoArchivo.FileName} ({fotoArchivo.Length} bytes)")}");
+
         ModelState.Remove(nameof(barbero.Tenant));
         ModelState.Remove(nameof(barbero.Usuario));
+        ModelState.Remove(nameof(barbero.RutaFoto));
 
-        if (ModelState.IsValid)
+        if (!ModelState.IsValid)
         {
-            // ☁️ GUARDADO EN SUPABASE STORAGE
-            if (fotoArchivo != null && fotoArchivo.Length > 0)
-            {
-                string? urlImagen = await _storageService.SubirImagenAsync(fotoArchivo, $"barberos/tenant_{barbero.TenantId}");
-                if (!string.IsNullOrEmpty(urlImagen))
-                {
-                    barbero.RutaFoto = urlImagen;
-                }
-            }
+            Console.WriteLine("---> [Barberos/Create POST] ModelState INVÁLIDO:");
+            foreach (var kv in ModelState)
+                foreach (var err in kv.Value.Errors)
+                    Console.WriteLine($"     Campo '{kv.Key}': {err.ErrorMessage}");
 
-            await _barberoService.GuardarAsync(barbero, CurrentUsuarioId, CurrentUserIp);
-            return RedirectToAction(nameof(Index));
+            var usuarios = await _barberoService.ObtenerUsuariosDisponiblesAsync();
+            var tenants  = await _barberoService.ObtenerTenantsAsync();
+            ViewBag.UsuarioId = new SelectList(usuarios, "Id", "Nombre", barbero.UsuarioId);
+            ViewBag.TenantId  = new SelectList(tenants,  "Id", "NombreNegocio", barbero.TenantId);
+            return View(barbero);
         }
 
-        var usuarios = await _barberoService.ObtenerUsuariosDisponiblesAsync();
-        var tenants = await _barberoService.ObtenerTenantsAsync();
-        return View(barbero);
+        // Subir foto a Supabase con aislamiento por Tenant
+        if (fotoArchivo != null && fotoArchivo.Length > 0)
+        {
+            var url = await _storageService.SubirImagenAsync(
+                fotoArchivo,
+                $"barberos/tenant_{barbero.TenantId}");
+
+            if (!string.IsNullOrEmpty(url))
+            {
+                barbero.RutaFoto = url;
+                Console.WriteLine($"---> [Barberos/Create POST] RutaFoto asignada: {url}");
+            }
+        }
+
+        await _barberoService.GuardarAsync(barbero, CurrentUsuarioId, CurrentUserIp);
+        return RedirectToAction(nameof(Index));
     }
+
+    // ── Edit GET ──────────────────────────────────────────────────────────────────────
 
     public async Task<IActionResult> Edit(int? id)
     {
@@ -110,51 +140,59 @@ public class BarberosController : Controller
         if (barbero == null) return NotFound();
 
         var usuarios = await _barberoService.ObtenerUsuariosDisponiblesAsync();
-        var tenants = await _barberoService.ObtenerTenantsAsync();
+        var tenants  = await _barberoService.ObtenerTenantsAsync();
+        ViewBag.UsuarioId = new SelectList(usuarios, "Id", "Nombre", barbero.UsuarioId);
+        ViewBag.TenantId  = new SelectList(tenants,  "Id", "NombreNegocio", barbero.TenantId);
         return View(barbero);
     }
 
+    // ── Edit POST ─────────────────────────────────────────────────────────────────────
+
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("Id,TenantId,UsuarioId,Especialidad,ComisionPorcentaje,RutaFoto")] Barbero barbero, IFormFile? fotoInput)
+    public async Task<IActionResult> Edit(
+        int id,
+        [Bind("Id,TenantId,UsuarioId,Especialidad,ComisionPorcentaje,RutaFoto")] Barbero barbero,
+        IFormFile? fotoInput)   // ← name debe coincidir con el input[name="fotoInput"]
     {
         if (id != barbero.Id) return NotFound();
 
         ModelState.Remove(nameof(barbero.Tenant));
         ModelState.Remove(nameof(barbero.Usuario));
+        ModelState.Remove(nameof(barbero.RutaFoto));
 
-        if (ModelState.IsValid)
+        if (!ModelState.IsValid) return View(barbero);
+
+        try
         {
-            try
+            if (fotoInput != null && fotoInput.Length > 0)
             {
-                // 📸 1. Si subió una foto nueva, la mandamos a Supabase Storage
-                if (fotoInput != null && fotoInput.Length > 0)
-                {
-                    string? urlImagen = await _storageService.SubirImagenAsync(fotoInput, $"barberos/tenant_{barbero.TenantId}");
-                    if (!string.IsNullOrEmpty(urlImagen))
-                    {
-                        barbero.RutaFoto = urlImagen;
-                    }
-                }
-                else
-                {
-                    // 🔄 2. Si no subió foto nueva, mantenemos la ruta que ya traía el input hidden
-                    var barberoExistente = await _barberoService.ObtenerPorIdAsync(id);
-                    if (barberoExistente != null) barbero.RutaFoto = barberoExistente.RutaFoto;
-                }
+                // Subir nueva foto y reemplazar URL
+                var url = await _storageService.SubirImagenAsync(
+                    fotoInput,
+                    $"barberos/tenant_{barbero.TenantId}");
 
-                // Guardamos con auditoría incorporada
-                await _barberoService.GuardarAsync(barbero, CurrentUsuarioId, CurrentUserIp);
+                if (!string.IsNullOrEmpty(url))
+                {
+                    barbero.RutaFoto = url;
+                    Console.WriteLine($"---> [Barberos/Edit POST] RutaFoto actualizada: {url}");
+                }
             }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_barberoService.Existe(barbero.Id)) return NotFound();
-                else throw;
-            }
-            return RedirectToAction(nameof(Index));
+            // Si fotoInput es null, la vista envía la foto existente
+            // vía <input type="hidden" asp-for="RutaFoto">, BarberoService la respeta.
+
+            await _barberoService.GuardarAsync(barbero, CurrentUsuarioId, CurrentUserIp);
         }
-        return View(barbero);
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!_barberoService.Existe(barbero.Id)) return NotFound();
+            throw;
+        }
+
+        return RedirectToAction(nameof(Index));
     }
+
+    // ── Delete ────────────────────────────────────────────────────────────────────────
 
     public async Task<IActionResult> Delete(int? id)
     {
@@ -168,7 +206,6 @@ public class BarberosController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        // En Supabase Storage eliminamos el registro y la referencia de la BD; el archivo queda en el bucket o se gestiona online.
         await _barberoService.EliminarAsync(id, CurrentUsuarioId, CurrentUserIp);
         return RedirectToAction(nameof(Index));
     }

@@ -62,25 +62,52 @@ namespace SaaSBarberia.Controllers
         [Authorize(Roles = "Administrador,SuperAdmin")]
         public async Task<IActionResult> Create([Bind("Id,Nombre,Descripcion,PrecioVenta,Stock,RutaImagen")] Producto producto, IFormFile? productoArchivo)
         {
-            // 👈 ASIGNAMOS EL TENANTID OBLIGATORIO AL MODELO
+            Console.WriteLine($"---> 🚨 1. ENTRO AL CREATE POST.");
+            Console.WriteLine($"---> 📦 ARCHIVO RECIBIDO: {(productoArchivo == null ? "NULO / NO LLEGÓ" : productoArchivo.FileName + " (" + productoArchivo.Length + " bytes)")}");
+
+            // Asignamos TenantId y limpiamos navegaciones para evitar falsos negativos en el ModelState
             producto.TenantId = CurrentTenantId;
             ModelState.Remove(nameof(producto.Tenant));
+            ModelState.Remove(nameof(producto.RutaImagen)); // 👈 Removemos RutaImagen para que no marque error si viene vacía inicialmente
 
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
+            {
+                Console.WriteLine("---> ❌ ERRORES DE VALIDACIÓN EN MODELSTATE:");
+                foreach (var state in ModelState)
+                {
+                    foreach (var error in state.Value.Errors)
+                    {
+                        Console.WriteLine($"      Campo '{state.Key}': {error.ErrorMessage}");
+                    }
+                }
+            }
+            else
             {
                 if (productoArchivo != null && productoArchivo.Length > 0)
                 {
-                    // ☁️ Subir imagen a Supabase Storage con aislamiento Multi-Tenant
+                    Console.WriteLine("---> ⏳ 2. LLAMANDO A SUPABASE STORAGE SERVICE...");
                     string? urlImagen = await _storageService.SubirImagenAsync(productoArchivo, $"productos/tenant_{CurrentTenantId}");
+
                     if (!string.IsNullOrEmpty(urlImagen))
                     {
                         producto.RutaImagen = urlImagen;
+                        Console.WriteLine($"---> ✅ 3. RUTA GUARDADA EN MODELO: {producto.RutaImagen}");
                     }
+                    else
+                    {
+                        Console.WriteLine("---> ❌ 3. SUPABASE RETORNÓ NULL AL SUBIR LA IMAGEN.");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("---> ⚠️ NO SE SELECCIONÓ NINGÚN ARCHIVO DE IMAGEN.");
                 }
 
                 await _productosService.CreateAsync(producto, CurrentTenantId, CurrentUsuarioId, CurrentUserIp);
+                Console.WriteLine("---> 🚀 4. PRODUCTO GUARDADO EN BD EXITOSAMENTE.");
                 return RedirectToAction(nameof(Index));
             }
+
             return View(producto);
         }
 
@@ -100,9 +127,9 @@ namespace SaaSBarberia.Controllers
         {
             if (id != producto.Id) return NotFound();
 
-            // 👈 MANTENEMOS EL TENANTID CORRECTO EN LA EDICIÓN
             producto.TenantId = CurrentTenantId;
             ModelState.Remove(nameof(producto.Tenant));
+            ModelState.Remove(nameof(producto.RutaImagen));
 
             if (ModelState.IsValid)
             {
@@ -110,7 +137,6 @@ namespace SaaSBarberia.Controllers
                 {
                     if (productoArchivo != null && productoArchivo.Length > 0)
                     {
-                        // ☁️ Subir la nueva imagen a Supabase Storage con aislamiento Multi-Tenant
                         string? urlImagen = await _storageService.SubirImagenAsync(productoArchivo, $"productos/tenant_{CurrentTenantId}");
                         if (!string.IsNullOrEmpty(urlImagen))
                         {

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SaaSBarberia.Data;
@@ -9,7 +10,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 
 namespace SaaSBarberia.Controllers
 {
@@ -18,15 +18,17 @@ namespace SaaSBarberia.Controllers
         private readonly TenantService _tenantService;
         private readonly HorarioLaboralService _horarioService;
         private readonly BarberSaaSDbContext _context;
-        private readonly SupabaseStorageService _storageService; // conservado para compatibilidad
         private readonly CloudinaryStorageService _cloudinary;
 
-        public TenantsController(TenantService tenantService, HorarioLaboralService horarioService, BarberSaaSDbContext context, SupabaseStorageService storageService, CloudinaryStorageService cloudinary)
+        public TenantsController(
+            TenantService tenantService, 
+            HorarioLaboralService horarioService, 
+            BarberSaaSDbContext context, 
+            CloudinaryStorageService cloudinary)
         {
             _tenantService  = tenantService;
             _horarioService = horarioService;
             _context        = context;
-            _storageService = storageService;
             _cloudinary     = cloudinary;
         }
 
@@ -54,7 +56,7 @@ namespace SaaSBarberia.Controllers
             return View(tenant);
         }
 
-        // POST: Tenants/Create (Paso 1: Guarda Tenant y sube logo)
+        // POST: Tenants/Create (Paso 1: Guarda Tenant y sube logo a Cloudinary)
         [HttpPost]
         [Authorize(Roles = "SuperAdmin")]
         [ValidateAntiForgeryToken]
@@ -88,7 +90,7 @@ namespace SaaSBarberia.Controllers
             await _tenantService.GuardarAsync(tenant);
             Console.WriteLine($"---> [Tenants/Create POST] Tenant ID={tenant.Id} guardado.");
 
-            // 2️⃣ Ahora que tenemos el Id, subir el logo a Cloudinary con carpeta multi-tenant
+            // 2️⃣ Subir el logo a Cloudinary con carpeta multi-tenant
             if (logoArchivo != null && logoArchivo.Length > 0)
             {
                 string? urlLogo = await _cloudinary.SubirImagenAsync(
@@ -96,7 +98,6 @@ namespace SaaSBarberia.Controllers
 
                 if (!string.IsNullOrEmpty(urlLogo))
                 {
-                    // Actualizar RutaLogo en la BD con la URL de Cloudinary
                     var tenantDb = await _context.Tenants.FindAsync(tenant.Id);
                     if (tenantDb != null)
                     {
@@ -277,8 +278,7 @@ namespace SaaSBarberia.Controllers
                         Console.WriteLine($"---> [Tenants/Edit] Logo subido a Cloudinary: {urlLogo}");
                     }
                 }
-                // Si logoArchivo es null, la vista envía la URL existente
-                // vía <input type="hidden" asp-for="RutaLogo">, TenantService la respeta.
+                // Si logoArchivo es null, la vista envía la URL existente vía hidden input
 
                 await _tenantService.GuardarAsync(tenant);
             }

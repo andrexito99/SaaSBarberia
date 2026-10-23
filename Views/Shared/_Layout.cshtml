@@ -87,11 +87,7 @@
             --tenant-secondary: @colorSecundario;
         }
 
-        /* 📱 RESPONSIVE REAL: Escritorio y Móvil sin huecos negros */
-        @NamedMediaDesktop {
-            /* Se aplica solo en pantallas medianas y grandes */
-        }
-
+        /* 🖥️ ESCRITORIO (>= 768px) */
         @@media (min-width: 768px) {
             #sidebarOffcanvas {
                 position: sticky;
@@ -112,6 +108,7 @@
             }
         }
 
+        /* 📱 MÓVIL (< 768px) */
         @@media (max-width: 767.98px) {
             .saas-content.has-sidebar {
                 padding-left: 0 !important;

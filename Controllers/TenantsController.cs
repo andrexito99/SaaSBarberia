@@ -18,14 +18,16 @@ namespace SaaSBarberia.Controllers
         private readonly TenantService _tenantService;
         private readonly HorarioLaboralService _horarioService;
         private readonly BarberSaaSDbContext _context;
-        private readonly SupabaseStorageService _storageService; // 🚀 Reemplazamos IWebHostEnvironment por Supabase Storage
+        private readonly SupabaseStorageService _storageService; // conservado para compatibilidad
+        private readonly CloudinaryStorageService _cloudinary;
 
-        public TenantsController(TenantService tenantService, HorarioLaboralService horarioService, BarberSaaSDbContext context, SupabaseStorageService storageService)
+        public TenantsController(TenantService tenantService, HorarioLaboralService horarioService, BarberSaaSDbContext context, SupabaseStorageService storageService, CloudinaryStorageService cloudinary)
         {
-            _tenantService = tenantService;
+            _tenantService  = tenantService;
             _horarioService = horarioService;
-            _context = context;
+            _context        = context;
             _storageService = storageService;
+            _cloudinary     = cloudinary;
         }
 
         [Authorize(Roles = "SuperAdmin")]
@@ -86,21 +88,21 @@ namespace SaaSBarberia.Controllers
             await _tenantService.GuardarAsync(tenant);
             Console.WriteLine($"---> [Tenants/Create POST] Tenant ID={tenant.Id} guardado.");
 
-            // 2️⃣ Ahora que tenemos el Id, subir el logo a la carpeta correcta
+            // 2️⃣ Ahora que tenemos el Id, subir el logo a Cloudinary con carpeta multi-tenant
             if (logoArchivo != null && logoArchivo.Length > 0)
             {
-                string? urlLogo = await _storageService.SubirImagenAsync(
+                string? urlLogo = await _cloudinary.SubirImagenAsync(
                     logoArchivo, $"tenants/tenant_{tenant.Id}");
 
                 if (!string.IsNullOrEmpty(urlLogo))
                 {
-                    // Actualizar RutaLogo en la BD con la URL real
+                    // Actualizar RutaLogo en la BD con la URL de Cloudinary
                     var tenantDb = await _context.Tenants.FindAsync(tenant.Id);
                     if (tenantDb != null)
                     {
                         tenantDb.RutaLogo = urlLogo;
                         await _context.SaveChangesAsync();
-                        Console.WriteLine($"---> [Tenants/Create POST] Logo actualizado: {urlLogo}");
+                        Console.WriteLine($"---> [Tenants/Create] Logo subido a Cloudinary: {urlLogo}");
                     }
                 }
             }
@@ -264,15 +266,15 @@ namespace SaaSBarberia.Controllers
 
             try
             {
-                // Subir logo nuevo si se seleccionó uno
+                // Subir logo nuevo a Cloudinary si se seleccionó uno
                 if (logoArchivo != null && logoArchivo.Length > 0)
                 {
-                    string? urlLogo = await _storageService.SubirImagenAsync(
+                    string? urlLogo = await _cloudinary.SubirImagenAsync(
                         logoArchivo, $"tenants/tenant_{tenant.Id}");
                     if (!string.IsNullOrEmpty(urlLogo))
                     {
                         tenant.RutaLogo = urlLogo;
-                        Console.WriteLine($"---> [Tenants/Edit POST] Logo actualizado: {urlLogo}");
+                        Console.WriteLine($"---> [Tenants/Edit] Logo subido a Cloudinary: {urlLogo}");
                     }
                 }
                 // Si logoArchivo es null, la vista envía la URL existente

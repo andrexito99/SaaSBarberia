@@ -16,9 +16,9 @@ namespace SaaSBarberia.Controllers
     public class ProductosController : Controller
     {
         private readonly IProductosService _productosService;
-        private readonly SupabaseStorageService _storageService;
+        private readonly CloudinaryStorageService _storageService;
 
-        public ProductosController(IProductosService productosService, SupabaseStorageService storageService)
+        public ProductosController(IProductosService productosService, CloudinaryStorageService storageService)
         {
             _productosService = productosService;
             _storageService   = storageService;
@@ -70,45 +70,34 @@ namespace SaaSBarberia.Controllers
         [Authorize(Roles = "Administrador,SuperAdmin")]
         public async Task<IActionResult> Create(
             [Bind("Id,Nombre,Descripcion,PrecioVenta,Stock,RutaImagen")] Producto producto,
-            IFormFile? productoArchivo)   // ← name debe coincidir con el input[name="productoArchivo"]
+            IFormFile? productoArchivo)   // ← name="productoArchivo" en la vista
         {
-            Console.WriteLine($"---> [Productos/Create POST] Archivo: " +
-                              $"{(productoArchivo == null ? "NO LLEGÓ" : $"{productoArchivo.FileName} ({productoArchivo.Length} bytes)")}");
+            Console.WriteLine($"---> [Productos/Create] Archivo: " +
+                $"{(productoArchivo == null ? "NO LLEGÓ" : $"{productoArchivo.FileName} ({productoArchivo.Length} bytes)")}");
 
-            // Asignar tenant y limpiar navegaciones del ModelState
             producto.TenantId = CurrentTenantId;
             ModelState.Remove(nameof(producto.Tenant));
-            ModelState.Remove(nameof(producto.RutaImagen)); // No es requerida en Create
+            ModelState.Remove(nameof(producto.RutaImagen));
 
             if (!ModelState.IsValid)
             {
-                Console.WriteLine("---> [Productos/Create POST] ModelState INVÁLIDO:");
                 foreach (var kv in ModelState)
                     foreach (var err in kv.Value.Errors)
-                        Console.WriteLine($"     Campo '{kv.Key}': {err.ErrorMessage}");
+                        Console.WriteLine($"     [ModelState] '{kv.Key}': {err.ErrorMessage}");
                 return View(producto);
             }
 
-            // Subir imagen si se seleccionó una
+            // Subir imagen a Cloudinary con carpeta multi-tenant
             if (productoArchivo != null && productoArchivo.Length > 0)
             {
                 var url = await _storageService.SubirImagenAsync(
-                    productoArchivo,
-                    $"productos/tenant_{CurrentTenantId}");
+                    productoArchivo, $"productos/tenant_{CurrentTenantId}");
 
                 if (!string.IsNullOrEmpty(url))
-                {
                     producto.RutaImagen = url;
-                    Console.WriteLine($"---> [Productos/Create POST] RutaImagen asignada: {url}");
-                }
-                else
-                {
-                    Console.WriteLine("---> [Productos/Create POST] Supabase devolvió null. El producto se guarda SIN imagen.");
-                }
             }
 
             await _productosService.CreateAsync(producto, CurrentTenantId, CurrentUsuarioId, CurrentUserIp);
-            Console.WriteLine($"---> [Productos/Create POST] Producto ID={producto.Id} guardado en BD.");
             return RedirectToAction(nameof(Index));
         }
 
@@ -131,7 +120,7 @@ namespace SaaSBarberia.Controllers
         public async Task<IActionResult> Edit(
             int id,
             [Bind("Id,Nombre,Descripcion,PrecioVenta,Stock,RutaImagen")] Producto producto,
-            IFormFile? productoArchivo)   // ← name debe coincidir con el input[name="productoArchivo"]
+            IFormFile? productoArchivo)   // ← name="productoArchivo" en la vista
         {
             if (id != producto.Id) return NotFound();
 
@@ -143,18 +132,16 @@ namespace SaaSBarberia.Controllers
 
             try
             {
+                // Si se seleccionó una imagen nueva, reemplazarla en Cloudinary
                 if (productoArchivo != null && productoArchivo.Length > 0)
                 {
-                    // Subir nueva imagen y reemplazar la URL
                     var url = await _storageService.SubirImagenAsync(
-                        productoArchivo,
-                        $"productos/tenant_{CurrentTenantId}");
-
+                        productoArchivo, $"productos/tenant_{CurrentTenantId}");
                     if (!string.IsNullOrEmpty(url))
                         producto.RutaImagen = url;
                 }
-                // Si productoArchivo es null/vacío, la vista ya envía la URL actual
-                // vía <input type="hidden" asp-for="RutaImagen">, así se preserva.
+                // Si no hay imagen nueva, la vista envía la URL actual
+                // vía <input type="hidden" asp-for="RutaImagen"> y se preserva.
 
                 await _productosService.UpdateAsync(producto, CurrentTenantId, CurrentUsuarioId, CurrentUserIp);
                 return RedirectToAction(nameof(Index));

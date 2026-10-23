@@ -1,3 +1,4 @@
+using CloudinaryDotNet;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using SaaSBarberia.Data;
@@ -13,10 +14,11 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 builder.Services.AddDbContext<BarberSaaSDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("con")));
 
-// 🔥 REGISTRAMOS SUPABASE STORAGE SERVICE USANDO HTTPCLIENT PURO (Adiós al SDK fantasma)
-builder.Services.AddHttpClient<SupabaseStorageService>();
+// ☁️ CLOUDINARY: Servicio de almacenamiento de imágenes (reemplaza Supabase Storage)
+// Registrado como Singleton porque Cloudinary es thread-safe y solo necesita una instancia.
+builder.Services.AddSingleton<CloudinaryStorageService>();
 
-// ----------------------------------------------------
+// ─────────────────────────────────────────────────────────────────────────────
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {

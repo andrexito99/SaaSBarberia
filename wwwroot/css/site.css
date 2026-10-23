@@ -334,8 +334,8 @@ code {
 .form-control,
 .form-select {
     background-color: var(--saas-bg-input) !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    color: #F3F4F6 !important;
+    border: 1px solid var(--saas-border-medium) !important;
+    color: var(--saas-text-title) !important;
     border-radius: var(--saas-radius-md) !important;
     padding: 0.65rem 0.9rem !important;
     font-size: 0.92rem;
@@ -346,7 +346,7 @@ code {
 .form-select:focus {
     background-color: var(--saas-bg-input) !important;
     border-color: var(--saas-gold) !important;
-    color: #FFFFFF !important;
+    color: var(--saas-text-title) !important;
     box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.22) !important;
     outline: none !important;
 }
@@ -371,8 +371,8 @@ code {
 }
 
 select option {
-    background-color: #111827 !important;
-    color: #F3F4F6 !important;
+    background-color: var(--saas-bg-card) !important;
+    color: var(--saas-text-body) !important;
 }
 
 /* ==========================================================================
@@ -396,7 +396,7 @@ select option {
 .card .display-5,
 .card .display-6,
 .kpi-value {
-    color: #FFFFFF !important;
+    color: var(--saas-text-title) !important;
     font-size: 2rem !important; /* 32px */
     font-weight: 700 !important;
     letter-spacing: -0.02em !important;
@@ -539,7 +539,7 @@ select option {
 /* ── CORE FIX: Todo texto dentro de <td> en tono claro de alto contraste ── */
 .table tbody td {
     background-color: transparent !important;
-    color: #E2E8F0 !important;
+    color: var(--saas-text-body) !important;
     border-color: var(--saas-border-medium) !important;
     padding: 1rem 1.1rem !important;
     vertical-align: middle !important;
@@ -556,7 +556,7 @@ select option {
 .table tbody td .fw-semibold,
 .table tbody td .fw-bold,
 .table tbody td span:not(.badge):not([class*="text-"]) {
-    color: #E2E8F0 !important;
+    color: var(--saas-text-title) !important;
 }
 
 /* ── Textos secundarios / metadatos / IDs dentro de td ── */
@@ -564,13 +564,13 @@ select option {
 .table tbody td small,
 .table tbody td .text-secondary,
 .table tbody td .text-muted {
-    color: #9CA3AF !important;
+    color: var(--saas-text-secondary) !important;
 }
 
 /* ── Timestamps / Fecha y hora (text-secondary en td) ── */
 /* Permite leer fechas con contraste suficiente sin ser tan brillantes como el body */
 .table tbody td.fw-semibold {
-    color: #E2E8F0 !important;
+    color: var(--saas-text-title) !important;
 }
 
 /* Iconos muted dentro de las celdas: levemente más visibles */
@@ -1007,3 +1007,286 @@ select option {
 .btn-close:hover {
     opacity: 1;
 }
+
+/* ==========================================================================
+   15. LIGHT MODE SYSTEM (SISTEMA DE TEMA CLARO)
+   Activado mediante [data-theme="light"] o clase .light-mode en <html> o <body>
+   ========================================================================== */
+
+[data-theme="light"],
+html.light-mode,
+body.light-mode {
+    /* Superficies y Fondos */
+    --saas-bg-body: #F8FAFC;           /* Slate 50 - Fondo general limpio y suave */
+    --saas-bg-sidebar: #FFFFFF;        /* Blanco sólido para menú lateral */
+    --saas-bg-card: #FFFFFF;           /* Blanco sólido para tarjetas y contenedores */
+    --saas-bg-card-hover: #F1F5F9;     /* Slate 100 - Hover de filas y tarjetas */
+    --saas-bg-input: #FFFFFF;          /* Fondo de inputs y formularios */
+    --saas-bg-header: #F8FAFC;         /* Encabezados de tablas y modales */
+    --saas-bg-footer: rgba(255, 255, 255, 0.92);
+
+    /* Acentos y Marca */
+    --saas-gold: #D97706;              /* Ámbar / Dorado con alto contraste legible en claro */
+    --saas-gold-hover: #B45309;        /* Hover dorado profundo */
+    --saas-gold-soft: rgba(217, 119, 6, 0.12);
+    --saas-emerald: #059669;           /* Verde esmeralda legible */
+    --saas-emerald-soft: rgba(5, 150, 105, 0.12);
+    --saas-rose: #DC2626;              /* Rojo de alta visibilidad */
+    --saas-rose-soft: rgba(220, 38, 38, 0.12);
+    --saas-blue: #2563EB;              /* Azul corporativo */
+    --saas-blue-soft: rgba(37, 99, 235, 0.12);
+
+    /* Tipografía y Jerarquía */
+    --bs-body-color: #334155;          /* Slate 700 */
+    --bs-body-color-rgb: 51, 65, 85;
+    --saas-text-title: #0F172A;        /* Slate 900 - Títulos, KPIs y encabezados */
+    --saas-text-body: #334155;         /* Slate 700 - Texto de lectura principal */
+    --saas-text-secondary: #64748B;    /* Slate 500 - Subtítulos, labels y metadatos */
+    --saas-text-muted: #94A3B8;        /* Slate 400 - Pistas y timestamps */
+
+    /* Bordes y Sombras */
+    --saas-border-subtle: #E2E8F0;     /* Slate 200 */
+    --saas-border-medium: #CBD5E1;     /* Slate 300 */
+    --saas-border-gold: rgba(217, 119, 6, 0.35);
+    --saas-shadow-card: 0 4px 18px -2px rgba(15, 23, 42, 0.08);
+    --saas-shadow-gold: 0 4px 14px rgba(217, 119, 6, 0.22);
+}
+
+/* Adaptación del fondo en Modo Claro */
+[data-theme="light"] body,
+body.light-mode {
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(217, 119, 6, 0.04) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(37, 99, 235, 0.03) 0px, transparent 50%) !important;
+}
+
+/* Adaptación de textos genéricos .text-white en componentes sobre fondo claro */
+[data-theme="light"] .text-white:not(.badge):not(.badge *):not(.btn-primary):not(.btn-danger):not(.btn-success):not(.btn-info):not(.avatar-circle):not(.brand-icon-wrapper),
+body.light-mode .text-white:not(.badge):not(.badge *):not(.btn-primary):not(.btn-danger):not(.btn-success):not(.btn-info):not(.avatar-circle):not(.brand-icon-wrapper) {
+    color: var(--saas-text-title) !important;
+}
+
+/* Tarjetas y Contenedores */
+[data-theme="light"] .card:hover,
+body.light-mode .card:hover {
+    border-color: var(--saas-border-medium) !important;
+}
+
+[data-theme="light"] .card-footer,
+body.light-mode .card-footer {
+    background-color: #F8FAFC !important;
+}
+
+[data-theme="light"] .brand-card,
+body.light-mode .brand-card {
+    background: #F8FAFC;
+    border-color: var(--saas-border-subtle);
+}
+
+[data-theme="light"] .user-card-sidebar,
+body.light-mode .user-card-sidebar {
+    background: #F1F5F9;
+    border-color: var(--saas-border-subtle);
+}
+
+[data-theme="light"] .sidebar-divider,
+body.light-mode .sidebar-divider {
+    background: linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0) 100%);
+}
+
+[data-theme="light"] .custom-nav-list .nav-link:hover,
+body.light-mode .custom-nav-list .nav-link:hover {
+    color: var(--saas-text-title);
+    background: rgba(0, 0, 0, 0.05);
+}
+
+/* Modales y Dropdowns en Modo Claro */
+[data-theme="light"] .modal-content,
+body.light-mode .modal-content {
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15) !important;
+    border-color: var(--saas-border-subtle) !important;
+}
+
+[data-theme="light"] .dropdown-menu,
+body.light-mode .dropdown-menu {
+    border-color: var(--saas-border-subtle) !important;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12) !important;
+}
+
+[data-theme="light"] .dropdown-item:hover,
+body.light-mode .dropdown-item:hover {
+    background-color: var(--saas-bg-card-hover) !important;
+    color: var(--saas-text-title) !important;
+}
+
+/* Botones secundarios en Modo Claro */
+[data-theme="light"] .btn-secondary,
+[data-theme="light"] .btn-dark,
+body.light-mode .btn-secondary,
+body.light-mode .btn-dark {
+    background: #F1F5F9 !important;
+    border: 1px solid var(--saas-border-medium) !important;
+    color: var(--saas-text-title) !important;
+}
+
+[data-theme="light"] .btn-secondary:hover,
+[data-theme="light"] .btn-dark:hover,
+body.light-mode .btn-secondary:hover,
+body.light-mode .btn-dark:hover {
+    background: #E2E8F0 !important;
+    border-color: var(--saas-border-medium) !important;
+    color: var(--saas-text-title) !important;
+}
+
+[data-theme="light"] .btn-outline-secondary,
+[data-theme="light"] .btn-outline-dark,
+body.light-mode .btn-outline-secondary,
+body.light-mode .btn-outline-dark {
+    background: transparent !important;
+    border: 1px solid var(--saas-border-medium) !important;
+    color: var(--saas-text-body) !important;
+}
+
+[data-theme="light"] .btn-outline-secondary:hover,
+[data-theme="light"] .btn-outline-dark:hover,
+body.light-mode .btn-outline-secondary:hover,
+body.light-mode .btn-outline-dark:hover {
+    background: #F1F5F9 !important;
+    color: var(--saas-text-title) !important;
+}
+
+[data-theme="light"] .btn-dark-glass,
+body.light-mode .btn-dark-glass {
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid var(--saas-border-medium);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .btn-dark-glass:hover,
+body.light-mode .btn-dark-glass:hover {
+    background: #FFFFFF;
+    border-color: var(--saas-gold);
+}
+
+/* Botón cerrar modal / offcanvas */
+[data-theme="light"] .btn-close,
+[data-theme="light"] .btn-close-white,
+body.light-mode .btn-close,
+body.light-mode .btn-close-white {
+    filter: none !important;
+    opacity: 0.65;
+}
+
+/* Footer */
+[data-theme="light"] .footer-saas,
+[data-theme="light"] .footer-dark,
+body.light-mode .footer-saas,
+body.light-mode .footer-dark {
+    background: rgba(255, 255, 255, 0.92) !important;
+    border-top: 1px solid var(--saas-border-subtle) !important;
+    color: var(--saas-text-body) !important;
+}
+
+/* Offcanvas shadow en claro */
+[data-theme="light"] #sidebarOffcanvas.offcanvas,
+body.light-mode #sidebarOffcanvas.offcanvas {
+    box-shadow: 0 0 25px rgba(15, 23, 42, 0.08) !important;
+}
+
+/* Barra superior móvil en Claro */
+[data-theme="light"] .navbar-dark.d-md-none,
+body.light-mode .navbar-dark.d-md-none {
+    background-color: var(--saas-bg-sidebar) !important;
+    border-color: var(--saas-border-subtle) !important;
+}
+
+[data-theme="light"] .navbar-dark .navbar-brand,
+[data-theme="light"] .navbar-dark .nav-link,
+body.light-mode .navbar-dark .navbar-brand,
+body.light-mode .navbar-dark .nav-link {
+    color: var(--saas-text-title) !important;
+}
+
+[data-theme="light"] .navbar-dark .navbar-toggler-icon,
+body.light-mode .navbar-dark .navbar-toggler-icon {
+    filter: invert(1);
+}
+
+/* Código en línea en Modo Claro */
+[data-theme="light"] code,
+body.light-mode code {
+    background-color: #F1F5F9 !important;
+    color: #B45309 !important;
+    border-color: #CBD5E1 !important;
+}
+
+/* Barras de desplazamiento en Modo Claro */
+[data-theme="light"] ::-webkit-scrollbar-track,
+body.light-mode ::-webkit-scrollbar-track {
+    background: #F1F5F9;
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb,
+body.light-mode ::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover,
+body.light-mode ::-webkit-scrollbar-thumb:hover {
+    background: #94A3B8;
+}
+
+/* ==========================================================================
+   16. ESTILOS DEL BOTÓN TOGGLE DE TEMA
+   ========================================================================== */
+
+.theme-toggle-btn {
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.theme-toggle-btn:hover {
+    transform: scale(1.08);
+}
+
+.theme-toggle-btn:active {
+    transform: scale(0.95);
+}
+
+.theme-toggle-btn i {
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Mostrar icono correcto según el tema activo */
+/* En Modo Claro: ocultar sol, mostrar luna */
+[data-theme="light"] .theme-icon-sun,
+html.light-mode .theme-icon-sun,
+body.light-mode .theme-icon-sun {
+    display: none !important;
+}
+
+[data-theme="light"] .theme-icon-moon,
+html.light-mode .theme-icon-moon,
+body.light-mode .theme-icon-moon {
+    display: inline-block !important;
+}
+
+/* En Modo Oscuro (por defecto): mostrar sol, ocultar luna */
+:root .theme-icon-sun,
+html:not([data-theme="light"]) .theme-icon-sun,
+body:not(.light-mode) .theme-icon-sun {
+    display: inline-block !important;
+}
+
+:root .theme-icon-moon,
+html:not([data-theme="light"]) .theme-icon-moon,
+body:not(.light-mode) .theme-icon-moon {
+    display: none !important;
+}
+

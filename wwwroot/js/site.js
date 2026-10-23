@@ -1,4 +1,4 @@
-﻿// Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
+// Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
 // for details on configuring this project to bundle and minify static web assets.
 
 // Shared, client-side listing controls. They intentionally operate only on
@@ -58,3 +58,85 @@ document.addEventListener('DOMContentLoaded', () => {
         render();
     });
 });
+
+// ==========================================================================
+// CONTROLADOR DE TEMA (MODO CLARO / MODO OSCURO)
+// ==========================================================================
+(() => {
+    const THEME_STORAGE_KEY = 'saas-barberia-theme';
+    const THEME_LIGHT = 'light';
+    const THEME_DARK = 'dark';
+
+    function getSystemPreference() {
+        return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? THEME_DARK
+            : THEME_LIGHT;
+    }
+
+    function getEffectiveTheme() {
+        try {
+            const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+            if (savedTheme === THEME_LIGHT || savedTheme === THEME_DARK) {
+                return savedTheme;
+            }
+        } catch (e) {
+            console.warn('LocalStorage no disponible para leer tema:', e);
+        }
+        return getSystemPreference();
+    }
+
+    function applyTheme(theme) {
+        const isLight = theme === THEME_LIGHT;
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.classList.toggle('light-mode', isLight);
+        if (document.body) {
+            document.body.classList.toggle('light-mode', isLight);
+            document.body.setAttribute('data-theme', theme);
+        }
+
+        // Actualizar tooltips y accesibilidad de botones de tema
+        document.querySelectorAll('[data-theme-toggle], #themeToggleBtn').forEach(btn => {
+            const newTitle = isLight ? 'Cambiar a Modo Oscuro' : 'Cambiar a Modo Claro';
+            btn.setAttribute('title', newTitle);
+            btn.setAttribute('aria-label', newTitle);
+        });
+    }
+
+    function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || THEME_DARK;
+        const nextTheme = currentTheme === THEME_LIGHT ? THEME_DARK : THEME_LIGHT;
+
+        try {
+            localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+        } catch (e) {
+            console.warn('LocalStorage no disponible para guardar tema:', e);
+        }
+
+        applyTheme(nextTheme);
+    }
+
+    // Inicializar al cargar el DOM
+    document.addEventListener('DOMContentLoaded', () => {
+        applyTheme(getEffectiveTheme());
+
+        // Manejador global por delegación de eventos para alternar tema
+        document.addEventListener('click', (event) => {
+            const toggleBtn = event.target.closest('[data-theme-toggle], #themeToggleBtn');
+            if (toggleBtn) {
+                event.preventDefault();
+                toggleTheme();
+            }
+        });
+    });
+
+    // Escucha de preferencias del sistema operativo si el usuario no ha fijado una preferencia manual
+    if (window.matchMedia) {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+            try {
+                if (!localStorage.getItem(THEME_STORAGE_KEY)) {
+                    applyTheme(getSystemPreference());
+                }
+            } catch (e) {}
+        });
+    }
+})();

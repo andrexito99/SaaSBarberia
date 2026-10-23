@@ -87,6 +87,23 @@
                 --tenant-secondary: @colorSecundario;
             }
     </style>
+</style>
+    <style>
+        @media (min-width: 768px) {
+            /* Show sidebar as sticky on medium+ screens */
+            #sidebarOffcanvas {
+                position: sticky;
+                top: 0;
+                transform: none !important;
+                visibility: visible !important;
+                width: 260px;
+                height: 100vh;
+                border-right: 1px solid rgba(255,255,255,.1);
+                background-color: var(--bs-dark);
+                color: #fff;
+            }
+        }
+    </style>
 </head>
 <body class="saas-dark-luxury bg-superadmin">
 
@@ -95,7 +112,15 @@
         @* 📊 MENÚ LATERAL *@
         @if (usaLayoutLateral)
         {
-            <nav class="saas-sidebar d-flex flex-column flex-shrink-0 p-3 shadow-lg sidebar-dark">
+            <nav class="navbar navbar-dark bg-dark d-md-none">
+    <div class="container-fluid">
+        <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <a class="navbar-brand fw-bold text-uppercase" asp-controller="Home" asp-action="Index">@nombreNegocio</a>
+    </div>
+</nav>
+<nav id="sidebarOffcanvas" class="saas-sidebar d-flex flex-column flex-shrink-0 p-3 shadow-lg sidebar-dark offcanvas offcanvas-start" tabindex="-1">
 
                 <!-- LOGO / BRANDING -->
                 <a class="navbar-brand d-flex align-items-center justify-content-center gap-2 py-3 px-2 rounded-3 brand-card text-decoration-none" asp-controller="Home" asp-action="Index">

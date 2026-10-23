@@ -89,19 +89,23 @@
 
         /* 🖥️ ESCRITORIO (>= 768px) */
         @@media (min-width: 768px) {
-            #sidebarOffcanvas {
-                position: sticky;
-                top: 0;
-                transform: none !important;
+            #sidebarOffcanvas.offcanvas {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 260px !important;
+                height: 100vh !important;
                 visibility: visible !important;
-                width: 260px;
-                height: 100vh;
-                border-right: 1px solid rgba(255,255,255,.1);
-                background-color: var(--bs-dark);
-                color: #fff;
+                transform: none !important;
+                z-index: 1040 !important;
+                border-right: 1px solid var(--saas-border-subtle) !important;
+                background-color: var(--saas-bg-sidebar) !important;
+                box-shadow: 0 0 25px rgba(0, 0, 0, 0.4) !important;
             }
             .saas-content.has-sidebar {
-                padding-left: 260px;
+                padding-left: 260px !important;
+                margin-left: 0 !important;
+                width: 100% !important;
             }
             .footer-saas {
                 padding-left: 260px !important;
@@ -110,15 +114,47 @@
 
         /* 📱 MÓVIL (< 768px) */
         @@media (max-width: 767.98px) {
+            .saas-wrapper {
+                display: block !important;
+                width: 100% !important;
+            }
+            #sidebarOffcanvas.offcanvas {
+                position: fixed !important;
+                top: 0 !important;
+                bottom: 0 !important;
+                left: 0 !important;
+                width: 280px !important;
+                max-width: 85vw !important;
+                height: 100vh !important;
+                z-index: 1055 !important;
+                background-color: var(--saas-bg-sidebar) !important;
+                box-shadow: 0 0 25px rgba(0, 0, 0, 0.7) !important;
+            }
+            #sidebarOffcanvas.offcanvas:not(.show) {
+                visibility: hidden !important;
+                transform: translateX(-100%) !important;
+            }
             .saas-content.has-sidebar {
                 padding-left: 0 !important;
                 margin-left: 0 !important;
+                width: 100% !important;
             }
             .footer-saas {
                 padding-left: 0 !important;
             }
-            #sidebarOffcanvas {
-                width: 280px !important;
+            #notificacionesWidget {
+                top: 10px !important;
+                right: 12px !important;
+                margin: 0 !important;
+                z-index: 1035 !important;
+            }
+            #notificacionesWidget > .btn {
+                width: 36px !important;
+                height: 36px !important;
+                padding: 0 !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
             }
         }
     </style>
@@ -130,19 +166,33 @@
         @* 📊 MENÚ LATERAL *@
         @if (usaLayoutLateral)
         {
-            <nav class="navbar navbar-dark bg-dark d-md-none border-bottom px-3 py-2">
+            <!-- 📱 BARRA SUPERIOR MÓVIL (< 768px) -->
+            <nav class="navbar navbar-dark d-md-none sticky-top border-bottom px-3 py-2" style="background-color: var(--saas-bg-sidebar) !important; border-color: var(--saas-border-subtle) !important; z-index: 1030; min-height: 56px;">
                 <div class="container-fluid p-0 d-flex justify-content-between align-items-center">
-                    <button class="navbar-toggler border-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas">
-                        <span class="navbar-toggler-icon"></span>
+                    <button class="btn btn-link text-white p-0 border-0 fs-3 d-flex align-items-center" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas" aria-label="Abrir menú lateral">
+                        <i class="bi bi-list"></i>
                     </button>
-                    <a class="navbar-brand fw-bold text-uppercase fs-6 m-0 text-truncate px-2" style="max-width: 200px;" asp-controller="Home" asp-action="Index">@nombreNegocio</a>
+                    <a class="navbar-brand fw-bold text-uppercase fs-6 m-0 text-truncate text-center flex-grow-1 px-2" style="max-width: calc(100vw - 110px);" asp-controller="Home" asp-action="Index">
+                        💈 <span class="text-white">@nombreNegocio</span>
+                    </a>
+                    <div style="width: 36px;" class="d-flex justify-content-end align-items-center">
+                        @* Espacio reservado para el widget de notificaciones *@
+                    </div>
                 </div>
             </nav>
 
-            <nav id="sidebarOffcanvas" class="saas-sidebar d-flex flex-column flex-shrink-0 p-3 shadow-lg sidebar-dark offcanvas offcanvas-start" tabindex="-1">
+            <nav id="sidebarOffcanvas" class="saas-sidebar d-flex flex-column flex-shrink-0 p-3 shadow-lg sidebar-dark offcanvas offcanvas-start" tabindex="-1" aria-labelledby="sidebarOffcanvasLabel">
+
+                <!-- CABECERA PARA MÓVIL (X cerrar) -->
+                <div class="d-flex align-items-center justify-content-between d-md-none pb-2 mb-2 border-bottom border-secondary border-opacity-25">
+                    <span class="fw-bold text-white fs-6 text-truncate" id="sidebarOffcanvasLabel">
+                        💈 @nombreNegocio
+                    </span>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
+                </div>
 
                 <!-- LOGO / BRANDING -->
-                <a class="navbar-brand d-flex align-items-center justify-content-center gap-2 py-3 px-2 rounded-3 brand-card text-decoration-none" asp-controller="Home" asp-action="Index">
+                <a class="navbar-brand d-none d-md-flex align-items-center justify-content-center gap-2 py-3 px-2 rounded-3 brand-card text-decoration-none" asp-controller="Home" asp-action="Index">
                     @if (esSuperAdmin)
                     {
                         <div class="brand-icon-wrapper bg-primary bg-gradient text-white shadow-sm">

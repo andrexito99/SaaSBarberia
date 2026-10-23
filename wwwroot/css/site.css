@@ -955,7 +955,7 @@ select option {
         flex-direction: column;
     }
 
-    .saas-sidebar {
+    .saas-sidebar:not(.offcanvas) {
         position: relative;
         width: 100% !important;
         min-width: 100% !important;

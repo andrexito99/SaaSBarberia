@@ -21,7 +21,7 @@ namespace SaaSBarberia.Controllers
         public ProductosController(IProductosService productosService, CloudinaryStorageService storageService)
         {
             _productosService = productosService;
-            _storageService   = storageService;
+            _storageService = storageService;
         }
 
         // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -37,8 +37,8 @@ namespace SaaSBarberia.Controllers
             }
         }
 
-        private int    CurrentUsuarioId => int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out int uid) ? uid : 0;
-        private string CurrentUserIp    => HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+        private int CurrentUsuarioId => int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out int uid) ? uid : 0;
+        private string CurrentUserIp => HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
 
         // ── Index ────────────────────────────────────────────────────────────────────
 
@@ -70,10 +70,10 @@ namespace SaaSBarberia.Controllers
         [Authorize(Roles = "Administrador,SuperAdmin")]
         public async Task<IActionResult> Create(
             [Bind("Id,Nombre,Descripcion,PrecioVenta,Stock,RutaImagen")] Producto producto,
-            IFormFile? productoArchivo)   // ← name="productoArchivo" en la vista
+            IFormFile? productoArchivo)
         {
-            Console.WriteLine($"---> [Productos/Create] Archivo: " +
-                $"{(productoArchivo == null ? "NO LLEGÓ" : $"{productoArchivo.FileName} ({productoArchivo.Length} bytes)")}");
+            Console.WriteLine($"---> 🚨 [Productos/Create] ARCHIVO RECIBIDO: " +
+                $"{(productoArchivo == null ? "NULO / NO LLEGÓ" : $"{productoArchivo.FileName} ({productoArchivo.Length} bytes)")}");
 
             producto.TenantId = CurrentTenantId;
             ModelState.Remove(nameof(producto.Tenant));
@@ -81,23 +81,33 @@ namespace SaaSBarberia.Controllers
 
             if (!ModelState.IsValid)
             {
+                Console.WriteLine("---> ❌ ERRORES DE VALIDACIÓN:");
                 foreach (var kv in ModelState)
                     foreach (var err in kv.Value.Errors)
-                        Console.WriteLine($"     [ModelState] '{kv.Key}': {err.ErrorMessage}");
+                        Console.WriteLine($"     '{kv.Key}': {err.ErrorMessage}");
                 return View(producto);
             }
 
-            // Subir imagen a Cloudinary con carpeta multi-tenant
+            // Subir imagen a Cloudinary con aislamiento multi-tenant
             if (productoArchivo != null && productoArchivo.Length > 0)
             {
+                Console.WriteLine($"---> ⏳ SUBIENDO A CLOUDINARY EN CARPETA: productos/tenant_{CurrentTenantId}");
                 var url = await _storageService.SubirImagenAsync(
                     productoArchivo, $"productos/tenant_{CurrentTenantId}");
 
                 if (!string.IsNullOrEmpty(url))
+                {
                     producto.RutaImagen = url;
+                    Console.WriteLine($"---> ✅ URL GUARDADA EN MODELO: {producto.RutaImagen}");
+                }
+                else
+                {
+                    Console.WriteLine("---> ❌ CLOUDINARY DEVUELVO NULL/VACÍO.");
+                }
             }
 
             await _productosService.CreateAsync(producto, CurrentTenantId, CurrentUsuarioId, CurrentUserIp);
+            Console.WriteLine("---> 🚀 PRODUCTO GUARDADO EN BD.");
             return RedirectToAction(nameof(Index));
         }
 
@@ -120,7 +130,7 @@ namespace SaaSBarberia.Controllers
         public async Task<IActionResult> Edit(
             int id,
             [Bind("Id,Nombre,Descripcion,PrecioVenta,Stock,RutaImagen")] Producto producto,
-            IFormFile? productoArchivo)   // ← name="productoArchivo" en la vista
+            IFormFile? productoArchivo)
         {
             if (id != producto.Id) return NotFound();
 
@@ -132,16 +142,26 @@ namespace SaaSBarberia.Controllers
 
             try
             {
-                // Si se seleccionó una imagen nueva, reemplazarla en Cloudinary
+                // Si el usuario subió una nueva imagen
                 if (productoArchivo != null && productoArchivo.Length > 0)
                 {
                     var url = await _storageService.SubirImagenAsync(
                         productoArchivo, $"productos/tenant_{CurrentTenantId}");
+
                     if (!string.IsNullOrEmpty(url))
+                    {
                         producto.RutaImagen = url;
+                    }
                 }
-                // Si no hay imagen nueva, la vista envía la URL actual
-                // vía <input type="hidden" asp-for="RutaImagen"> y se preserva.
+                else
+                {
+                    // Si no subió foto nueva, mantenemos la URL existente de la BD
+                    var productoExistente = await _productosService.GetByIdAsync(id, CurrentTenantId);
+                    if (productoExistente != null && string.IsNullOrEmpty(producto.RutaImagen))
+                    {
+                        producto.RutaImagen = productoExistente.RutaImagen;
+                    }
+                }
 
                 await _productosService.UpdateAsync(producto, CurrentTenantId, CurrentUsuarioId, CurrentUserIp);
                 return RedirectToAction(nameof(Index));

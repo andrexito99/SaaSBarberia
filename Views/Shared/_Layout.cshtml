@@ -82,15 +82,13 @@
     <link rel="stylesheet" href="~/SaaSBarberia.styles.css" asp-append-version="true" />
 
     <style>
-            :root {
-                --tenant-primary: @colorPrimario;
-                --tenant-secondary: @colorSecundario;
-            }
-    </style>
-</style>
-    <style>
-        @media (min-width: 768px) {
-            /* Show sidebar as sticky on medium+ screens */
+        :root {
+            --tenant-primary: @colorPrimario;
+            --tenant-secondary: @colorSecundario;
+        }
+
+        /* 📱 Corrección del Sidebar Responsivo y Offcanvas */
+        @@media (min-width: 768px) {
             #sidebarOffcanvas {
                 position: sticky;
                 top: 0;
@@ -112,15 +110,16 @@
         @* 📊 MENÚ LATERAL *@
         @if (usaLayoutLateral)
         {
-            <nav class="navbar navbar-dark bg-dark d-md-none">
-    <div class="container-fluid">
-        <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <a class="navbar-brand fw-bold text-uppercase" asp-controller="Home" asp-action="Index">@nombreNegocio</a>
-    </div>
-</nav>
-<nav id="sidebarOffcanvas" class="saas-sidebar d-flex flex-column flex-shrink-0 p-3 shadow-lg sidebar-dark offcanvas offcanvas-start" tabindex="-1">
+            <nav class="navbar navbar-dark bg-dark d-md-none border-bottom px-3 py-2">
+                <div class="container-fluid p-0">
+                    <button class="navbar-toggler border-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <a class="navbar-brand fw-bold text-uppercase fs-6 m-0" asp-controller="Home" asp-action="Index">@nombreNegocio</a>
+                </div>
+            </nav>
+
+            <nav id="sidebarOffcanvas" class="saas-sidebar d-flex flex-column flex-shrink-0 p-3 shadow-lg sidebar-dark offcanvas offcanvas-start" tabindex="-1">
 
                 <!-- LOGO / BRANDING -->
                 <a class="navbar-brand d-flex align-items-center justify-content-center gap-2 py-3 px-2 rounded-3 brand-card text-decoration-none" asp-controller="Home" asp-action="Index">
@@ -348,7 +347,7 @@
             <footer class="footer-saas position-fixed bottom-0 start-0 w-100 z-3 footer-dark"
                     style="padding-left: @(usaLayoutLateral ? "270px" : "20px"); transition: all 0.3s ease;">
                 <div class="container-fluid px-4 py-2 text-center text-md-start d-md-flex justify-content-between align-items-center small">
-                    <span class="text-secondary">&copy; 2026 - <strong class="text-white">@nombreNegocio</strong> - Core System.</span>
+                    <span class="text-secondary">&copy; 2026 - <strong class="text-white">@nombreNegocio</strong> Core System.</span>
                     <span class="badge bg-dark border border-secondary text-white-50 d-none d-md-inline-block">Valledupar, Cesar 🇨🇴</span>
                 </div>
             </footer>

@@ -70,8 +70,8 @@ namespace SaaSBarberia.Controllers
             {
                 if (productoArchivo != null && productoArchivo.Length > 0)
                 {
-                    // ☁️ Subir imagen a la carpeta "productos" en Supabase Storage
-                    string? urlImagen = await _storageService.SubirImagenAsync(productoArchivo, "productos");
+                    // ☁️ Subir imagen a Supabase Storage con aislamiento Multi-Tenant
+                    string? urlImagen = await _storageService.SubirImagenAsync(productoArchivo, $"productos/tenant_{CurrentTenantId}");
                     if (!string.IsNullOrEmpty(urlImagen))
                     {
                         producto.RutaImagen = urlImagen;
@@ -110,8 +110,8 @@ namespace SaaSBarberia.Controllers
                 {
                     if (productoArchivo != null && productoArchivo.Length > 0)
                     {
-                        // ☁️ Subir la nueva imagen a Supabase Storage
-                        string? urlImagen = await _storageService.SubirImagenAsync(productoArchivo, "productos");
+                        // ☁️ Subir la nueva imagen a Supabase Storage con aislamiento Multi-Tenant
+                        string? urlImagen = await _storageService.SubirImagenAsync(productoArchivo, $"productos/tenant_{CurrentTenantId}");
                         if (!string.IsNullOrEmpty(urlImagen))
                         {
                             producto.RutaImagen = urlImagen;

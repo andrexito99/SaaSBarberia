@@ -87,7 +87,7 @@ public class BarberosController : Controller
             // ☁️ GUARDADO EN SUPABASE STORAGE
             if (fotoArchivo != null && fotoArchivo.Length > 0)
             {
-                string? urlImagen = await _storageService.SubirImagenAsync(fotoArchivo, "barberos");
+                string? urlImagen = await _storageService.SubirImagenAsync(fotoArchivo, $"barberos/tenant_{barbero.TenantId}");
                 if (!string.IsNullOrEmpty(urlImagen))
                 {
                     barbero.RutaFoto = urlImagen;
@@ -130,7 +130,7 @@ public class BarberosController : Controller
                 // 📸 1. Si subió una foto nueva, la mandamos a Supabase Storage
                 if (fotoInput != null && fotoInput.Length > 0)
                 {
-                    string? urlImagen = await _storageService.SubirImagenAsync(fotoInput, "barberos");
+                    string? urlImagen = await _storageService.SubirImagenAsync(fotoInput, $"barberos/tenant_{barbero.TenantId}");
                     if (!string.IsNullOrEmpty(urlImagen))
                     {
                         barbero.RutaFoto = urlImagen;

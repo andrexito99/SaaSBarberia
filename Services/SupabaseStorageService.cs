@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.IO;
@@ -18,34 +18,56 @@ public class SupabaseStorageService
         _configuration = configuration;
     }
 
+    /// <summary>
+    /// Sube un archivo (imagen) al bucket "uploads" de Supabase Storage usando la REST API pura.
+    /// Devuelve la URL pública del archivo subido, o null si falla.
+    /// </summary>
+    /// <param name="archivo">El IFormFile recibido desde el formulario.</param>
+    /// <param name="carpeta">Carpeta dentro del bucket (ej: "productos/tenant_5").</param>
     public async Task<string?> SubirImagenAsync(IFormFile archivo, string carpeta)
     {
         if (archivo == null || archivo.Length == 0) return null;
 
         try
         {
-            var supabaseUrl = _configuration["Supabase:Url"]?.TrimEnd('/');
+            // Leer la URL y la Key desde appsettings.json -> sección "Supabase"
+            var supabaseConfigUrl = _configuration["Supabase:Url"]?.TrimEnd('/');
             var supabaseKey = _configuration["Supabase:Key"];
 
-            if (string.IsNullOrEmpty(supabaseUrl) || string.IsNullOrEmpty(supabaseKey))
+            if (string.IsNullOrEmpty(supabaseConfigUrl) || string.IsNullOrEmpty(supabaseKey))
             {
-                Console.WriteLine("---> ❌ ERROR: Faltan las credenciales de Supabase en appsettings.json");
+                Console.WriteLine("---> ❌ ERROR: Faltan las credenciales de Supabase en appsettings.json (Supabase:Url o Supabase:Key)");
                 return null;
+            }
+
+            // 🔥 CORRECCIÓN CRÍTICA: Derivar la URL base del proyecto Supabase.
+            // En appsettings.json el Url puede estar como "https://xxx.supabase.co/rest/v1/"
+            // Necesitamos solo "https://xxx.supabase.co" para construir la ruta de Storage.
+            var baseProjectUrl = supabaseConfigUrl;
+            var restIndex = baseProjectUrl.IndexOf("/rest/", StringComparison.OrdinalIgnoreCase);
+            if (restIndex > 0)
+            {
+                baseProjectUrl = baseProjectUrl.Substring(0, restIndex);
             }
 
             var extension = Path.GetExtension(archivo.FileName);
             var fileName = $"{carpeta}/{Guid.NewGuid()}{extension}";
 
-            // Endpoint de la REST API de Supabase Storage
-            var endpoint = $"{supabaseUrl}/storage/v1/object/{_bucketName}/{fileName}";
+            // Endpoint correcto de la REST API de Supabase Storage
+            var endpoint = $"{baseProjectUrl}/storage/v1/object/{_bucketName}/{fileName}";
+
+            Console.WriteLine($"---> 📤 SUBIENDO IMAGEN a: {endpoint}");
 
             using var memoryStream = new MemoryStream();
             await archivo.CopyToAsync(memoryStream);
             var fileBytes = memoryStream.ToArray();
 
             using var requestMessage = new HttpRequestMessage(HttpMethod.Post, endpoint);
+            // Autenticación con Bearer token + apikey (ambos requeridos por Supabase)
             requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", supabaseKey);
             requestMessage.Headers.Add("apikey", supabaseKey);
+            // 🔥 UPSERT: Permite sobrescribir archivos existentes sin error 409
+            requestMessage.Headers.Add("x-upsert", "true");
 
             using var content = new ByteArrayContent(fileBytes);
             content.Headers.ContentType = new MediaTypeHeaderValue(archivo.ContentType ?? "application/octet-stream");
@@ -55,8 +77,8 @@ public class SupabaseStorageService
 
             if (response.IsSuccessStatusCode)
             {
-                // URL pública lista para la BD
-                var publicUrl = $"{supabaseUrl}/storage/v1/object/public/{_bucketName}/{fileName}";
+                // URL pública correcta para guardar en la BD y mostrar en la interfaz
+                var publicUrl = $"{baseProjectUrl}/storage/v1/object/public/{_bucketName}/{fileName}";
                 Console.WriteLine($"---> 🚀 IMAGEN SUBIDA EXITOSAMENTE: {publicUrl}");
                 return publicUrl;
             }

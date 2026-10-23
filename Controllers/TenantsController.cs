@@ -66,8 +66,8 @@ namespace SaaSBarberia.Controllers
 
                 if (logoArchivo != null && logoArchivo.Length > 0)
                 {
-                    // ☁️ Subir logo a la carpeta "tenants" en Supabase Storage
-                    string? urlLogo = await _storageService.SubirImagenAsync(logoArchivo, "tenants");
+                    // ☁️ Subir logo a Supabase Storage (carpeta temporal, se re-organiza con el Id después)
+                    string? urlLogo = await _storageService.SubirImagenAsync(logoArchivo, "tenants/nuevos");
                     if (!string.IsNullOrEmpty(urlLogo))
                     {
                         tenant.RutaLogo = urlLogo;
@@ -221,8 +221,8 @@ namespace SaaSBarberia.Controllers
                 {
                     if (logoArchivo != null && logoArchivo.Length > 0)
                     {
-                        // ☁️ Subir nuevo logo a Supabase Storage
-                        string? urlLogo = await _storageService.SubirImagenAsync(logoArchivo, "tenants");
+                        // ☁️ Subir nuevo logo a Supabase Storage con aislamiento Multi-Tenant
+                        string? urlLogo = await _storageService.SubirImagenAsync(logoArchivo, $"tenants/tenant_{tenant.Id}");
                         if (!string.IsNullOrEmpty(urlLogo))
                         {
                             tenant.RutaLogo = urlLogo;

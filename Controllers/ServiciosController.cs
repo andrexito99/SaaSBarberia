@@ -8,7 +8,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-[Authorize(Roles = "Administrador,SuperAdmin")]
+[Authorize]
 public class ServiciosController : Controller
 {
     private readonly ServicioService _servicioService;
@@ -20,7 +20,7 @@ public class ServiciosController : Controller
         _citaService = citaService;
     }
 
-    // GET: Servicios
+    // GET: Servicios (Permitido para Clientes y personal autorizado)
     public async Task<IActionResult> Index()
     {
         var usuarioIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -32,7 +32,6 @@ public class ServiciosController : Controller
 
             if (usuarioDb != null && usuarioDb.TenantId != null)
             {
-                // 🔒 FILTRADO HERMÉTICO: Si es Cliente, Administrador de barbería o Barbero, solo ven su sede
                 if (User.IsInRole("Cliente") || User.IsInRole("Administrador") || User.IsInRole("Barbero"))
                 {
                     var serviciosFiltrados = await _servicioService.ObtenerTodosPorTenantAsync(usuarioDb.TenantId.Value);
@@ -41,27 +40,22 @@ public class ServiciosController : Controller
             }
         }
 
-        // Si es SuperAdmin, ve absolutamente todo el catálogo global
         return View(await _servicioService.ObtenerTodosConTenantAsync());
     }
 
-    // GET: Servicios/Details/5
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null) return NotFound();
-
         var servicio = await _servicioService.ObtenerPorIdAsync(id.Value);
         if (servicio == null) return NotFound();
-
         return View(servicio);
     }
 
-    // GET: Servicios/Create
+    [Authorize(Roles = "Administrador,SuperAdmin")]
     public async Task<IActionResult> Create()
     {
         var usuarioIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         int usuarioId = int.Parse(usuarioIdStr ?? "0");
-
         var tenants = await _servicioService.ObtenerTenantsAsync();
 
         if (User.IsInRole("Administrador"))
@@ -80,9 +74,9 @@ public class ServiciosController : Controller
         return View(new Servicio());
     }
 
-    // POST: Servicios/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Administrador,SuperAdmin")]
     public async Task<IActionResult> Create([Bind("Id,TenantId,Nombre,Precio,DuracionMinutos")] Servicio servicio)
     {
         ModelState.Remove(nameof(servicio.Tenant));
@@ -94,44 +88,28 @@ public class ServiciosController : Controller
         }
 
         var tenants = await _servicioService.ObtenerTenantsAsync();
-        if (User.IsInRole("Administrador"))
-        {
-            ViewBag.TenantId = new SelectList(tenants.Where(t => t.Id == servicio.TenantId), "Id", "NombreNegocio", servicio.TenantId);
-        }
-        else
-        {
-            ViewBag.TenantId = new SelectList(tenants, "Id", "NombreNegocio", servicio.TenantId);
-        }
+        ViewBag.TenantId = new SelectList(tenants, "Id", "NombreNegocio", servicio.TenantId);
         return View(servicio);
     }
 
-    // GET: Servicios/Edit/5
+    [Authorize(Roles = "Administrador,SuperAdmin")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();
-
         var servicio = await _servicioService.ObtenerPorIdAsync(id.Value);
         if (servicio == null) return NotFound();
 
         var tenants = await _servicioService.ObtenerTenantsAsync();
-        if (User.IsInRole("Administrador"))
-        {
-            ViewBag.TenantId = new SelectList(tenants.Where(t => t.Id == servicio.TenantId), "Id", "NombreNegocio", servicio.TenantId);
-        }
-        else
-        {
-            ViewBag.TenantId = new SelectList(tenants, "Id", "NombreNegocio", servicio.TenantId);
-        }
+        ViewBag.TenantId = new SelectList(tenants, "Id", "NombreNegocio", servicio.TenantId);
         return View(servicio);
     }
 
-    // POST: Servicios/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Administrador,SuperAdmin")]
     public async Task<IActionResult> Edit(int id, [Bind("Id,TenantId,Nombre,Precio,DuracionMinutos")] Servicio servicio)
     {
         if (id != servicio.Id) return NotFound();
-
         ModelState.Remove(nameof(servicio.Tenant));
 
         if (ModelState.IsValid)
@@ -149,31 +127,22 @@ public class ServiciosController : Controller
         }
 
         var tenants = await _servicioService.ObtenerTenantsAsync();
-        if (User.IsInRole("Administrador"))
-        {
-            ViewBag.TenantId = new SelectList(tenants.Where(t => t.Id == servicio.TenantId), "Id", "NombreNegocio", servicio.TenantId);
-        }
-        else
-        {
-            ViewBag.TenantId = new SelectList(tenants, "Id", "NombreNegocio", servicio.TenantId);
-        }
+        ViewBag.TenantId = new SelectList(tenants, "Id", "NombreNegocio", servicio.TenantId);
         return View(servicio);
     }
 
-    // GET: Servicios/Delete/5
+    [Authorize(Roles = "Administrador,SuperAdmin")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null) return NotFound();
-
         var servicio = await _servicioService.ObtenerPorIdAsync(id.Value);
         if (servicio == null) return NotFound();
-
         return View(servicio);
     }
 
-    // POST: Servicios/Delete/5
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Administrador,SuperAdmin")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         await _servicioService.EliminarAsync(id);

@@ -1,6 +1,3 @@
-using System;
-using System.Security.Claims;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -8,10 +5,13 @@ using Microsoft.EntityFrameworkCore;
 using SaaSBarberia.Filters;
 using SaaSBarberia.Models;
 using SaaSBarberia.Services;
+using System;
+using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace SaaSBarberia.Controllers
 {
-    [Authorize(Roles = "Administrador,SuperAdmin")]
+    [Authorize]
     [TenantAuthorize]
     public class ProductosController : Controller
     {
@@ -23,8 +23,6 @@ namespace SaaSBarberia.Controllers
             _productosService = productosService;
             _storageService = storageService;
         }
-
-        // ── Helpers ─────────────────────────────────────────────────────────────────
 
         private int CurrentTenantId
         {
@@ -40,15 +38,12 @@ namespace SaaSBarberia.Controllers
         private int CurrentUsuarioId => int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out int uid) ? uid : 0;
         private string CurrentUserIp => HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
 
-        // ── Index ────────────────────────────────────────────────────────────────────
-
+        // Permitido para todos los autenticados (incluyendo Clientes)
         public async Task<IActionResult> Index()
         {
             var productos = await _productosService.GetAllAsync(CurrentTenantId);
             return View(productos);
         }
-
-        // ── Details ──────────────────────────────────────────────────────────────────
 
         public async Task<IActionResult> Details(int? id)
         {
@@ -58,12 +53,9 @@ namespace SaaSBarberia.Controllers
             return View(producto);
         }
 
-        // ── Create GET ───────────────────────────────────────────────────────────────
-
+        // Solo Admins y SuperAdmins
         [Authorize(Roles = "Administrador,SuperAdmin")]
         public IActionResult Create() => View(new Producto());
-
-        // ── Create POST ──────────────────────────────────────────────────────────────
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -72,46 +64,22 @@ namespace SaaSBarberia.Controllers
             [Bind("Id,Nombre,Descripcion,PrecioVenta,Stock,RutaImagen")] Producto producto,
             IFormFile? productoArchivo)
         {
-            Console.WriteLine($"---> 🚨 [Productos/Create] ARCHIVO RECIBIDO: " +
-                $"{(productoArchivo == null ? "NULO / NO LLEGÓ" : $"{productoArchivo.FileName} ({productoArchivo.Length} bytes)")}");
-
             producto.TenantId = CurrentTenantId;
             ModelState.Remove(nameof(producto.Tenant));
             ModelState.Remove(nameof(producto.RutaImagen));
 
-            if (!ModelState.IsValid)
-            {
-                Console.WriteLine("---> ❌ ERRORES DE VALIDACIÓN:");
-                foreach (var kv in ModelState)
-                    foreach (var err in kv.Value.Errors)
-                        Console.WriteLine($"     '{kv.Key}': {err.ErrorMessage}");
-                return View(producto);
-            }
+            if (!ModelState.IsValid) return View(producto);
 
-            // Subir imagen a Cloudinary con aislamiento multi-tenant
             if (productoArchivo != null && productoArchivo.Length > 0)
             {
-                Console.WriteLine($"---> ⏳ SUBIENDO A CLOUDINARY EN CARPETA: productos/tenant_{CurrentTenantId}");
                 var url = await _storageService.SubirImagenAsync(
                     productoArchivo, $"productos/tenant_{CurrentTenantId}");
-
-                if (!string.IsNullOrEmpty(url))
-                {
-                    producto.RutaImagen = url;
-                    Console.WriteLine($"---> ✅ URL GUARDADA EN MODELO: {producto.RutaImagen}");
-                }
-                else
-                {
-                    Console.WriteLine("---> ❌ CLOUDINARY DEVUELVO NULL/VACÍO.");
-                }
+                if (!string.IsNullOrEmpty(url)) producto.RutaImagen = url;
             }
 
             await _productosService.CreateAsync(producto, CurrentTenantId, CurrentUsuarioId, CurrentUserIp);
-            Console.WriteLine("---> 🚀 PRODUCTO GUARDADO EN BD.");
             return RedirectToAction(nameof(Index));
         }
-
-        // ── Edit GET ─────────────────────────────────────────────────────────────────
 
         [Authorize(Roles = "Administrador,SuperAdmin")]
         public async Task<IActionResult> Edit(int? id)
@@ -121,8 +89,6 @@ namespace SaaSBarberia.Controllers
             if (producto == null) return NotFound();
             return View(producto);
         }
-
-        // ── Edit POST ────────────────────────────────────────────────────────────────
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -142,20 +108,14 @@ namespace SaaSBarberia.Controllers
 
             try
             {
-                // Si el usuario subió una nueva imagen
                 if (productoArchivo != null && productoArchivo.Length > 0)
                 {
                     var url = await _storageService.SubirImagenAsync(
                         productoArchivo, $"productos/tenant_{CurrentTenantId}");
-
-                    if (!string.IsNullOrEmpty(url))
-                    {
-                        producto.RutaImagen = url;
-                    }
+                    if (!string.IsNullOrEmpty(url)) producto.RutaImagen = url;
                 }
                 else
                 {
-                    // Si no subió foto nueva, mantenemos la URL existente de la BD
                     var productoExistente = await _productosService.GetByIdAsync(id, CurrentTenantId);
                     if (productoExistente != null && string.IsNullOrEmpty(producto.RutaImagen))
                     {
@@ -171,13 +131,7 @@ namespace SaaSBarberia.Controllers
                 if (!_productosService.Exists(producto.Id, CurrentTenantId)) return NotFound();
                 throw;
             }
-            catch (UnauthorizedAccessException)
-            {
-                return Forbid();
-            }
         }
-
-        // ── Delete ───────────────────────────────────────────────────────────────────
 
         [Authorize(Roles = "Administrador,SuperAdmin")]
         public async Task<IActionResult> Delete(int? id)

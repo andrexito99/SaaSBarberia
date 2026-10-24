@@ -40,7 +40,7 @@ builder.Services.AddScoped<IHerramientasService, HerramientasService>();
 builder.Services.AddScoped<IProductosService, ProductosService>();
 builder.Services.AddScoped<IAlquileresHerramientasService, AlquileresHerramientasService>();
 builder.Services.AddScoped<IAuditoriaService, AuditoriaService>();
-builder.Services.AddScoped<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
+
 builder.Services.AddScoped<INotificacionService, NotificacionService>();
 builder.Services.AddScoped<IEventosSistemaService, EventosSistemaService>();
 builder.Services.AddScoped<BarberoAusenciaService>();

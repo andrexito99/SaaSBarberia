@@ -17,14 +17,13 @@ namespace SaaSBarberia.Controllers
         private readonly BarberSaaSDbContext _context;
         private readonly IAuditoriaService _auditoriaService;
 
-        public AccountController(BarberSaaSDbContext context, IAuditoriaService auditoriaService, IPasswordHasher<Usuario> passwordHasher)
+        public AccountController(BarberSaaSDbContext context, IAuditoriaService auditoriaService)
         {
             _context = context;
             _auditoriaService = auditoriaService;
-            _passwordHasher = passwordHasher;
         }
 
-        private readonly IPasswordHasher<Usuario> _passwordHasher;
+        private readonly IPasswordHasher<Usuario> _passwordHasher = new PasswordHasher<Usuario>();
 
         private string CurrentUserIp => HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
 

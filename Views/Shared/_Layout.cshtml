@@ -287,7 +287,7 @@
                             <li class="nav-header text-uppercase mt-3 mb-1 px-3">Administración</li>
                             <li>
                                 <a class="nav-link d-flex align-items-center gap-3 text-warning" asp-controller="Tenants" asp-action="DashboardSede">
-                                    <i class="bi bi-speedometer2"></i> <span>Panel Control</span>
+                                    <i class="bi bi-qr-code-scan"></i> <span>Panel Sede & QR</span>
                                 </a>
                             </li>
                             <li>
@@ -418,6 +418,14 @@
                                     <li class="nav-item"><a class="nav-link text-white fw-semibold" asp-controller="Home" asp-action="Index">🏠 Inicio</a></li>
                                     @if (User.Identity?.IsAuthenticated == true)
                                     {
+                                        @if (User.IsInRole("Administrador"))
+                                        {
+                                            <li class="nav-item">
+                                                <a class="nav-link text-warning fw-semibold d-flex align-items-center gap-1" asp-controller="Tenants" asp-action="DashboardSede">
+                                                    <i class="bi bi-qr-code-scan"></i> Panel Sede & QR
+                                                </a>
+                                            </li>
+                                        }
                                         <li class="nav-item"><a class="nav-link text-white-50 fw-semibold" asp-controller="Servicios" asp-action="Index">✂️ Servicios</a></li>
                                         <li class="nav-item"><a class="nav-link text-white-50 fw-semibold" asp-controller="Productos" asp-action="Index">🛒 Productos</a></li>
 

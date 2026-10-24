@@ -27,9 +27,14 @@
                 <h3 class="fw-bold text-white m-0 d-flex align-items-center gap-2">
                     <i class="bi bi-speedometer2 text-warning"></i> Operaciones de la Sede
                 </h3>
-                <span class="badge bg-success">
-                    <i class="bi bi-broadcast me-1"></i> Tiempo Real
-                </span>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <a asp-controller="Tenants" asp-action="DashboardSede" class="btn btn-warning btn-sm fw-bold d-flex align-items-center gap-2 shadow-sm">
+                        <i class="bi bi-qr-code-scan"></i> Panel Sede & Enlace QR
+                    </a>
+                    <span class="badge bg-success">
+                        <i class="bi bi-broadcast me-1"></i> Tiempo Real
+                    </span>
+                </div>
             </div>
 
             <!-- ⚡ BLOQUE DE KPIs DE HOY (DARK LUXURY) -->
@@ -214,6 +219,66 @@
                             }
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- ⚡ ACCESOS RÁPIDOS PARA ADMINISTRADOR -->
+            <div class="mt-4 pt-2">
+                <h5 class="fw-bold text-white mb-3 d-flex align-items-center gap-2">
+                    <i class="bi bi-grid-fill text-warning"></i> Herramientas de Gestión de Sede
+                </h5>
+                <div class="row row-cols-1 row-cols-md-3 g-3">
+                    <div class="col">
+                        <div class="card h-100 p-3 d-flex flex-column border-0 shadow-sm" style="background: rgba(31, 41, 55, 0.7) !important;">
+                            <div class="d-flex align-items-center gap-3 mb-2">
+                                <div class="kpi-icon-wrapper kpi-icon-amber" style="width: 44px; height: 44px; font-size: 1.2rem;">
+                                    <i class="bi bi-qr-code-scan"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold text-white mb-0">Panel Sede & Enlace QR</h6>
+                                    <small class="text-secondary">Invitación y emergencias</small>
+                                </div>
+                            </div>
+                            <p class="text-secondary small mb-3 flex-grow-1">Genera y descarga el código QR de registro para tus clientes y gestiona el botón de pánico de la sucursal.</p>
+                            <a asp-controller="Tenants" asp-action="DashboardSede" class="btn btn-outline-warning btn-sm w-100 fw-semibold">
+                                Abrir Panel Sede <i class="bi bi-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card h-100 p-3 d-flex flex-column border-0 shadow-sm" style="background: rgba(31, 41, 55, 0.7) !important;">
+                            <div class="d-flex align-items-center gap-3 mb-2">
+                                <div class="kpi-icon-wrapper kpi-icon-emerald" style="width: 44px; height: 44px; font-size: 1.2rem;">
+                                    <i class="bi bi-cash-stack"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold text-white mb-0">Caja Chica</h6>
+                                    <small class="text-secondary">Flujo de efectivo</small>
+                                </div>
+                            </div>
+                            <p class="text-secondary small mb-3 flex-grow-1">Control diario de ingresos, egresos, gastos operativos y arqueo de caja en tiempo real.</p>
+                            <a asp-controller="Caja" asp-action="Index" class="btn btn-outline-success btn-sm w-100 fw-semibold">
+                                Administrar Caja <i class="bi bi-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card h-100 p-3 d-flex flex-column border-0 shadow-sm" style="background: rgba(31, 41, 55, 0.7) !important;">
+                            <div class="d-flex align-items-center gap-3 mb-2">
+                                <div class="kpi-icon-wrapper kpi-icon-blue" style="width: 44px; height: 44px; font-size: 1.2rem;">
+                                    <i class="bi bi-calendar2-x-fill"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold text-white mb-0">Ausencias y Permisos</h6>
+                                    <small class="text-secondary">Bloqueo de agenda</small>
+                                </div>
+                            </div>
+                            <p class="text-secondary small mb-3 flex-grow-1">Registra descansos, incapacidades y permisos del staff para evitar reservas en horas inactivas.</p>
+                            <a asp-controller="BarberoAusencias" asp-action="Index" class="btn btn-outline-info btn-sm w-100 fw-semibold">
+                                Gestionar Ausencias <i class="bi bi-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

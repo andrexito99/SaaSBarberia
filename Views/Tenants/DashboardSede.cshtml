@@ -3,69 +3,145 @@
 @{
     ViewData["Title"] = "Dashboard de Sede";
     var citasAfectadas = ViewBag.CitasAfectadas as List<SaaSBarberia.Models.Cita>;
+    var registroUrl = $"{Context.Request.Scheme}://{Context.Request.Host}/barberia/{Model.Slug}/Account/Register";
 }
 
 <div class="container mt-4">
-    <div class="card mb-4">
-        <div class="card-body text-center p-5">
+    <!-- 💈 CABECERA & CONTROL OPERATIVO DE LA SEDE -->
+    <div class="card mb-4 border-0 shadow-sm" style="background: linear-gradient(135deg, rgba(31, 41, 55, 0.95) 0%, rgba(17, 24, 39, 0.98) 100%) !important;">
+        <div class="card-body text-center p-4 p-md-5">
+            <div class="d-inline-flex align-items-center justify-content-center p-3 rounded-circle bg-warning bg-opacity-10 text-warning mb-3">
+                <i class="bi bi-shop-window fs-2"></i>
+            </div>
             <h2 class="fw-bold text-white mb-2 d-flex align-items-center justify-content-center gap-2">
                 <span>💈 Panel de Control — @Model.NombreNegocio</span>
             </h2>
-            <p class="text-secondary mb-4">Gestiona bloqueos de agenda y medidas operativas de emergencia para tu sucursal.</p>
-            <hr class="my-4" />
+            <p class="text-secondary mb-4 mx-auto" style="max-width: 650px;">
+                Administra el enlace de registro para nuevos clientes, código QR para mostrador y el estado operativo de emergencia de tu sede.
+            </p>
+            <hr class="my-4 border-secondary opacity-25" />
 
-            @if (Model.CerradoPorEmergencia)
+            @if (User.IsInRole("Administrador"))
             {
-                <div class="alert alert-danger d-inline-flex align-items-center gap-2 px-4 py-3 fw-bold rounded-pill mb-4" role="alert">
-                    <i class="bi bi-exclamation-octagon-fill fs-5"></i>
-                    <span>ATENCIÓN: LA AGENDA DE HOY ESTÁ BLOQUEADA POR EMERGENCIA</span>
-                </div>
-                <form asp-action="CambiarEstadoEmergencia" method="post">
-                    <input type="hidden" name="id" value="@Model.Id" />
-                    <input type="hidden" name="estadoCierre" value="false" />
-                    <button type="submit" class="btn btn-outline-success btn-lg px-5 fw-bold">
-                        <i class="bi bi-door-open-fill me-2"></i> REABRIR AGENDA Y LOCAL
-                    </button>
-                </form>
+                @if (Model.CerradoPorEmergencia)
+                {
+                    <div class="alert alert-danger d-inline-flex align-items-center gap-2 px-4 py-3 fw-bold rounded-pill mb-4" role="alert">
+                        <i class="bi bi-exclamation-octagon-fill fs-5"></i>
+                        <span>ATENCIÓN: LA AGENDA DE HOY ESTÁ BLOQUEADA POR EMERGENCIA</span>
+                    </div>
+                    <div>
+                        <form asp-action="CambiarEstadoEmergencia" method="post" class="d-inline-block">
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <input type="hidden" name="estadoCierre" value="false" />
+                            <button type="submit" class="btn btn-outline-success btn-lg px-5 fw-bold shadow-sm">
+                                <i class="bi bi-door-open-fill me-2"></i> REABRIR AGENDA Y LOCAL
+                            </button>
+                        </form>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-success d-inline-flex align-items-center gap-2 px-4 py-3 fw-bold rounded-pill mb-4" role="alert">
+                        <i class="bi bi-check-circle-fill fs-5"></i>
+                        <span>Sede operando con normalidad. Los clientes pueden reservar turnos.</span>
+                    </div>
+                    <div>
+                        <form asp-action="CambiarEstadoEmergencia" method="post" class="d-inline-block">
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <input type="hidden" name="estadoCierre" value="true" />
+                            <button type="submit" class="btn btn-outline-danger btn-lg px-5 fw-bold shadow-sm"
+                                    onclick="return confirm('¿Está seguro de activar el cierre de emergencia? Esto bloqueará los horarios de hoy en la app.');">
+                                <i class="bi bi-shield-slash-fill me-2"></i> BOTÓN DE PÁNICO: CERRAR HOY
+                            </button>
+                        </form>
+                    </div>
+                }
             }
             else
             {
-                <div class="alert alert-success d-inline-flex align-items-center gap-2 px-4 py-3 fw-bold rounded-pill mb-4" role="alert">
-                    <i class="bi bi-check-circle-fill fs-5"></i>
-                    <span>Sede operando con normalidad. Los clientes pueden reservar turnos.</span>
+                <div class="alert alert-secondary d-inline-flex align-items-center gap-2 px-4 py-2 small rounded-pill">
+                    <i class="bi bi-lock-fill"></i> Las acciones operativas de emergencia están reservadas para administradores.
                 </div>
-                <form asp-action="CambiarEstadoEmergencia" method="post">
-                    <input type="hidden" name="id" value="@Model.Id" />
-                    <input type="hidden" name="estadoCierre" value="true" />
-                    <button type="submit" class="btn btn-outline-danger btn-lg px-5 fw-bold"
-                            onclick="return confirm('¿Está seguro de activar el cierre de emergencia? Esto bloqueará los horarios de hoy en la app.');">
-                        <i class="bi bi-shield-slash-fill me-2"></i> BOTÓN DE PÁNICO: CERRAR HOY
-                    </button>
-                </form>
             }
         </div>
     </div>
 
+    @* 🔗 ======================================================== *@
+    @* 🌟 SECCIÓN: ENLACE DE INVITACIÓN PÚBLICA Y CÓDIGO QR       *@
+    @* ========================================================== *@
+    @if (User.IsInRole("Administrador"))
+    {
+        <div class="card mb-4 border-0 shadow-sm">
+            <div class="card-header bg-dark p-3 border-bottom border-secondary border-opacity-25 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <span class="fw-bold text-white d-flex align-items-center gap-2 fs-5">
+                    <i class="bi bi-qr-code text-warning"></i> Enlace de Registro Público y Código QR
+                </span>
+                <span class="badge bg-warning text-dark fw-bold px-3 py-2">
+                    <i class="bi bi-shield-check me-1"></i> Rol Administrador
+                </span>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-4 align-items-center">
+                    <!-- Columna Izquierda: Input de URL y Acciones -->
+                    <div class="col-12 col-lg-7">
+                        <h5 class="text-white fw-bold mb-2">
+                            <i class="bi bi-link-45deg text-warning me-1"></i> Enlace único de tu barbería
+                        </h5>
+                        <p class="text-secondary small mb-3">
+                            Comparte este enlace con tus clientes por WhatsApp, redes sociales o en tu biografía de Instagram. Al abrirlo, los clientes se registrarán automáticamente vinculados a tu sede <strong class="text-white">@Model.NombreNegocio</strong>.
+                        </p>
+
+                        <label for="registroUrl" class="form-label text-secondary small fw-semibold">URL pública de registro:</label>
+                        <div class="input-group mb-3">
+                            <span class="input-group-text bg-dark border-secondary text-secondary">
+                                <i class="bi bi-globe"></i>
+                            </span>
+                            <input id="registroUrl" type="text" class="form-control bg-dark text-white border-secondary fw-semibold font-monospace"
+                                   value="@registroUrl" readonly aria-label="URL de registro del tenant" />
+                            <button id="copyBtn" class="btn btn-warning fw-bold px-3 d-flex align-items-center gap-2" type="button" title="Copiar enlace al portapapeles">
+                                <i class="bi bi-clipboard" id="copyIcon"></i>
+                                <span id="copyText">Copiar Enlace</span>
+                            </button>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <a href="@registroUrl" target="_blank" class="btn btn-outline-light btn-sm d-inline-flex align-items-center gap-2" rel="noopener noreferrer">
+                                <i class="bi bi-box-arrow-up-right"></i> Probar enlace en pestaña nueva
+                            </a>
+                            <span class="badge bg-dark border border-secondary text-secondary py-2 px-3 font-monospace">
+                                Slug: @Model.Slug
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Columna Derecha: Código QR -->
+                    <div class="col-12 col-lg-5 text-center">
+                        <div class="p-3 bg-dark rounded-3 border border-secondary border-opacity-25 d-inline-block shadow-sm" style="max-width: 280px;">
+                            <div class="p-3 bg-white rounded-2 mb-2 d-flex justify-content-center align-items-center" style="min-height: 200px; min-width: 200px;">
+                                <div id="qrCode" class="d-flex justify-content-center align-items-center"></div>
+                            </div>
+                            <small class="text-secondary d-block mb-2">Escanea para abrir el registro</small>
+                            <button id="downloadQrBtn" type="button" class="btn btn-outline-secondary btn-sm w-100 d-none">
+                                <i class="bi bi-download me-1"></i> Descargar Imagen QR (PNG)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @* 🚨 ======================================================== *@
+    @* 🌟 SECCIÓN: CLIENTES AFECTADOS POR CIERRE DE EMERGENCIA    *@
+    @* ========================================================== *@
     @if (Model.CerradoPorEmergencia)
     {
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center p-3 flex-wrap gap-2">
+        <div class="card mb-4 border-0 shadow-sm">
+            <div class="card-header bg-dark d-flex justify-content-between align-items-center p-3 flex-wrap gap-2 border-bottom border-secondary border-opacity-25">
                 <span class="fw-bold text-white d-flex align-items-center gap-2">
                     <i class="bi bi-whatsapp text-success"></i> Clientes Afectados Hoy (Notificación vía WhatsApp)
                 </span>
-                @if (User.IsInRole("Administrador"))
-                {
-                    <div class="mt-4 p-3 bg-dark rounded-3">
-                        <h5 class="text-white mb-2"><i class="bi bi-link-45deg me-2"></i>Enlace de registro público</h5>
-                        <div class="d-flex align-items-center gap-2 mb-2">
-                            <input id="registroUrl" type="text" class="form-control flex-grow-1" value="@($"{Context.Request.Scheme}://{Context.Request.Host}/barberia/{Model.Slug}/Account/Register")" readonly />
-                            <button id="copyBtn" class="btn btn-outline-secondary" type="button"><i class="bi bi-clipboard"></i></button>
-                        </div>
-                        <div id="qrCode" class="d-flex justify-content-center mb-2"></div>
-                        <small class="text-secondary">Escanea para compartir el enlace.</small>
-                    </div>
-                }
-                @if (citasAfectadas != null && citasAfectadas.Any())
+                @if (User.IsInRole("Administrador") && citasAfectadas != null && citasAfectadas.Any())
                 {
                     <button onclick="iniciarEnvioMasivo()" class="btn btn-primary btn-sm">
                         <i class="bi bi-send-fill me-1"></i> Despachar todas las alertas en cola
@@ -102,9 +178,12 @@
                                         <td class="text-danger fw-bold">@cita.FechaHora.ToString("hh:mm tt")</td>
                                         <td class="text-white">@barberoNombre</td>
                                         <td>
-                                            <a href="@urlWhatsapp" target="_blank" class="btn btn-sm btn-outline-success btn-alerta-individual">
-                                                <i class="bi bi-chat-dots-fill me-1"></i> Enviar Alerta
-                                            </a>
+                                            @if (User.IsInRole("Administrador"))
+                                            {
+                                                <a href="@urlWhatsapp" target="_blank" class="btn btn-sm btn-outline-success btn-alerta-individual">
+                                                    <i class="bi bi-chat-dots-fill me-1"></i> Enviar Alerta
+                                                </a>
+                                            }
                                         </td>
                                     </tr>
                                 }
@@ -127,69 +206,136 @@
     }
 </div>
 
-<script>
-    function iniciarEnvioMasivo() {
-        const filas = document.querySelectorAll('.fila-cliente');
-        if (filas.length === 0) return;
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // 1. Copiar Enlace al Portapapeles con feedback visual
+            var copyBtn = document.getElementById('copyBtn');
+            var urlInput = document.getElementById('registroUrl');
+            var copyIcon = document.getElementById('copyIcon');
+            var copyText = document.getElementById('copyText');
 
-        let index = 0;
+            if (copyBtn && urlInput) {
+                copyBtn.addEventListener('click', function () {
+                    var textToCopy = urlInput.value;
+                    if (!textToCopy) return;
 
-        function procesarSiguiente() {
-            if (index < filas.length) {
-                const filaActual = filas[index];
-                const url = filaActual.getAttribute('data-url');
-                const nombre = filaActual.querySelector('.nombre-cliente').innerText;
+                    function mostrarFeedbackExito() {
+                        if (copyIcon) copyIcon.className = 'bi bi-check-lg';
+                        if (copyText) copyText.textContent = '¡Copiado!';
+                        copyBtn.classList.remove('btn-warning');
+                        copyBtn.classList.add('btn-success');
 
-                filaActual.style.backgroundColor = 'rgba(245, 158, 11, 0.15)';
+                        // Toast flotante temporal
+                        var toast = document.createElement('div');
+                        toast.className = 'position-fixed top-0 end-0 m-3 alert alert-success shadow-lg fade show';
+                        toast.style.zIndex = '9999';
+                        toast.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>¡Enlace copiado al portapapeles!';
+                        document.body.appendChild(toast);
 
-                window.open(url, '_blank');
-
-                setTimeout(() => {
-                    filaActual.style.opacity = '0.5';
-                    filaActual.style.backgroundColor = 'transparent';
-                    index++;
-
-                    if (index < filas.length) {
-                        if (confirm(`Chat de ${nombre} abierto. ¿Pasar al siguiente cliente en cola?`)) {
-                            procesarSiguiente();
-                        }
-                    } else {
-                        alert("Notificaciones despachadas a los clientes afectados.");
+                        setTimeout(function () {
+                            if (copyIcon) copyIcon.className = 'bi bi-clipboard';
+                            if (copyText) copyText.textContent = 'Copiar Enlace';
+                            copyBtn.classList.remove('btn-success');
+                            copyBtn.classList.add('btn-warning');
+                            toast.classList.remove('show');
+                            setTimeout(() => toast.remove(), 300);
+                        }, 2500);
                     }
-                }, 500);
+
+                    if (navigator.clipboard && window.isSecureContext) {
+                        navigator.clipboard.writeText(textToCopy).then(mostrarFeedbackExito).catch(function () {
+                            urlInput.select();
+                            document.execCommand('copy');
+                            mostrarFeedbackExito();
+                        });
+                    } else {
+                        urlInput.select();
+                        urlInput.setSelectionRange(0, 99999);
+                        try {
+                            document.execCommand('copy');
+                            mostrarFeedbackExito();
+                        } catch (err) {
+                            alert('No se pudo copiar automáticamente. Por favor copia la URL manualmente.');
+                        }
+                    }
+                });
+            }
+
+            // 2. Renderizado Dinámico del Código QR
+            var qrContainer = document.getElementById('qrCode');
+            var regUrl = urlInput ? urlInput.value : '';
+
+            if (qrContainer && regUrl && typeof QRCode !== 'undefined') {
+                qrContainer.innerHTML = '';
+                QRCode.toCanvas(regUrl, {
+                    width: 190,
+                    margin: 1,
+                    color: {
+                        dark: '#000000',
+                        light: '#ffffff'
+                    }
+                }, function (error, canvas) {
+                    if (error) {
+                        console.error('Error generando QR:', error);
+                        qrContainer.innerHTML = '<span class="text-danger small">Error al generar código QR</span>';
+                    } else {
+                        canvas.style.maxWidth = '100%';
+                        canvas.style.height = 'auto';
+                        qrContainer.appendChild(canvas);
+
+                        // Habilitar botón de descarga de la imagen QR
+                        var downloadBtn = document.getElementById('downloadQrBtn');
+                        if (downloadBtn) {
+                            downloadBtn.classList.remove('d-none');
+                            downloadBtn.addEventListener('click', function () {
+                                var link = document.createElement('a');
+                                link.download = 'QR_Registro_@(Model.Slug).png';
+                                link.href = canvas.toDataURL('image/png');
+                                link.click();
+                            });
+                        }
+                    }
+                });
+            }
+        });
+
+        // 3. Envío masivo de alertas de emergencia WhatsApp
+        function iniciarEnvioMasivo() {
+            const filas = document.querySelectorAll('.fila-cliente');
+            if (filas.length === 0) return;
+
+            let index = 0;
+
+            function procesarSiguiente() {
+                if (index < filas.length) {
+                    const filaActual = filas[index];
+                    const url = filaActual.getAttribute('data-url');
+                    const nombre = filaActual.querySelector('.nombre-cliente')?.innerText || 'Cliente';
+
+                    filaActual.style.backgroundColor = 'rgba(245, 158, 11, 0.15)';
+                    window.open(url, '_blank');
+
+                    setTimeout(() => {
+                        filaActual.style.opacity = '0.5';
+                        filaActual.style.backgroundColor = 'transparent';
+                        index++;
+
+                        if (index < filas.length) {
+                            if (confirm(`Chat de ${nombre} abierto. ¿Pasar al siguiente cliente en cola?`)) {
+                                procesarSiguiente();
+                            }
+                        } else {
+                            alert("Notificaciones despachadas a los clientes afectados.");
+                        }
+                    }, 500);
+                }
+            }
+
+            if (confirm("Se abrirán las ventanas de WhatsApp una a una para cada cliente. ¿Iniciar proceso?")) {
+                procesarSiguiente();
             }
         }
-
-        if (confirm("Se abrirán las ventanas de WhatsApp una a una para cada cliente. ¿Iniciar proceso?")) {
-            procesarSiguiente();
-        }
-    }
-</script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
-<script>
-    // Copy to clipboard functionality
-    document.getElementById('copyBtn')?.addEventListener('click', function() {
-        var urlInput = document.getElementById('registroUrl');
-        urlInput.select();
-        urlInput.setSelectionRange(0, 99999);
-        navigator.clipboard.writeText(urlInput.value).then(function() {
-            // Show temporary toast/alert
-            var toast = document.createElement('div');
-            toast.className = 'position-fixed top-0 end-0 m-3 alert alert-success fade show';
-            toast.role = 'alert';
-            toast.innerHTML = 'Enlace copiado al portapapeles!';
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
-        });
-    });
-    // Generate QR code for the registration URL
-    var qrContainer = document.getElementById('qrCode');
-    var regUrl = document.getElementById('registroUrl')?.value;
-    if (qrContainer && regUrl) {
-        QRCode.toCanvas(regUrl, { width: 180, margin: 1 }, function(error, canvas) {
-            if (error) console.error(error);
-            else qrContainer.appendChild(canvas);
-        });
-    }
-</script>
-//cambio
+    </script>
+}

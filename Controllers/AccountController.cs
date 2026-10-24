@@ -8,6 +8,7 @@ using SaaSBarberia.Services;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
 
 namespace SaaSBarberia.Controllers
 {
@@ -16,11 +17,14 @@ namespace SaaSBarberia.Controllers
         private readonly BarberSaaSDbContext _context;
         private readonly IAuditoriaService _auditoriaService;
 
-        public AccountController(BarberSaaSDbContext context, IAuditoriaService auditoriaService)
+        public AccountController(BarberSaaSDbContext context, IAuditoriaService auditoriaService, IPasswordHasher<Usuario> passwordHasher)
         {
             _context = context;
             _auditoriaService = auditoriaService;
+            _passwordHasher = passwordHasher;
         }
+
+        private readonly IPasswordHasher<Usuario> _passwordHasher;
 
         private string CurrentUserIp => HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
 
@@ -50,11 +54,34 @@ namespace SaaSBarberia.Controllers
                 .FirstOrDefaultAsync(u => u.Email == email);
 
             // ⚠️ CONTROL DE FALLOS: Se queda activo para registrar intrusos o bloqueos
-            if (usuario == null || usuario.PasswordHash != password || usuario.Activo == false)
+            if (usuario == null || usuario.Activo == false)
             {
                 int tenantFallo = usuario?.TenantId ?? 0;
                 int usuarioFalloId = usuario?.Id ?? 0;
-                string causa = usuario == null ? "Correo no registrado" : (usuario.Activo == false ? "Cuenta deshabilitada" : "Contraseña incorrecta");
+                string causa = usuario == null ? "Correo no registrado" : "Cuenta deshabilitada";
+                // Auditar y fallar handled below
+            }
+            else
+            {
+                var verificationResult = _passwordHasher.VerifyHashedPassword(usuario, usuario.PasswordHash, password);
+                if (verificationResult != PasswordVerificationResult.Success)
+                {
+                    int tenantFallo = usuario.TenantId ?? 0;
+                    int usuarioFalloId = usuario.Id;
+                    string causa = "Contraseña incorrecta";
+                    await _auditoriaService.RegistrarAsync(
+                        tenantFallo,
+                        usuarioFalloId,
+                        "Login",
+                        "0",
+                        "Fallo Login",
+                        $"Intento fallido de inicio de sesión para el correo '{email}'. Causa sospechosa: {causa}.",
+                        CurrentUserIp
+                    );
+                    ModelState.AddModelError("", "Credenciales incorrectas o usuario deshabilitado.");
+                    return View();
+                }
+            }
 
                 // 🔥 AUDITORÍA: Deja el rastro si intentan reventar el login
                 await _auditoriaService.RegistrarAsync(
@@ -241,7 +268,7 @@ namespace SaaSBarberia.Controllers
             {
                 Nombre = model.Nombre.Trim(),
                 Email = model.Email.Trim(),
-                PasswordHash = model.Password,
+                PasswordHash = _passwordHasher.HashPassword(null, model.Password),
                 Telefono = string.IsNullOrWhiteSpace(model.Telefono) ? null : model.Telefono.Trim(),
                 TenantId = tenantIdObligatorio,
                 RoleId = rolCliente.Id,

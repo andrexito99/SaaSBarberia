@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace SaaSBarberia.Models;
@@ -10,6 +10,9 @@ public partial class Tenant
     public string NombreNegocio { get; set; } = null!;
 
     public string Subdominio { get; set; } = null!;
+
+    // Propiedad Slug amigable para URLs (ej: barberia-el-negro)
+    public string? Slug { get; set; }
 
     public string PlanSuscripcion { get; set; } = null!;
 

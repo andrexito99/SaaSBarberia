@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http; // 🌟 Necesario para acceder a HttpContext
@@ -351,6 +351,7 @@ public partial class BarberSaaSDbContext : DbContext
             entity.Property(e => e.NombreNegocio).HasMaxLength(150).IsUnicode(false);
             entity.Property(e => e.PlanSuscripcion).HasMaxLength(50).IsUnicode(false).HasDefaultValue("Bronce");
             entity.Property(e => e.Subdominio).HasMaxLength(50).IsUnicode(false);
+            entity.Property(e => e.Slug).HasMaxLength(150).IsUnicode(false);
             entity.Property(e => e.TieneModuloWhatsApp).HasDefaultValue(false);
         });
 

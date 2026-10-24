@@ -46,6 +46,17 @@
             </div>
 
             <div class="mb-3">
+                <label asp-for="Slug" class="form-label fw-semibold">Slug para URLs de Registro</label>
+                <div class="input-group">
+                    <span class="input-group-text">/barberia/</span>
+                    <input asp-for="Slug" class="form-control" autocomplete="off" placeholder="barberia-el-negro" />
+                    <span class="input-group-text">/Account/Register</span>
+                </div>
+                <small class="text-muted">Slug amigable para URLs públicas (ej: barberia-el-negro).</small>
+                <span asp-validation-for="Slug" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
                 <label class="form-label fw-semibold text-dark">Cambiar Logo Comercial</label>
                 <input type="file" name="logoArchivo" id="logoArchivo" class="form-control" accept="image/*" />
                 <small class="text-muted">Deja este campo vacío si vas a mantener el logo que ya tienes.</small>

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -113,6 +113,182 @@ namespace SaaSBarberia.Controllers
         public IActionResult AccessDenied()
         {
             return View();
+        }
+
+        [HttpGet]
+        [Route("barberia/{slugTenant}/Account/Register")]
+        public async Task<IActionResult> Register(string slugTenant)
+        {
+            if (string.IsNullOrWhiteSpace(slugTenant))
+            {
+                return NotFound();
+            }
+
+            if (User.Identity != null && User.Identity.IsAuthenticated)
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            // Se ignora filtros globales para poder resolver el tenant públicamente por su slug o subdominio
+            var tenant = await _context.Tenants
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(t => t.Slug == slugTenant || t.Subdominio == slugTenant);
+
+            if (tenant == null)
+            {
+                return NotFound();
+            }
+
+            ViewBag.TenantId = tenant.Id;
+            ViewBag.NombreNegocio = tenant.NombreNegocio;
+            ViewBag.SlugTenant = slugTenant;
+            ViewBag.ColorPrimario = tenant.ColorPrimario ?? "#1a1a1a";
+            ViewBag.ColorSecundario = tenant.ColorSecundario ?? "#d4af37";
+            ViewBag.RutaLogo = tenant.RutaLogo;
+
+            var model = new RegisterViewModel
+            {
+                TenantId = tenant.Id,
+                SlugTenant = slugTenant,
+                NombreNegocio = tenant.NombreNegocio,
+                ColorPrimario = tenant.ColorPrimario ?? "#1a1a1a",
+                ColorSecundario = tenant.ColorSecundario ?? "#d4af37",
+                RutaLogo = tenant.RutaLogo
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Route("barberia/{slugTenant}/Account/Register")]
+        public async Task<IActionResult> Register(string slugTenant, RegisterViewModel model)
+        {
+            if (string.IsNullOrWhiteSpace(slugTenant))
+            {
+                return NotFound();
+            }
+
+            // Buscar tenant en base de datos ignorando filtros globales
+            var tenant = await _context.Tenants
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(t => t.Slug == slugTenant || t.Subdominio == slugTenant);
+
+            if (tenant == null)
+            {
+                return NotFound();
+            }
+
+            // 🔒 ASIGNACIÓN ESTRICTA Y OBLIGATORIA DEL TENANTID (por debajo de cuerda)
+            int tenantIdObligatorio = tenant.Id;
+            model.TenantId = tenantIdObligatorio;
+            model.SlugTenant = slugTenant;
+            model.NombreNegocio = tenant.NombreNegocio;
+            model.ColorPrimario = tenant.ColorPrimario ?? "#1a1a1a";
+            model.ColorSecundario = tenant.ColorSecundario ?? "#d4af37";
+            model.RutaLogo = tenant.RutaLogo;
+
+            ViewBag.TenantId = tenant.Id;
+            ViewBag.NombreNegocio = tenant.NombreNegocio;
+            ViewBag.SlugTenant = slugTenant;
+            ViewBag.ColorPrimario = tenant.ColorPrimario ?? "#1a1a1a";
+            ViewBag.ColorSecundario = tenant.ColorSecundario ?? "#d4af37";
+            ViewBag.RutaLogo = tenant.RutaLogo;
+
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            // Validar unicidad del email en todo el sistema ignorando filtros de aislamiento
+            bool emailExiste = await _context.Usuarios
+                .IgnoreQueryFilters()
+                .AnyAsync(u => u.Email.ToLower() == model.Email.Trim().ToLower());
+
+            if (emailExiste)
+            {
+                ModelState.AddModelError("Email", "Este correo electrónico ya se encuentra registrado.");
+                return View(model);
+            }
+
+            // Validar unicidad del teléfono en caso de ser ingresado
+            if (!string.IsNullOrWhiteSpace(model.Telefono))
+            {
+                bool telefonoExiste = await _context.Usuarios
+                    .IgnoreQueryFilters()
+                    .AnyAsync(u => u.Telefono == model.Telefono.Trim());
+
+                if (telefonoExiste)
+                {
+                    ModelState.AddModelError("Telefono", "Este número de teléfono ya está registrado.");
+                    return View(model);
+                }
+            }
+
+            // Obtener rol "Cliente" para garantizar seguridad e integridad de roles
+            var rolCliente = await _context.Roles
+                .FirstOrDefaultAsync(r => r.NombreRole == "Cliente");
+
+            if (rolCliente == null)
+            {
+                rolCliente = new Role { NombreRole = "Cliente" };
+                _context.Roles.Add(rolCliente);
+                await _context.SaveChangesAsync();
+            }
+
+            // Crear el nuevo usuario estrictamente amarrado a su sede correspondiente
+            var nuevoUsuario = new Usuario
+            {
+                Nombre = model.Nombre.Trim(),
+                Email = model.Email.Trim(),
+                PasswordHash = model.Password,
+                Telefono = string.IsNullOrWhiteSpace(model.Telefono) ? null : model.Telefono.Trim(),
+                TenantId = tenantIdObligatorio,
+                RoleId = rolCliente.Id,
+                Activo = true,
+                TokenUsado = false
+            };
+
+            _context.Usuarios.Add(nuevoUsuario);
+            await _context.SaveChangesAsync();
+
+            // Auditoría del registro de usuario en su respectivo Tenant
+            await _auditoriaService.RegistrarAsync(
+                tenantIdObligatorio,
+                nuevoUsuario.Id,
+                "Usuario",
+                nuevoUsuario.Id.ToString(),
+                "Registro Cliente",
+                $"Nuevo cliente registrado en la sede '{tenant.NombreNegocio}' vía slug '{slugTenant}'. Email: {nuevoUsuario.Email}.",
+                CurrentUserIp
+            );
+
+            // Iniciar sesión con claims de autenticación estándar del sistema
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, nuevoUsuario.Id.ToString()),
+                new Claim(ClaimTypes.Name, nuevoUsuario.Nombre),
+                new Claim(ClaimTypes.Email, nuevoUsuario.Email),
+                new Claim(ClaimTypes.Role, rolCliente.NombreRole),
+                new Claim("TenantId", nuevoUsuario.TenantId?.ToString() ?? "0")
+            };
+
+            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+
+            var authProperties = new AuthenticationProperties
+            {
+                IsPersistent = true,
+                ExpiresUtc = System.DateTimeOffset.UtcNow.AddHours(8)
+            };
+
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(claimsIdentity),
+                authProperties
+            );
+
+            TempData["SuccessMessage"] = $"¡Registro exitoso! Bienvenido a {tenant.NombreNegocio}.";
+            return RedirectToAction("Index", "Home");
         }
     }
 }

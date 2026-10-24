@@ -58,7 +58,7 @@
                     <div class="mt-4 p-3 bg-dark rounded-3">
                         <h5 class="text-white mb-2"><i class="bi bi-link-45deg me-2"></i>Enlace de registro público</h5>
                         <div class="d-flex align-items-center gap-2 mb-2">
-                            <input id="registroUrl" type="text" class="form-control flex-grow-1" value="@($"{Request.Scheme}://{Request.Host}/barberia/{Model.Slug}/Account/Register")" readonly />
+                            <input id="registroUrl" type="text" class="form-control flex-grow-1" value="@($"{Context.Request.Scheme}://{Context.Request.Host}/barberia/{Model.Slug}/Account/Register")" readonly />
                             <button id="copyBtn" class="btn btn-outline-secondary" type="button"><i class="bi bi-clipboard"></i></button>
                         </div>
                         <div id="qrCode" class="d-flex justify-content-center mb-2"></div>
@@ -168,11 +168,11 @@
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
 <script>
     // Copy to clipboard functionality
-    document.getElementById('copyBtn')?.addEventListener('click', function () {
+    document.getElementById('copyBtn')?.addEventListener('click', function() {
         var urlInput = document.getElementById('registroUrl');
         urlInput.select();
         urlInput.setSelectionRange(0, 99999);
-        navigator.clipboard.writeText(urlInput.value).then(function () {
+        navigator.clipboard.writeText(urlInput.value).then(function() {
             // Show temporary toast/alert
             var toast = document.createElement('div');
             toast.className = 'position-fixed top-0 end-0 m-3 alert alert-success fade show';
@@ -186,7 +186,7 @@
     var qrContainer = document.getElementById('qrCode');
     var regUrl = document.getElementById('registroUrl')?.value;
     if (qrContainer && regUrl) {
-        QRCode.toCanvas(regUrl, { width: 180, margin: 1 }, function (error, canvas) {
+        QRCode.toCanvas(regUrl, { width: 180, margin: 1 }, function(error, canvas) {
             if (error) console.error(error);
             else qrContainer.appendChild(canvas);
         });

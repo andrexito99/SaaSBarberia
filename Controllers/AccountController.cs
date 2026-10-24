@@ -83,20 +83,7 @@ namespace SaaSBarberia.Controllers
                 }
             }
 
-                // 🔥 AUDITORÍA: Deja el rastro si intentan reventar el login
-                await _auditoriaService.RegistrarAsync(
-                    tenantFallo,
-                    usuarioFalloId,
-                    "Login",
-                    "0",
-                    "Fallo Login",
-                    $"Intento fallido de inicio de sesión para el correo '{email}'. Causa sospechosa: {causa}.",
-                    CurrentUserIp
-                );
 
-                ModelState.AddModelError("", "Credenciales incorrectas o usuario deshabilitado.");
-                return View();
-            }
 
             // 🎯 CREACIÓN DE IDENTIDAD CON CLAIMS CRÍTICOS
             var claims = new List<Claim>

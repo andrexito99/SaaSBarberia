@@ -18,18 +18,18 @@ namespace SaaSBarberia.Controllers
         private readonly TenantService _tenantService;
         private readonly HorarioLaboralService _horarioService;
         private readonly BarberSaaSDbContext _context;
-        private readonly CloudinaryStorageService _cloudinary;
+        private readonly SupabaseStorageService _storageService;
 
         public TenantsController(
             TenantService tenantService, 
             HorarioLaboralService horarioService, 
             BarberSaaSDbContext context, 
-            CloudinaryStorageService cloudinary)
+            SupabaseStorageService storageService)
         {
             _tenantService  = tenantService;
             _horarioService = horarioService;
             _context        = context;
-            _cloudinary     = cloudinary;
+            _storageService = storageService;
         }
 
         [Authorize(Roles = "SuperAdmin")]
@@ -90,10 +90,10 @@ namespace SaaSBarberia.Controllers
             await _tenantService.GuardarAsync(tenant);
             Console.WriteLine($"---> [Tenants/Create POST] Tenant ID={tenant.Id} guardado.");
 
-            // 2️⃣ Subir el logo a Cloudinary con carpeta multi-tenant
+            // 2️⃣ Subir el logo a Supabase Storage con carpeta multi‑tenant
             if (logoArchivo != null && logoArchivo.Length > 0)
             {
-                string? urlLogo = await _cloudinary.SubirImagenAsync(
+                string? urlLogo = await _storageService.SubirImagenAsync(
                     logoArchivo, $"tenants/tenant_{tenant.Id}");
 
                 if (!string.IsNullOrEmpty(urlLogo))
@@ -103,7 +103,7 @@ namespace SaaSBarberia.Controllers
                     {
                         tenantDb.RutaLogo = urlLogo;
                         await _context.SaveChangesAsync();
-                        Console.WriteLine($"---> [Tenants/Create] Logo subido a Cloudinary: {urlLogo}");
+                        Console.WriteLine($"---> [Tenants/Create] Logo subido a Supabase: {urlLogo}");
                     }
                 }
             }
@@ -267,10 +267,10 @@ namespace SaaSBarberia.Controllers
 
             try
             {
-                // Subir logo nuevo a Cloudinary si se seleccionó uno
+                // Subir logo nuevo a Supabase Storage si se seleccionó uno
                 if (logoArchivo != null && logoArchivo.Length > 0)
                 {
-                    string? urlLogo = await _cloudinary.SubirImagenAsync(
+                    string? urlLogo = await _storageService.SubirImagenAsync(
                         logoArchivo, $"tenants/tenant_{tenant.Id}");
                     if (!string.IsNullOrEmpty(urlLogo))
                     {

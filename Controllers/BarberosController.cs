@@ -15,9 +15,9 @@ public class BarberosController : Controller
 {
     private readonly BarberoService _barberoService;
     private readonly CitaService _citaService;
-    private readonly CloudinaryStorageService _storageService;
+    private readonly SupabaseStorageService _storageService;
 
-    public BarberosController(BarberoService barberoService, CitaService citaService, CloudinaryStorageService storageService)
+    public BarberosController(BarberoService barberoService, CitaService citaService, SupabaseStorageService storageService)
     {
         _barberoService = barberoService;
         _citaService    = citaService;

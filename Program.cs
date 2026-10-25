@@ -1,4 +1,4 @@
-using CloudinaryDotNet;
+
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using SaaSBarberia.Data;
@@ -16,7 +16,7 @@ builder.Services.AddDbContext<BarberSaaSDbContext>(options =>
 
 // ☁️ CLOUDINARY: Servicio de almacenamiento de imágenes (reemplaza Supabase Storage)
 // Registrado como Singleton porque Cloudinary es thread-safe y solo necesita una instancia.
-builder.Services.AddSingleton<CloudinaryStorageService>();
+builder.Services.AddHttpClient<SupabaseStorageService>();
 
 // ─────────────────────────────────────────────────────────────────────────────
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

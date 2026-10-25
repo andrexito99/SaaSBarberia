@@ -16,9 +16,9 @@ namespace SaaSBarberia.Controllers
     public class ProductosController : Controller
     {
         private readonly IProductosService _productosService;
-        private readonly CloudinaryStorageService _storageService;
+        private readonly SupabaseStorageService _storageService;
 
-        public ProductosController(IProductosService productosService, CloudinaryStorageService storageService)
+        public ProductosController(IProductosService productosService, SupabaseStorageService storageService)
         {
             _productosService = productosService;
             _storageService = storageService;

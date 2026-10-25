@@ -14,8 +14,7 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 builder.Services.AddDbContext<BarberSaaSDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("con")));
 
-// ☁️ CLOUDINARY: Servicio de almacenamiento de imágenes (reemplaza Supabase Storage)
-// Registrado como Singleton porque Cloudinary es thread-safe y solo necesita una instancia.
+
 builder.Services.AddHttpClient<SupabaseStorageService>();
 
 // ─────────────────────────────────────────────────────────────────────────────

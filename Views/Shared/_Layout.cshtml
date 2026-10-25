@@ -106,7 +106,7 @@
         }
 
         /* 🖥️ ESCRITORIO (>= 768px) */
-        @@media (min-width: 768px) {
+        @media (min-width: 768px) {
             #sidebarOffcanvas.offcanvas {
                 position: fixed !important;
                 top: 0 !important;
@@ -131,7 +131,7 @@
         }
 
         /* 📱 MÓVIL (< 768px) */
-        @@media (max-width: 767.98px) {
+        @media (max-width: 767.98px) {
             .saas-wrapper {
                 display: block !important;
                 width: 100% !important;
@@ -160,14 +160,14 @@
             .footer-saas {
                 padding-left: 0 !important;
             }
-                        #saasHeaderActions {
+            #saasHeaderActions {
                 top: 10px !important;
                 right: 12px !important;
                 margin: 0 !important;
                 z-index: 1035 !important;
             }
             #notificacionesWidget {
-                top: 56px !important; /* positioned below the theme toggle button */
+                top: 56px !important;
                 right: 12px !important;
                 margin: 0 !important;
                 z-index: 1035 !important;
@@ -235,165 +235,169 @@
                     }
                 </a>
 
-                <div class="sidebar-divider my-3"></div>
+                <div class="sidebar-divider my-2"></div>
 
-                <!-- LISTA DE NAVEGACIÓN -->
-                <ul class="nav nav-pills flex-column mb-auto gap-1 custom-nav-list">
-                    <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center gap-3" asp-controller="Home" asp-action="Index">
-                            <i class="bi bi-grid-1x2-fill"></i> <span>Inicio</span>
-                        </a>
-                    </li>
-                
-                    @if (User.Identity?.IsAuthenticated == true)
+                <!-- LISTA DE NAVEGACIÓN (CON SCROLL INTERNO) -->
+                <div class="flex-grow-1 overflow-y-auto pe-1" style="max-height: calc(100vh - 170px);">
+                    <ul class="nav nav-pills flex-column gap-1 custom-nav-list">
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center gap-3" asp-controller="Home" asp-action="Index">
+                                <i class="bi bi-grid-1x2-fill"></i> <span>Inicio</span>
+                            </a>
+                        </li>
+                    
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <li class="nav-header text-uppercase mt-3 mb-1 px-3">Gestión Comercial</li>
+                            <li>
+                                <a class="nav-link d-flex align-items-center gap-3" asp-controller="Servicios" asp-action="Index">
+                                    <i class="bi bi-scissors"></i> <span>Servicios</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="nav-link d-flex align-items-center gap-3" asp-controller="Productos" asp-action="Index">
+                                    <i class="bi bi-bag-check-fill"></i> <span>Productos</span>
+                                </a>
+                            </li>
+
+                            @if (!User.IsInRole("Cliente"))
+                            {
+                                <li>
+                                    <a class="nav-link d-flex align-items-center gap-3" asp-controller="Barberos" asp-action="Index">
+                                        <i class="bi bi-person-badge-fill"></i> <span>Barberos</span>
+                                    </a>
+                                </li>
+
+                                @if (tieneHerramientas || User.IsInRole("Administrador") || User.IsInRole("SuperAdmin")) 
+                                {
+                                    <li>
+                                        <a class="nav-link d-flex align-items-center gap-3" asp-controller="Herramientas" asp-action="Index">
+                                            <i class="bi bi-wrench-adjustable"></i> <span>Inventario Máquinas</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="nav-link d-flex align-items-center gap-3" asp-controller="AlquileresHerramientas" asp-action="Index">
+                                            <i class="bi bi-tools"></i> <span>Alquiler Máquinas</span>
+                                        </a>
+                                    </li>
+                                }
+                            }
+
+                            @if (User.IsInRole("Administrador"))
+                            {
+                                <li class="nav-header text-uppercase mt-3 mb-1 px-3">Administración</li>
+                                <li>
+                                    <a class="nav-link d-flex align-items-center gap-3 text-warning" asp-controller="Tenants" asp-action="DashboardSede">
+                                        <i class="bi bi-qr-code-scan"></i> <span>Panel Sede & QR</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="nav-link d-flex align-items-center gap-3" asp-controller="Caja" asp-action="Index">
+                                        <i class="bi bi-cash-stack"></i> <span>Caja Chica</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="nav-link d-flex align-items-center gap-3" asp-controller="BarberoAusencias" asp-action="Index">
+                                        <i class="bi bi-calendar2-x-fill"></i> <span>Ausencias</span>
+                                    </a>
+                                </li>
+
+                                @if (tieneWhatsApp)
+                                {
+                                    <li class="nav-header text-uppercase mt-3 mb-1 px-3">Módulo WhatsApp</li>
+                                    <li>
+                                        <a class="nav-link d-flex align-items-center gap-3" asp-controller="WhatsAppDashboard" asp-action="Index">
+                                            <i class="bi bi-whatsapp text-success"></i> <span>Dashboard WA</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="nav-link d-flex align-items-center gap-3" asp-controller="WhatsAppConfiguracion" asp-action="Index">
+                                            <i class="bi bi-gear-fill"></i> <span>Configuración WA</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="nav-link d-flex align-items-center gap-3" asp-controller="WhatsAppPlantillas" asp-action="Index">
+                                            <i class="bi bi-chat-square-text"></i> <span>Plantillas WA</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="nav-link d-flex align-items-center gap-3" asp-controller="WhatsAppHistorial" asp-action="Index">
+                                            <i class="bi bi-clock-history"></i> <span>Historial WA</span>
+                                        </a>
+                                    </li>
+                                }
+                            }
+
+                            <li>
+                                <a class="nav-link d-flex align-items-center gap-3" asp-controller="Citas" asp-action="Index">
+                                    <i class="bi bi-calendar-event-fill"></i> <span>Citas</span>
+                                </a>
+                            </li>
+
+                            @if (esSuperAdmin)
+                            {
+                                <li class="nav-header text-uppercase mt-4 mb-1 px-3 text-cyan">
+                                    <i class="bi bi-cpu-fill me-1"></i> Control Global SaaS
+                                </li>
+                                <li>
+                                    <a class="nav-link d-flex align-items-center gap-3 nav-super-link text-info" asp-controller="Tenants" asp-action="SuperDashboard">
+                                        <i class="bi bi-pie-chart-fill"></i> <span>Métricas Globales</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="nav-link d-flex align-items-center gap-3 nav-super-link text-primary-glow" asp-controller="Tenants" asp-action="Index">
+                                        <i class="bi bi-building-fill-gear"></i> <span>Gestión Tenants</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="nav-link d-flex align-items-center gap-3 nav-super-link text-light" asp-controller="Usuarios" asp-action="Index">
+                                        <i class="bi bi-people-fill"></i> <span>Usuarios Globales</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="nav-link d-flex align-items-center gap-3 nav-super-link text-danger" asp-controller="Auditoria" asp-action="Index">
+                                        <i class="bi bi-shield-shaded"></i> <span>Auditoría de Logs</span>
+                                    </a>
+                                </li>
+                            }
+                        }
+                    </ul>
+                </div>
+
+                <div class="sidebar-divider my-2"></div>
+
+                <!-- USER FOOTER EN SIDEBAR (FIJO ABAJO) -->
+                <div class="mt-auto">
+                    @if (User.Identity != null && User.Identity.IsAuthenticated)
                     {
-                        <li class="nav-header text-uppercase mt-3 mb-1 px-3">Gestión Comercial</li>
-                        <li>
-                            <a class="nav-link d-flex align-items-center gap-3" asp-controller="Servicios" asp-action="Index">
-                                <i class="bi bi-scissors"></i> <span>Servicios</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="nav-link d-flex align-items-center gap-3" asp-controller="Productos" asp-action="Index">
-                                <i class="bi bi-bag-check-fill"></i> <span>Productos</span>
-                            </a>
-                        </li>
-
-                        @if (!User.IsInRole("Cliente"))
-                        {
-                            <li>
-                                <a class="nav-link d-flex align-items-center gap-3" asp-controller="Barberos" asp-action="Index">
-                                    <i class="bi bi-person-badge-fill"></i> <span>Barberos</span>
+                        <div class="user-card-sidebar p-2 rounded-3 d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2 overflow-hidden">
+                                <div class="avatar-circle">
+                                    @(User.Identity.Name?.Substring(0, 1).ToUpper() ?? "U")
+                                </div>
+                                <div class="d-flex flex-column text-truncate">
+                                    <span class="fw-bold fs-7 text-white text-truncate">@(User.Identity?.Name ?? "Invitado")</span>
+                                    <span class="text-muted fs-8">@(esSuperAdmin ? "SuperAdmin" : "Operador")</span>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-1">
+                                <button class="btn btn-icon btn-outline-secondary btn-sm rounded-circle d-flex align-items-center justify-content-center" data-theme-toggle type="button" title="Cambiar tema (Claro / Oscuro)" aria-label="Cambiar tema">
+                                    <i class="bi bi-sun-fill text-warning theme-icon-sun"></i>
+                                    <i class="bi bi-moon-stars-fill text-info theme-icon-moon"></i>
+                                </button>
+                                <a class="btn btn-icon btn-outline-danger btn-sm rounded-circle" asp-controller="Account" asp-action="Logout" title="Cerrar Sesión">
+                                    <i class="bi bi-power"></i>
                                 </a>
-                            </li>
-
-                            @if (tieneHerramientas || User.IsInRole("Administrador") || User.IsInRole("SuperAdmin")) 
-                            {
-                                <li>
-                                    <a class="nav-link d-flex align-items-center gap-3" asp-controller="Herramientas" asp-action="Index">
-                                        <i class="bi bi-wrench-adjustable"></i> <span>Inventario Máquinas</span>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="nav-link d-flex align-items-center gap-3" asp-controller="AlquileresHerramientas" asp-action="Index">
-                                        <i class="bi bi-tools"></i> <span>Alquiler Máquinas</span>
-                                    </a>
-                                </li>
-                            }
-                        }
-
-                        @if (User.IsInRole("Administrador"))
-                        {
-                            <li class="nav-header text-uppercase mt-3 mb-1 px-3">Administración</li>
-                            <li>
-                                <a class="nav-link d-flex align-items-center gap-3 text-warning" asp-controller="Tenants" asp-action="DashboardSede">
-                                    <i class="bi bi-qr-code-scan"></i> <span>Panel Sede & QR</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a class="nav-link d-flex align-items-center gap-3" asp-controller="Caja" asp-action="Index">
-                                    <i class="bi bi-cash-stack"></i> <span>Caja Chica</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a class="nav-link d-flex align-items-center gap-3" asp-controller="BarberoAusencias" asp-action="Index">
-                                    <i class="bi bi-calendar2-x-fill"></i> <span>Ausencias</span>
-                                </a>
-                            </li>
-
-                            @if (tieneWhatsApp)
-                            {
-                                <li class="nav-header text-uppercase mt-3 mb-1 px-3">Módulo WhatsApp</li>
-                                <li>
-                                    <a class="nav-link d-flex align-items-center gap-3" asp-controller="WhatsAppDashboard" asp-action="Index">
-                                    <i class="bi bi-whatsapp text-success"></i> <span>Dashboard WA</span>
-                                </a>
-                                </li>
-                                <li>
-                                    <a class="nav-link d-flex align-items-center gap-3" asp-controller="WhatsAppConfiguracion" asp-action="Index">
-                                        <i class="bi bi-gear-fill"></i> <span>Configuración WA</span>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="nav-link d-flex align-items-center gap-3" asp-controller="WhatsAppPlantillas" asp-action="Index">
-                                        <i class="bi bi-chat-square-text"></i> <span>Plantillas WA</span>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="nav-link d-flex align-items-center gap-3" asp-controller="WhatsAppHistorial" asp-action="Index">
-                                        <i class="bi bi-clock-history"></i> <span>Historial WA</span>
-                                    </a>
-                                </li>
-                            }
-                        }
-
-                        <li>
-                            <a class="nav-link d-flex align-items-center gap-3" asp-controller="Citas" asp-action="Index">
-                                <i class="bi bi-calendar-event-fill"></i> <span>Citas</span>
-                            </a>
-                        </li>
-
-                        @if (esSuperAdmin)
-                        {
-                            <li class="nav-header text-uppercase mt-4 mb-1 px-3 text-cyan">
-                                <i class="bi bi-cpu-fill me-1"></i> Control Global SaaS
-                            </li>
-                            <li>
-                                <a class="nav-link d-flex align-items-center gap-3 nav-super-link text-info" asp-controller="Tenants" asp-action="SuperDashboard">
-                                    <i class="bi bi-pie-chart-fill"></i> <span>Métricas Globales</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a class="nav-link d-flex align-items-center gap-3 nav-super-link text-primary-glow" asp-controller="Tenants" asp-action="Index">
-                                    <i class="bi bi-building-fill-gear"></i> <span>Gestión Tenants</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a class="nav-link d-flex align-items-center gap-3 nav-super-link text-light" asp-controller="Usuarios" asp-action="Index">
-                                    <i class="bi bi-people-fill"></i> <span>Usuarios Globales</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a class="nav-link d-flex align-items-center gap-3 nav-super-link text-danger" asp-controller="Auditoria" asp-action="Index">
-                                    <i class="bi bi-shield-shaded"></i> <span>Auditoría de Logs</span>
-                                </a>
-                            </li>
-                        }
+                            </div>
+                        </div>
                     }
-                </ul>
-
-                <div class="sidebar-divider my-3"></div>
-
-                <!-- USER FOOTER EN SIDEBAR -->
-                @if (User.Identity != null && User.Identity.IsAuthenticated)
-                {
-                    <div class="user-card-sidebar p-2 rounded-3 d-flex align-items-center justify-content-between">
-                        <div class="d-flex align-items-center gap-2 overflow-hidden">
-                            <div class="avatar-circle">
-                                @(User.Identity.Name?.Substring(0, 1).ToUpper() ?? "U")
-                            </div>
-                            <div class="d-flex flex-column text-truncate">
-                                <span class="fw-bold fs-7 text-white text-truncate">@(User.Identity?.Name ?? "Invitado")</span>
-                                <span class="text-muted fs-8">@(esSuperAdmin ? "SuperAdmin" : "Operador")</span>
-                            </div>
-                        </div>
-                        <div class="d-flex align-items-center gap-1">
-                            <button class="btn btn-icon btn-outline-secondary btn-sm rounded-circle d-flex align-items-center justify-content-center" data-theme-toggle type="button" title="Cambiar tema (Claro / Oscuro)" aria-label="Cambiar tema">
-                                <i class="bi bi-sun-fill text-warning theme-icon-sun"></i>
-                                <i class="bi bi-moon-stars-fill text-info theme-icon-moon"></i>
-                            </button>
-                            <a class="btn btn-icon btn-outline-danger btn-sm rounded-circle" asp-controller="Account" asp-action="Logout" title="Cerrar Sesión">
-                                <i class="bi bi-power"></i>
-                            </a>
-                        </div>
-                    </div>
-                }
-                else
-                {
-                    <a class="btn btn-primary w-100 fw-bold py-2 shadow-sm" asp-controller="Account" asp-action="Login">
-                        <i class="bi bi-box-arrow-in-right me-1"></i> Iniciar Sesión
-                    </a>
-                }
+                    else
+                    {
+                        <a class="btn btn-primary w-100 fw-bold py-2 shadow-sm" asp-controller="Account" asp-action="Login">
+                            <i class="bi bi-box-arrow-in-right me-1"></i> Iniciar Sesión
+                        </a>
+                    }
+                </div>
             </nav>
         }
 

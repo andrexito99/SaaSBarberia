@@ -143,7 +143,8 @@
                 left: 0 !important;
                 width: 280px !important;
                 max-width: 85vw !important;
-                height: 100vh !important;
+                height: 100dvh !important; /* Altura dinámica real del cel */
+                padding-bottom: 25px !important; /* Margen extra para que las barras no lo tapen */
                 z-index: 1055 !important;
                 background-color: var(--saas-bg-sidebar) !important;
                 box-shadow: 0 0 25px rgba(0, 0, 0, 0.7) !important;
@@ -237,8 +238,8 @@
 
                 <div class="sidebar-divider my-2"></div>
 
-                <!-- LISTA DE NAVEGACIÓN (CON SCROLL INTERNO) -->
-                <div class="flex-grow-1 overflow-y-auto pe-1" style="max-height: calc(100vh - 170px);">
+                <!-- LISTA DE NAVEGACIÓN (CON SCROLL INTERNO DINÁMICO) -->
+                <div class="flex-grow-1 overflow-y-auto pe-1" style="max-height: calc(100dvh - 210px);">
                     <ul class="nav nav-pills flex-column gap-1 custom-nav-list">
                         <li class="nav-item">
                             <a class="nav-link d-flex align-items-center gap-3" asp-controller="Home" asp-action="Index">

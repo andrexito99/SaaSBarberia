@@ -62,23 +62,46 @@ namespace SaaSBarberia.Controllers
             }
             else
             {
-                var verificationResult = _passwordHasher.VerifyHashedPassword(usuario, usuario.PasswordHash, password);
+                // Verificar contraseña hasheada y soportar contraseñas legadas en texto plano
+                PasswordVerificationResult verificationResult;
+                try
+                {
+                    verificationResult = _passwordHasher.VerifyHashedPassword(usuario, usuario.PasswordHash, password);
+                }
+                catch (System.FormatException)
+                {
+                    // El hash almacenado no es un formato válido (probablemente texto plano)
+                    verificationResult = PasswordVerificationResult.Failed;
+                }
+
                 if (verificationResult != PasswordVerificationResult.Success)
                 {
-                    int tenantFallo = usuario.TenantId ?? 0;
-                    int usuarioFalloId = usuario.Id;
-                    string causa = "Contraseña incorrecta";
-                    await _auditoriaService.RegistrarAsync(
-                        tenantFallo,
-                        usuarioFalloId,
-                        "Login",
-                        "0",
-                        "Fallo Login",
-                        $"Intento fallido de inicio de sesión para el correo '{email}'. Causa sospechosa: {causa}.",
-                        CurrentUserIp
-                    );
-                    ModelState.AddModelError("", "Credenciales incorrectas o usuario deshabilitado.");
-                    return View();
+                    // Intento fallido con hash; comprobar si la contraseña está almacenada en texto plano
+                    if (usuario.PasswordHash == password)
+                    {
+                        // Actualizar a hash seguro
+                        usuario.PasswordHash = _passwordHasher.HashPassword(usuario, password);
+                        await _context.SaveChangesAsync();
+                        // Considerar verificado exitosamente
+                        verificationResult = PasswordVerificationResult.Success;
+                    }
+                    else
+                    {
+                        int tenantFallo = usuario.TenantId ?? 0;
+                        int usuarioFalloId = usuario.Id;
+                        string causa = "Contraseña incorrecta";
+                        await _auditoriaService.RegistrarAsync(
+                            tenantFallo,
+                            usuarioFalloId,
+                            "Login",
+                            "0",
+                            "Fallo Login",
+                            $"Intento fallido de inicio de sesión para el correo '{email}'. Causa sospechosa: {causa}.",
+                            CurrentUserIp
+                        );
+                        ModelState.AddModelError("", "Credenciales incorrectas o usuario deshabilitado.");
+                        return View();
+                    }
                 }
             }
 

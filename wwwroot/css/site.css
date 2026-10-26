@@ -9,15 +9,15 @@
     /* Base Color Tokens */
     --font-family-base: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     
-    --saas-bg-body: #0B0F17;           /* Main Deep Dark Navy/Slate */
-    --saas-bg-sidebar: #111827;        /* Solid Slate 900 */
-    --saas-bg-card: #1F2937;           /* Card & Container Slate 800 */
-    --saas-bg-card-hover: #253346;     /* Subtle row & card hover */
-    --saas-bg-input: #111827;          /* Inputs & Form background */
-    --saas-bg-header: #111827;         /* Table headers & Navbars */
+    --saas-bg-body: #080b0f;           /* Main Dark Background */
+    --saas-bg-sidebar: #0e131b;        /* Sidebar Surface */
+    --saas-bg-card: rgba(14,19,27,0.6);           /* Glassmorphic Card */
+    --saas-bg-card-hover: rgba(14,19,27,0.8);     /* Card Hover */
+    --saas-bg-input: #0e131b;          /* Inputs Background */
+    --saas-bg-header: #0e131b;         /* Header Background */
 
     /* Accent & Brand Colors */
-    --saas-gold: #F59E0B;              /* Primary Warm Gold / Amber */
+    --saas-gold: #d4af37;              /* Luxury Gold Accent */
     --saas-gold-hover: #D97706;        /* Deep Gold Hover */
     --saas-gold-soft: rgba(245, 158, 11, 0.15);
     --saas-emerald: #10B981;           /* Emerald Success / Active */
@@ -44,6 +44,27 @@
     --saas-shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.45);
     --saas-shadow-gold: 0 4px 14px rgba(245, 158, 11, 0.3);
 }
+
+[data-theme="light"], .light-mode {
+    --saas-bg-body: #f5f5f5; /* Light background */
+    --saas-bg-sidebar: #ffffff; /* Light sidebar */
+    --saas-bg-card: rgba(255, 255, 255, 0.85); /* Light card */
+    --saas-bg-card-hover: rgba(255, 255, 255, 0.95);
+    --saas-bg-input: #ffffff;
+    --saas-bg-header: #ffffff;
+    --saas-gold: #d4af37; /* Gold accent */
+    --saas-gold-hover: #b8860b;
+    --saas-text-title: #111827; /* Dark text for titles */
+    --saas-text-body: #374151; /* Dark body text */
+    --saas-text-secondary: #6b7280;
+    --saas-text-muted: #9ca3af;
+    --saas-border-subtle: rgba(0, 0, 0, 0.08);
+    --saas-border-medium: #d1d5db;
+    --saas-border-gold: rgba(245, 158, 11, 0.35);
+    --saas-shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.15);
+    --saas-shadow-gold: 0 4px 14px rgba(245, 158, 11, 0.3);
+}
+
 
 /* ==========================================================================
    1. GLOBAL RESET & BASE FOUNDATION

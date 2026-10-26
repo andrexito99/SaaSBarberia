@@ -12,8 +12,8 @@
              style="opacity: 0.05; background: radial-gradient(circle at 50% 50%, #F59E0B 0%, transparent 70%); pointer-events: none;"></div>
         <div class="position-relative z-1">
             <span class="badge bg-warning mb-2 px-3 py-1 text-uppercase" style="letter-spacing: 0.1em; font-size: 0.7rem;">SaaS Barbería Core</span>
-            <h1 class="display-5 fw-bold text-white mb-2">Panel Operativo & Ejecutivo</h1>
-            <p class="fs-6 text-secondary mb-0 max-w-xl mx-auto" style="max-width: 600px;">Bienvenido al núcleo de control. Administra tus sedes, supervisa citas en tiempo real y maximiza tus ingresos.</p>
+            <h1 class="display-5 fw-bold text-white mb-2">Panel Operativo y Ejecutivo</h1>
+            <p class="fs-6 text-secondary mb-0 max-w-xl mx-auto" style="max-width: 600px;">Administra tus sedes y supervisa la operación.</p>
         </div>
     </div>
 
@@ -225,58 +225,41 @@
             <!-- ⚡ ACCESOS RÁPIDOS PARA ADMINISTRADOR -->
             <div class="mt-4 pt-2">
                 <h5 class="fw-bold text-white mb-3 d-flex align-items-center gap-2">
-                    <i class="bi bi-grid-fill text-warning"></i> Herramientas de Gestión de Sede
+                    <i class="bi bi-grid-fill text-warning"></i> <span class="ms-2">Panel Operativo y Ejecutivo</span>
                 </h5>
-                <div class="row row-cols-1 row-cols-md-3 g-3">
+                <div class="row row-cols-1 row-cols-md-3 g-4">
+                    <!-- Catálogo de Servicios -->
                     <div class="col">
-                        <div class="card h-100 p-3 d-flex flex-column border-0 shadow-sm" style="background: rgba(31, 41, 55, 0.7) !important;">
-                            <div class="d-flex align-items-center gap-3 mb-2">
-                                <div class="kpi-icon-wrapper kpi-icon-amber" style="width: 44px; height: 44px; font-size: 1.2rem;">
-                                    <i class="bi bi-qr-code-scan"></i>
-                                </div>
-                                <div>
-                                    <h6 class="fw-bold text-white mb-0">Panel Sede & Enlace QR</h6>
-                                    <small class="text-secondary">Invitación y emergencias</small>
-                                </div>
+                        <div class="card h-100 p-4 d-flex flex-column border-0 shadow-sm glass-card" style="background: rgba(31,41,55,0.45); backdrop-filter: blur(12px);">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="bi bi-scissors fs-2 text-warning me-3"></i>
+                                <h6 class="fw-bold text-white mb-0">Catálogo de Servicios</h6>
                             </div>
-                            <p class="text-secondary small mb-3 flex-grow-1">Genera y descarga el código QR de registro para tus clientes y gestiona el botón de pánico de la sucursal.</p>
-                            <a asp-controller="Tenants" asp-action="DashboardSede" class="btn btn-outline-warning btn-sm w-100 fw-semibold">
-                                Abrir Panel Sede <i class="bi bi-arrow-right ms-1"></i>
-                            </a>
+                            <p class="text-secondary flex-grow-1 mb-3">Explora y gestiona todos los servicios que ofreces, define precios y duraciones.</p>
+                            <a asp-controller="Servicios" asp-action="Index" class="btn btn-outline-success w-100 fw-semibold">Ver Servicios <i class="bi bi-arrow-right ms-1"></i></a>
                         </div>
                     </div>
+                    <!-- Equipo de Barberos -->
                     <div class="col">
-                        <div class="card h-100 p-3 d-flex flex-column border-0 shadow-sm" style="background: rgba(31, 41, 55, 0.7) !important;">
-                            <div class="d-flex align-items-center gap-3 mb-2">
-                                <div class="kpi-icon-wrapper kpi-icon-emerald" style="width: 44px; height: 44px; font-size: 1.2rem;">
-                                    <i class="bi bi-cash-stack"></i>
-                                </div>
-                                <div>
-                                    <h6 class="fw-bold text-white mb-0">Caja Chica</h6>
-                                    <small class="text-secondary">Flujo de efectivo</small>
-                                </div>
+                        <div class="card h-100 p-4 d-flex flex-column border-0 shadow-sm glass-card" style="background: rgba(31,41,55,0.45); backdrop-filter: blur(12px);">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="bi bi-person-badge-fill fs-2 text-info me-3"></i>
+                                <h6 class="fw-bold text-white mb-0">Equipo de Barberos</h6>
                             </div>
-                            <p class="text-secondary small mb-3 flex-grow-1">Control diario de ingresos, egresos, gastos operativos y arqueo de caja en tiempo real.</p>
-                            <a asp-controller="Caja" asp-action="Index" class="btn btn-outline-success btn-sm w-100 fw-semibold">
-                                Administrar Caja <i class="bi bi-arrow-right ms-1"></i>
-                            </a>
+                            <p class="text-secondary flex-grow-1 mb-3">Administra tu staff, asigna horarios y controla su disponibilidad.</p>
+                            <a asp-controller="Barberos" asp-action="Index" class="btn btn-outline-info w-100 fw-semibold">Gestionar Equipo <i class="bi bi-arrow-right ms-1"></i></a>
+
                         </div>
                     </div>
+                    <!-- Caja y Facturación -->
                     <div class="col">
-                        <div class="card h-100 p-3 d-flex flex-column border-0 shadow-sm" style="background: rgba(31, 41, 55, 0.7) !important;">
-                            <div class="d-flex align-items-center gap-3 mb-2">
-                                <div class="kpi-icon-wrapper kpi-icon-blue" style="width: 44px; height: 44px; font-size: 1.2rem;">
-                                    <i class="bi bi-calendar2-x-fill"></i>
-                                </div>
-                                <div>
-                                    <h6 class="fw-bold text-white mb-0">Ausencias y Permisos</h6>
-                                    <small class="text-secondary">Bloqueo de agenda</small>
-                                </div>
+                        <div class="card h-100 p-4 d-flex flex-column border-0 shadow-sm glass-card" style="background: rgba(31,41,55,0.45); backdrop-filter: blur(12px);">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="bi bi-cash-stack fs-2 text-success me-3"></i>
+                                <h6 class="fw-bold text-white mb-0">Caja y Facturación</h6>
                             </div>
-                            <p class="text-secondary small mb-3 flex-grow-1">Registra descansos, incapacidades y permisos del staff para evitar reservas en horas inactivas.</p>
-                            <a asp-controller="BarberoAusencias" asp-action="Index" class="btn btn-outline-info btn-sm w-100 fw-semibold">
-                                Gestionar Ausencias <i class="bi bi-arrow-right ms-1"></i>
-                            </a>
+                            <p class="text-secondary flex-grow-1 mb-3">Control total de ingresos, egresos y generación de facturas.</p>
+                            <a asp-controller="Caja" asp-action="Index" class="btn btn-outline-warning w-100 fw-semibold">Abrir Caja <i class="bi bi-arrow-right ms-1"></i></a>
                         </div>
                     </div>
                 </div>

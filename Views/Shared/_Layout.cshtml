@@ -505,14 +505,21 @@
     <script src="~/js/swal-helpers.js" asp-append-version="true"></script>
 
     <script>
-        // TempData toast handling (global)
-        @if (TempData["Mensaje"] != null) {
-            <text>swalToast('success', '@TempData["Mensaje"]');</text>
-        }
-        @if (TempData["Error"] != null) {
-            <text>swalToast('error', '@TempData["Error"]');</text>
-        }
-    </script>
+    // Populate global TempData messages for swal-helpers.js
+    window.tempDataMessages = {};
+    @if (TempData["Mensaje"] != null) {
+        <text>window.tempDataMessages.Mensaje = '@TempData["Mensaje"]';</text>
+    }
+    @if (TempData["Success"] != null) {
+        <text>window.tempDataMessages.Success = '@TempData["Success"]';</text>
+    }
+    @if (TempData["Exito"] != null) {
+        <text>window.tempDataMessages.Exito = '@TempData["Exito"]';</text>
+    }
+    @if (TempData["Error"] != null) {
+        <text>window.tempDataMessages.Error = '@TempData["Error"]';</text>
+    }
+</script>
     @if (User.Identity?.IsAuthenticated == true)
     {
         <script>

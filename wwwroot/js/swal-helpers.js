@@ -37,3 +37,22 @@ function swalToast(type, title) {
         showConfirmButton: false
     });
 }
+
+// Auto‑render toasts from TempData (any of the supported keys)
+function renderTempDataToasts() {
+    if (typeof window.tempDataMessages !== 'object' || window.tempDataMessages === null) return;
+    const keyMap = {
+        Mensaje: 'success',
+        Success: 'success',
+        Exito: 'success',
+        Error: 'error'
+    };
+    for (const [key, type] of Object.entries(keyMap)) {
+        const msg = window.tempDataMessages[key];
+        if (msg) {
+            swalToast(type, msg);
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', renderTempDataToasts);

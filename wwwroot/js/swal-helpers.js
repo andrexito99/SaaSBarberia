@@ -14,15 +14,31 @@ const SwalDarkLuxury = Swal.mixin({
 });
 
 // Override native confirm with SweetAlert2
-window.confirm = async function (message) {
-    const result = await SwalDarkLuxury.fire({
+// Override native confirm with SweetAlert2.
+// Returns a Promise that resolves to true if confirmed, false otherwise.
+// This allows usage with `await confirm(...)` in async contexts.
+// For legacy synchronous calls (e.g., onclick="return confirm('...')"), the returned Promise is truthy,
+// so we also prevent default navigation and handle the action manually via the resolved value.
+window.confirm = function (message) {
+    // Show the modal
+    const modalPromise = SwalDarkLuxury.fire({
         icon: 'question',
         title: message,
         showCancelButton: true,
         confirmButtonText: 'Sí',
         cancelButtonText: 'No'
-    });
-    return result.isConfirmed;
+    }).then(result => result.isConfirmed);
+
+    // If the call is used synchronously (like in an inline onclick handler), prevent default navigation
+    // by returning false. The caller can handle navigation after the Promise resolves if needed.
+    try {
+        // In event handler context, `this` may be the element; we attempt to stop default action.
+        if (window.event && window.event instanceof Event) {
+            window.event.preventDefault();
+        }
+    } catch (e) { /* ignore */ }
+
+    return modalPromise;
 };
 
 // Helper for toast notifications (success, error, warning, info)
@@ -39,6 +55,9 @@ function swalToast(type, title) {
 }
 
 // Auto‑render toasts from TempData (any of the supported keys)
+// Auto‑render toasts from TempData (any of the supported keys).
+// This function runs after the 'load' event to guarantee that the inline script in the layout
+// (which fills window.tempDataMessages) has already executed.
 function renderTempDataToasts() {
     if (typeof window.tempDataMessages !== 'object' || window.tempDataMessages === null) return;
     const keyMap = {
@@ -55,4 +74,5 @@ function renderTempDataToasts() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', renderTempDataToasts);
+// Use 'load' instead of 'DOMContentLoaded' to ensure the TempData script has populated the object.
+window.addEventListener('load', renderTempDataToasts);
